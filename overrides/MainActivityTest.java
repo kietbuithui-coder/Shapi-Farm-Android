@@ -37,7 +37,7 @@ public class MainActivityTest {
         Thread worker = (Thread)get(controller.get(), "versionThread");
         if (worker != null) worker.join(3000);
         shadowOf(Looper.getMainLooper()).idle();
-        assertNotNull(get(controller.get(), "game"));
+        assertNotNull(String.valueOf(get(controller.get(), "startupError")), get(controller.get(), "game"));
         return controller;
     }
     @Test public void lateStartupAfterDestroyDoesNotCrash() throws Exception {
@@ -67,7 +67,7 @@ public class MainActivityTest {
             controller.pause().stop().destroy();
         }
     }
-    @Test public void authenticationDoesNotUseBundledAssetsAndCookiesArePreserved() throws Exception {
+    @Test public void authenticationAndRangeRequestsDoNotUseBundledAssets() throws Exception {
         ActivityController<OfflineActivity> controller = open(); MainActivity activity = controller.get();
         set(activity, "useBundledAssets", true);
         WebView web = (WebView)get(activity, "game"); WebViewClient client = web.getWebViewClient();

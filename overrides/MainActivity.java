@@ -67,6 +67,7 @@ public class MainActivity extends Activity {
     private Bundle restoredWebState;
     private Thread versionThread;
     private String lastFailure = "";
+    private RuntimeException startupError;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -128,6 +129,7 @@ public class MainActivity extends Activity {
         FrameLayout.LayoutParams helpParams = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
         root.addView(help, helpParams);
         browserHelp = help;
+        help.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateGameInsets());
         help.setVisibility(View.GONE);
         try {
             game = new WebView(this);
@@ -135,6 +137,8 @@ public class MainActivity extends Activity {
             root.addView(game, 0, new FrameLayout.LayoutParams(-1, -1));
             configureWebView();
         } catch (RuntimeException ex) {
+            startupError = ex;
+            android.util.Log.e("ShapiWebView", "WebView initialization failed", ex);
             discardWebView(game);
             showFailure("Không khởi động được Android System WebView. Hãy cập nhật WebView/Chrome hoặc mở bằng trình duyệt.");
             return;
@@ -235,12 +239,14 @@ public class MainActivity extends Activity {
 
     private void showBrowserHelp(boolean visible) {
         browserHelp.setVisibility(visible ? View.VISIBLE : View.GONE);
-        browserHelp.post(() -> {
-            if (destroyed || game == null) return;
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) game.getLayoutParams();
-            params.topMargin = browserHelp.getVisibility() == View.VISIBLE ? browserHelp.getHeight() : 0;
-            game.setLayoutParams(params);
-        });
+        updateGameInsets();
+    }
+
+    private void updateGameInsets() {
+        if (destroyed || game == null || browserHelp == null) return;
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) game.getLayoutParams();
+        int margin = browserHelp.getVisibility() == View.VISIBLE ? browserHelp.getHeight() : 0;
+        if (params.topMargin != margin) { params.topMargin = margin; game.setLayoutParams(params); }
     }
 
     private void showFailure(String message) {
