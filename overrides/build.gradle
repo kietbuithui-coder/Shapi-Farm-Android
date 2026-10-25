@@ -1,0 +1,32 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'vn.shapifarm.game'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'vn.shapifarm.game'
+        minSdk 23
+        targetSdk 35
+        versionCode 37
+        versionName '3.6'
+    }
+    testOptions { unitTests.includeAndroidResources = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+// No external browser library: Android system WebView renders the online game.
+
+// Prepare a version-matched local snapshot of all runtime art, audio, fonts and icons.
+// Website HTML/JS, authentication and APIs stay online; only static media are bundled.
+def bundlePython = System.getenv('ANDROID_BUNDLE_PYTHON') ?: 'python3'
+tasks.register('prepareBundledWebAssets', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine bundlePython, 'scripts/prepare-android-bundle.py'
+}
+tasks.named('preBuild').configure { dependsOn tasks.named('prepareBundledWebAssets') }
+
+dependencies {
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.robolectric:robolectric:4.14.1"
+}

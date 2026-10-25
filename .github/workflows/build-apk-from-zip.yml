@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-apk-from-zip.yml'
+      - 'overrides/**'
   release:
     types: [published]
   workflow_dispatch:
@@ -62,6 +63,14 @@ jobs:
           test -f game-source/public/android-assets-version.txt
           python3 game-source/scripts/prepare-android-bundle.py --verify
 
+      - name: Apply Android startup and sign-in fixes
+        run: |
+          cp overrides/MainActivity.java game-source/android/app/src/main/java/vn/shapifarm/game/MainActivity.java
+          cp overrides/AndroidManifest.xml game-source/android/app/src/main/AndroidManifest.xml
+          cp overrides/build.gradle game-source/android/app/build.gradle
+          mkdir -p game-source/android/app/src/test/java/vn/shapifarm/game
+          cp overrides/MainActivityTest.java game-source/android/app/src/test/java/vn/shapifarm/game/MainActivityTest.java
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -82,8 +91,22 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK with bundled assets
-        run: gradle --no-daemon -p game-source/android assembleDebug
+      - name: Reuse debug signing key for subsequent builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: shapi-android-debug-signing-v1
+
+      - name: Test Android lifecycle and build APK with bundled assets
+        run: gradle --no-daemon -Pandroid.useAndroidX=true -p game-source/android testDebugUnitTest assembleDebug
+
+      - name: Upload Android test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-startup-tests
+          path: game-source/android/app/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
 
       - name: Verify signature and package
         run: |
