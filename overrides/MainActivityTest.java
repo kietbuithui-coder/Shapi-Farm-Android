@@ -83,6 +83,8 @@ public class MainActivityTest {
         ActivityController<OfflineActivity> controller = open(); MainActivity activity = controller.get();
         WebView web = (WebView)get(activity,"game");
         web.loadUrl("https://shapifarm.kietbuithui.chatgpt.site/signin-with-chatgpt?return_to=%2F");
+        // Robolectric does not commit loadUrl to history until explicitly requested.
+        shadowOf(web).pushEntryToHistory("https://shapifarm.kietbuithui.chatgpt.site/signin-with-chatgpt?return_to=%2F");
         Bundle state = new Bundle(); controller.saveInstanceState(state);
         assertNotNull(state.getBundle("webState"));
         controller.pause().stop().destroy();
