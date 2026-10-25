@@ -1,6 +1,10 @@
 name: Build Android APK from Game ZIP
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-apk-from-zip.yml'
   release:
     types: [published]
   workflow_dispatch:
@@ -27,7 +31,7 @@ jobs:
           RELEASE_TAG_EVENT: ${{ github.event.release.tag_name }}
           RELEASE_TAG_INPUT: ${{ inputs.release_tag }}
         run: |
-          TAG="${RELEASE_TAG_EVENT:-$RELEASE_TAG_INPUT}"
+          TAG="${RELEASE_TAG_EVENT:-${RELEASE_TAG_INPUT:-apk-source-3.6}}"
           test -n "$TAG"
           echo "SOURCE_RELEASE=$TAG" >> "$GITHUB_ENV"
 
@@ -64,11 +68,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK platform 35
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Install Android SDK from preinstalled runner
+        run: |
+          if [ -z "${ANDROID_HOME:-}" ] || [ ! -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            echo "::error::Android SDK khong co san tren runner."
+            exit 1
+          fi
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
@@ -98,7 +105,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "$SOURCE_RELEASE"             game-source/android/app/build/outputs/apk/debug/app-debug.apk             --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$SOURCE_RELEASE" \
+            game-source/android/app/build/outputs/apk/debug/app-debug.apk \
+            --repo "$GITHUB_REPOSITORY" --clobber
 
       - name: Backup APK in Actions artifacts
         if: always()
