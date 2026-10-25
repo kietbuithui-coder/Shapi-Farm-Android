@@ -208,7 +208,13 @@ public class MainActivity extends Activity {
         });
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            ServiceWorkerController.getInstance().setServiceWorkerClient(new AssetWorkerClient(this));
+            try {
+                ServiceWorkerController.getInstance().setServiceWorkerClient(new AssetWorkerClient(this));
+            } catch (RuntimeException ex) {
+                // This optimization is optional: older/broken providers may not expose it.
+                // Ordinary WebView requests can still use local assets; worker requests use HTTPS.
+                android.util.Log.w("ShapiWebView", "Service worker interception unavailable; using network fallback", ex);
+            }
         }
 
     }
