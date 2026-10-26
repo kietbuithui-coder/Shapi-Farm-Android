@@ -96,3 +96,21 @@ for idx in range(0,len(display),N):
     payload=base64.b64encode(temp.getvalue()).decode()
     print(f'SHEET_{idx//N:02d}='+payload,flush=True)
 print(f'SUMMARY images={len(rows)} public={len(display)} pages={(len(display)+N-1)//N} duplicate_groups={len(dups)} missing_refs={len(missing)} errors={len(errors)}',flush=True)
+
+print('DIR_COUNT='+json.dumps(v['directories'],ensure_ascii=False),flush=True)
+print('MISSING_REF_LIST='+json.dumps(v['refs_missing'],ensure_ascii=False),flush=True)
+print('OUTLIERS='+json.dumps(v['unusual_size'],ensure_ascii=False),flush=True)
+print('BLANK_IMAGES='+json.dumps(v['blank_alpha'],ensure_ascii=False),flush=True)
+print('SVG_LIST='+json.dumps(v['svg_examples'],ensure_ascii=False),flush=True)
+print('IMAGE_LIST='+json.dumps([[r['p'],r['w'],r['h']] for r in rows],ensure_ascii=False),flush=True)
+for manifest in sorted(ROOT.rglob('manifest.json')):
+    if any(p in manifest.relative_to(ROOT).parts for p in EXCLUDE):continue
+    try:
+        blob=manifest.read_text('utf-8')
+        if len(blob)>90000:continue
+        val=json.loads(blob)
+        print('MANIFEST_FILE='+manifest.relative_to(ROOT).as_posix()+' '+blob[:90000],flush=True)
+    except Exception:pass
+for frag in ('unified-assets','item-sprites','tool-upgrades','fish-catalog','staff-animation','modern-world','clover','semantic-art'):
+    located=[p.relative_to(ROOT).as_posix() for p in code_files if frag in p.name]
+    print('SOURCE_MODULE='+frag+' '+json.dumps(located),flush=True)
