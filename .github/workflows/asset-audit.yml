@@ -4,6 +4,7 @@ on:
     branches: [assets-audit-20261026]
     paths:
       - .github/workflows/asset-audit.yml
+      - scripts/audit_assets.py
   workflow_dispatch:
 
 permissions:
