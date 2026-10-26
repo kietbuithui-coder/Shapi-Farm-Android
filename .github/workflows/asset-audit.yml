@@ -1,0 +1,30 @@
+name: Audit game 3.6 assets (read only)
+on:
+  push:
+    branches: [assets-audit-20261026]
+    paths:
+      - .github/workflows/asset-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout audit script only (game untouched)
+        uses: actions/checkout@v4
+      - name: Download exact source from private release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download apk-source-3.6 --repo "$GITHUB_REPOSITORY" --pattern 'ShapiFarm-3.6-Android-Source.zip' --dir "$RUNNER_TEMP"
+          echo "89eb73049c02407cb545b7667e1e3902fa478b873e18f8cfcdec5e32977dec0a  $RUNNER_TEMP/ShapiFarm-3.6-Android-Source.zip" | sha256sum --check
+          mkdir game-source
+          unzip -q "$RUNNER_TEMP/ShapiFarm-3.6-Android-Source.zip" -d game-source
+      - name: Prepare image tools
+        run: python3 -m pip install --quiet pillow
+      - name: Audit source, emit machine-readable inventory and contact sheets
+        run: python3 scripts/audit_assets.py
