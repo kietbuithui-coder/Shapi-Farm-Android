@@ -31,7 +31,7 @@ plays out.
 
 ### The loop
 
-1. **Home** → `Mèo` (cats), `Kỹ Năng` (skills), `Cường Hóa` (upgrades), `Bộ Sưu Tập` (collection), `Cài Đặt` (settings).
+1. **Home** → `Mèo` (cats), `Kỹ Năng` (skills), `Cường Hóa` (upgrades), `Bộ Sưu Tập` (collection), `Sổ Tay` (codex), `Cài Đặt` (settings).
 2. Choose a cat and fill all four skill slots, then `Xuất Phát` to start.
 3. Clear five waves per night. Level-ups offer three cards; boss nights add a
    reward pick after the kill.
@@ -63,14 +63,16 @@ Then open <http://localhost:8080/>. The server serves the built `index.html`;
 | Command | What it does |
 | --- | --- |
 | `npm start` | Serve the repo on port 8080 (`node scripts/serve.mjs [port]`) |
-| `npm test` | Full suite (48 tests) — engine, progression, audio, input, bundle |
+| `npm test` | Full suite (142 tests) — engine, progression, audio, input, bosses, codex, deploy, bundle |
 | `npm run build:web` | Bundle `src/` + inline fonts → `index.html` |
 | `npm run verify` | Self-containment + placeholder check on `index.html` |
 | `npm run art` | Re-render the art sheets into `public/art-check/` |
 | `node tools/_boot.mjs` | Headless full-flow boot → `public/art-check/boot-*.png` |
 | `node tools/verify-fonts.mjs` | Prove every Vietnamese character resolves to an inlined glyph |
 | `node tools/render-scene.mjs <n>` | Render one gameplay scene for art review |
-| `node tools/tune.mjs` / `node tools/deathlog.mjs <cat> <seed>` | Balance passes |
+| `node tools/tune.mjs` | Balance sweep (seeded and reproducible) |
+| `node tools/deathlog.mjs <cat> <seed>` | Where and why a run ended |
+| `node tools/render-bosses.mjs` | Render both new bosses in-engine, both phases |
 
 `tools/` and `tests/` are developer-only; nothing in either ships.
 
@@ -96,7 +98,7 @@ src/
   art/
     renderer.js        camera, DPR, world draw order, arena fit
     env.js             sky, garden, town, terrace, playfield surface
-    actors.js          cats and creatures
+    actors.js          cats and creatures (incl. summon materialisation)
     catart.js          the ten cat portraits
     creatureart.js     enemy/boss art
     fx.js              slashes, rings, impacts
@@ -104,6 +106,8 @@ src/
   data/
     cats.js skills.js perks.js upgrades.js achievements.js enemies.js acts.js
     palette.js strings.js
+    wiki.js            codex: 8 categories derived from the data files above,
+                       plus discovery helpers
   core/
     save.js            ProfileStore: versioned schema, sanitize, backup/recovery
     rng.js math.js events.js clock.js camera.js
@@ -140,6 +144,18 @@ tests/input.test.mjs         6 — gamepad dash/skills with a centred stick, hel
 tests/bundle.test.mjs        6 — boots the built index.html in a VM, asserts it
                             paints, loads nothing from the network, no console
                             noise, fonts cover Vietnamese
+tests/bosses2.test.mjs      17 — the two new bosses: every declared attack is
+                            implemented and has an effect, every phase is
+                            reachable in a live fight, walls block and expire,
+                            no attack repeats twice in a row, every dangerous
+                            attack on every boss is telegraphed and reactable,
+                            summons cannot hit on their spawn frame, phase 2 is
+                            visually distinct
+tests/wiki.test.mjs         10 — codex: exactly 8 categories, every category
+                            covers its real data, follows a changed stat,
+                            nothing revealed without discovery, playing
+                            discovers things, icons exist, both languages full
+tests/deploy.test.mjs        7 — deploy configs are coherent
 ```
 
 `tests/dom.mjs` provides the DOM/canvas shim used by the progression and boot
@@ -166,7 +182,86 @@ enforces that:
 ### Balance
 
 `node tools/tune.mjs` runs the bot across cats and seeds and reports depth
-reached. Current spread sits around **avg depth 25 / 45** on a fresh profile.
+reached. Current spread sits around **avg depth 27 / 45** on a fresh profile.
+
+The sweep is **deterministic**: the bot's strafe timer used `Math.random`, which
+made two runs of the same build differ by three whole nights and made every
+A/B comparison meaningless. It now draws from a local seeded generator that is
+kept separate from the run's own RNG stream — drawing bot noise from the main
+stream would shift spawns, crits and loot, and you would be measuring the dice
+rather than the change.
+
+---
+
+## What is in it
+
+### Roster
+
+**15 enemies** and **5 bosses**, each with its own silhouette, colour and AI. The
+five added in this pass are not recolours — each asks a different question:
+
+- **Crystal crawler** — a slow armoured advance that never stops and never
+  speeds up. You route around it; you cannot outrun the problem.
+- **Explosive slime** — creeps in, then *plants* while its bomb arms. The
+  telegraph means exactly what it says, and the answer is to leave the circle.
+- **Shadow stalker** — fades, closes from behind, then snaps solid and strikes
+  in a straight line. Lateral movement beats it.
+- **Thorn beast** — a siege attacker that holds long range and lays thorns. It
+  will not come to you, so you have to go to it.
+- **Banshee** — keeps its distance and screams, slowing you.
+
+That is five different counter-plays rather than five more hit points.
+
+| Boss | Act | Phases | The shift in phase 2 |
+| --- | --- | --- | --- |
+| Moon Devourer | 1 | 3 | Gains **eclipse** (a closing ring) in phase 2, then drops the fan shot for **moonBeam** + enrage in phase 3 |
+| Lantern King | 2 | 3 | Gains **lanternNova** from phase 2, and phase 3 leads with it while keeping dash pressure |
+| Hollow Ninth | 3 | 4 | Gains **nineLash** from phase 2; a fourth phase at 12% drops blink claws and keeps only lash + echo |
+| **Void Predator** | 2 | 3 | **Stops retreating and hunts.** Phase 1 is a skirmisher that punishes chasing; phase 2 removes the retreat, so the answer changes from "close the gap" to "keep moving" |
+| **Crystal Queen** | 3 | 3 | **Turns her own walls into spikes.** Phase 1 is zoning with real solid cover; phase 2 shatters that cover into hazards and adds an aimed beam. She gains a visible aura and orbiting shards so the change is readable |
+
+From night ten the bosses rotate, so a long run meets all five rather than
+repeating the first three.
+
+### Telegraphs
+
+Every dangerous attack warns before it lands, and nothing resolves faster than
+a human can react (0.35 s floor, enforced by a test). Delayed hazards draw their
+own ground telegraph, so the boss-side tell only has to signal the wind-up.
+Summoned minions spend a short materialisation window in which they cannot act,
+drawn as a contracting ring — an invisible grace period would just move the
+unfairness rather than remove it.
+
+### Codex
+
+Eight categories — bestiary, bosses, skills, cats, embers, upgrades, world,
+feats — with every entry **locked until you meet it**. Nothing is copied: the
+codex reads the same definition objects the combat code runs, so a balance
+change updates the manual with it. Locked entries are shown as sealed tiles
+rather than hidden, because a codex that silently omits things gives you no
+sense of what is left to find.
+
+Discovery is recorded in `profile.seen` and persists across runs and devices
+via the normal save.
+
+### Arena
+
+The playfield is 1570 × 660 with a 96–1474 × 250–506 playable region:
+**352,768 px² against 252,928 px² before, +39.5% real floor**. (The arena width
+grew 1180 → 1570, which is +33.1%; the playable area grows slightly faster
+because the side margins are a fixed 96px rather than a percentage. Both figures
+sit inside the requested 25–50% band.) It is real playable
+space, not a zoom-out: the camera, the spawn bands, the wall derivation and the
+HUD safe areas all follow the new bounds, and the mobile tests assert the
+invariants rather than a fixed width.
+
+### On a phone
+
+The HUD is computed from the viewport and the safe-area insets, never from one
+global CSS scale, so notched phones and landscape play both lay out correctly.
+Touch controls get their own layer with no overlap against the HUD. Fullscreen
+uses the real Fullscreen API — on Android the browser may keep its system bars
+visible, and the game does not pretend otherwise.
 
 ---
 

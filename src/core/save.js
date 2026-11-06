@@ -105,7 +105,15 @@ export function sanitize(raw, isKnown = () => true) {
     out.settings = sanitizeSettings(raw.settings);
   }
   if (raw.seen && typeof raw.seen === 'object') {
-    for (const id of Object.keys(raw.seen)) if (raw.seen[id]) out.seen[id] = true;
+    // Only keep keys shaped like real codex entries. A save edited by hand, or
+    // one written by a future build with a category we no longer have, must not
+    // be able to bloat the profile with arbitrary keys — and an empty string
+    // would sit in the seen map forever doing nothing.
+    for (const id of Object.keys(raw.seen)) {
+      if (!raw.seen[id]) continue;
+      if (typeof id !== 'string' || !/^[a-z]+:[a-z0-9_]+$/.test(id)) continue;
+      out.seen[id] = true;
+    }
   }
   if (raw.loadout && typeof raw.loadout === 'object') {
     const l = raw.loadout;

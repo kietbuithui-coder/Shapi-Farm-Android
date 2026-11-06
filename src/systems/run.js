@@ -1692,11 +1692,27 @@ export class Run {
     const step = b.speed * dt;
     let tx = b.x;
     let ty = b.y;
+    // ── Movement style changes the fight, not just the numbers.
+    //
+    // `phase.style` was declared in the boss data and read by nothing, so the
+    // Void Predator's "stops retreating and hunts" phase was purely cosmetic —
+    // a placeholder pretending to be a mechanic. Style is now real: a hunting
+    // boss never backs off, it commits and closes. The answer changes from
+    // "keep your distance" to "move sideways", which is the whole point of a
+    // phase-two shift.
+    const style = phase.style || 'skirmish';
+    const hunts = style === 'hunt';
+    // standoff: how close this style wants to live. A zoning boss keeps a wide
+    // ring so her walls and rain have room; a shatter boss wants to be close
+    // enough to punish while still able to rebuild. The orbit branch below used
+    // to hard-code 195px for every boss, which made all three styles identical
+    // in practice.
+    const standoff = style === 'shatter' ? 150 : style === 'zone' ? 235 : hunts ? 110 : 195;
     if (d > 240) {
       // close the gap
       tx = b.x + Math.cos(dirA) * step;
       ty = b.y + Math.sin(dirA) * step * 0.5;
-    } else if (d < 150 && d > 1) {
+    } else if (d < 150 && d > 1 && style !== 'hunt') {
       // back off, but never out of the arena
       tx = b.x - Math.cos(dirA) * step * 0.7;
       ty = b.y - Math.sin(dirA) * step * 0.35;
@@ -1716,10 +1732,19 @@ export class Run {
       // speed and always presents a changing silhouette.
       const side = (b.orbitDir ?? 1) * (b.orbitBias ? Math.sign(b.orbitBias) : 1);
       const perp = dirA + (Math.PI / 2) * side;
-      // gentle radial correction so it does not spiral in or out
-      const radial = (d - 195) * 0.004;
-      tx = b.x + (Math.cos(perp) + Math.cos(dirA) * radial) * step;
-      ty = b.y + (Math.sin(perp) + Math.sin(dirA) * radial) * step * 0.55;
+      if (hunts) {
+        // Close the distance at full speed with a lateral bias, instead of
+        // holding a ring. This is what makes phase 2 a different fight.
+        const sway = Math.sin(this.time * 1.7 + (b.uid || 0)) * 0.4;
+        tx = b.x + Math.cos(dirA + sway) * step * 1.05;
+        ty = b.y + Math.sin(dirA + sway) * step * 0.6;
+      } else {
+        // Radial correction toward THIS style's preferred ring, so a zoning boss
+        // really does keep her distance and a shatter boss really does press in.
+        const radial = (d - standoff) * 0.004;
+        tx = b.x + (Math.cos(perp) + Math.cos(dirA) * radial) * step;
+        ty = b.y + (Math.sin(perp) + Math.sin(dirA) * radial) * step * 0.55;
+      }
     }
 
     const nx = clamp(tx, PLAY.left, PLAY.right);
@@ -2774,6 +2799,10 @@ export class Run {
 
   playerDeath() {
     if (this.state === RUN_STATE.DEAD) return;
+    // Clamp at the moment of death. The overkill amount has no meaning once the
+    // run is over, and it leaked into the results screen as a negative number
+    // (seen in the QA sweep: hp -20.6 on a 620 HP cat).
+    if (this.hp < 0) this.hp = 0;
     this.player.alive = false;
     this.setState(RUN_STATE.DEAD);
     this.emit('run:defeat', { night: this.night, wave: this.wave, kills: this.kills, level: this.level, time: this.time, gold: this.gold });

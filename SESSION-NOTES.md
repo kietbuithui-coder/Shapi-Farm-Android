@@ -1,7 +1,8 @@
 # Session notes — handoff
 
-Written at the end of the build session on **2026-11-06**. Read this first if you
-are continuing the project.
+Written at the end of the build session on **2026-11-06**, updated after the
+upgrade pass on **2026-11-07**. Read this first if you are continuing the
+project.
 
 ---
 
@@ -12,15 +13,17 @@ The game is **complete and shippable**. `index.html` boots, plays the whole loop
 the full test suite passes.
 
 ```
-npm test                 # 48/48 pass, ~40 s
-npm run verify           # index.html is self-contained
+npm test                      # 145/145 pass, ~75 s
+npm run verify                # index.html is self-contained
 node tools/verify-fonts.mjs   # every Vietnamese glyph resolves
-node tools/_boot.mjs     # full flow + screenshots in public/art-check/
+node tools/_boot.mjs          # full flow + screenshots in public/art-check/
+node tools/tune.mjs           # balance sweep (deterministic)
+node tools/render-bosses.mjs  # both new bosses, in-engine, both phases
 ```
 
 Live preview: `npm start` → <http://localhost:8080/>.
 
-Deliverable: **`index.html`**, ~528 KB, 294 KB JS, 11 inlined fonts, no network
+Deliverable: **`index.html`**, 580 KB, 344 KB JS, 11 inlined fonts, no network
 access at runtime.
 
 ---
@@ -138,6 +141,61 @@ that to `src/`; browsers do this natively.
 - Any new on-screen string must be checked by `tools/verify-fonts.mjs` for
   diacritic coverage.
 
+## What the upgrade pass changed (2026-11-07)
+
+Eight phases, each followed by a test run and a balance check.
+
+| What shipped | Commit |
+| --- | --- |
+| Boss anti-stuck: watchdog, no stalling, no teleporting onto the player | `fd4802f` |
+| Mobile HUD from viewport + safe areas, touch layer, real Fullscreen API | `d2927fa` |
+| Web release readiness: self-healing boot, `DEPLOY.md`, deploy configs, deploy tests | `0acb837` |
+| Arena 1180 → 1570 wide (**+39.5% playable floor**) | `19b59a4` |
+| Five new enemies (crawler, slime, shadow stalker, thorn beast, banshee) | `a26e040` |
+| Void Predator + Crystal Queen, attack selection by distance/phase | `c7cb600` |
+| Telegraphs on every attack; summons get a visible grace window | `34e1eab` |
+| Codex: 8 categories, locked until discovered, built from live data | `1ce661f` |
+
+Run `git log --oneline 5c5c6bb..HEAD` to see them in order.
+
+### Bugs found by the QA pass that the tests had missed
+
+- **HP went negative on death** (seen at −20.6 on a 620 HP cat) and leaked into
+  the stats. Now clamped at the moment of death.
+- **`profile.seen` accepted junk keys** from a hand-edited save: an empty string
+  and arbitrary objects survived sanitising forever. Now only keys shaped like
+  real codex entries are kept.
+- **`phase.style` was dead data.** The Void Predator's "stops retreating and
+  hunts" phase was declared in the boss table and read by nothing, so the
+  behaviour change the README and codex both promised did not exist. Movement
+  styles are now real: `hunt` closes instead of orbiting (45.7% of frames
+  closing versus 12.1%), and each style owns a preferred standoff.
+- **The Crystal Queen's phase 1 dropped `crystalWall`**, which left phase 2's
+  signature `shatterWall` with no walls to shatter and killed the whole mechanic
+  for most of the fight.
+- **The anti-stuck watchdog could never fire** for a frozen boss: its threshold
+  scaled with the boss's own speed, so at speed 0 the test was `moved < 0`. It
+  also counted the separation shove as progress, so a boss pinned on the player
+  looked like it was moving.
+- **`moonBeam` had no telegraph** despite a 0.7 s fuse — an unavoidable attack
+  dressed up as a dodge window. All four summon attacks also materialised
+  enemies instantly, sometimes in melee range.
+- **The bot's strafe timer used `Math.random`**, which made the balance sweep
+  non-reproducible: two runs of the same build differed by three whole nights,
+  so no A/B comparison of a combat change could be trusted. It now uses a local
+  seeded generator kept separate from the run's own RNG stream.
+
+### Balance methodology
+
+`node tools/tune.mjs` is deterministic: same seed set, same bot, same result
+every run. A change is only accepted if this number does not regress. Baseline
+for the upgrade pass was 25.0; final is **27.5** (of 45).
+
+Do **not** give the boss attack selector its own RNG stream. Drawing attack
+choice from a separate generator was tried and cost 2.5 depth, because the main
+stream then shifted underneath everything else — spawns, crits and loot all
+re-rolled, and the sweep was measuring the new world rather than the new boss.
+
 ## Not available in this environment
 
 - Playwright / any real browser (downloads blocked). `tests/bundle.test.mjs`
@@ -147,12 +205,15 @@ that to `src/`; browsers do this natively.
 
 ## If you pick this up
 
-1. `npm install && npm test` — confirm 48/48 green before changing anything.
+1. `npm install && npm test` — confirm 145/145 green before changing anything.
 2. Look at `public/art-check/boot-*.png`; they regenerate with
    `node tools/_boot.mjs`.
 3. Probably worth doing next:
-   - **Real device playtest.** Touch layout is verified by geometry only; the
-     virtual stick and buttons have never been used by a thumb.
+   - **Real device playtest.** Touch layout is verified by geometry only (seven
+     viewport shapes are swept by an automated QA script), but the virtual stick
+     and buttons have never been used by an actual thumb, and the Fullscreen API
+     path has never run on a real Android browser. On Android the browser may
+     keep its system bars visible; the game does not claim otherwise.
    - **Difficulty pass.** Sphynx dies at depth ~1 on 2 of 3 seeds, and Bengal
      swings between depth 3 and 7. `node tools/tune.mjs` has the table.
    - **`index.html` head polish.** It currently has no `og:` tags or favicon

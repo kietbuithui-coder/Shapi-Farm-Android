@@ -427,3 +427,92 @@ test('summoned minions cannot hit on the frame they appear', () => {
     assert.ok((e.spawnGrace || 0) > 0, `${e.def && e.def.id} spawned with no grace window`);
   }
 });
+
+test('a hunting phase actually hunts — movement style is not decoration', () => {
+  // `phase.style` was declared in the boss data and read by nothing, so the Void
+  // Predator's "stops retreating and hunts" phase was cosmetic while the codex
+  // and the README both claimed it. Measure the behaviour instead: pin the
+  // player and count how often the boss closes the distance.
+  const closer = (phaseIdx) => {
+    const run = new Run({ catId: 'tabby', skills: ['claw_slash'], perks: {}, seed: 9 });
+    run.night = 13;
+    run.start();
+    for (let i = 0; i < 90; i++) run.step(1 / 60, {});
+    run.enemies.length = 0;
+    run.pendingSpawns.length = 0;
+    run.waveEnemiesLeft = 0;
+    run.spawnBoss('void_predator');
+    const b = run.boss;
+    b.hp = b.hpMax = 1e9;
+    b.phase = phaseIdx;
+    let closed = 0;
+    let frames = 0;
+    for (let i = 0; i < 60 * 14; i++) {
+      run.player.x = 800;
+      run.player.y = 420;
+      const before = Math.hypot(b.x - 800, b.y - 420);
+      const bx = b.x;
+      const by = b.y;
+      run.step(1 / 60, {});
+      while (run.state === 'levelup') run.chooseOffer(0);
+      // ignore dashes and blinks: this is about walking, not attacks
+      if (Math.hypot(b.x - bx, b.y - by) < 40) {
+        const after = Math.hypot(b.x - 800, b.y - 420);
+        frames++;
+        if (after < before - 0.3) closed++;
+      }
+    }
+    return closed / Math.max(1, frames);
+  };
+  const skirmish = closer(0);
+  const hunt = closer(1);
+  assert.ok(hunt > skirmish * 2,
+    `hunting phase barely moved differently (skirmish ${(skirmish * 100).toFixed(1)}%, hunt ${(hunt * 100).toFixed(1)}%)`);
+  assert.ok(hunt > 0.25, `a hunting boss should close most frames; it closed ${(hunt * 100).toFixed(1)}%`);
+});
+
+test('only bosses that declare a hunting phase hunt', () => {
+  // The style must not leak into the other four fights.
+  const styleOf = (id, phaseIdx) => BOSS_BY_ID[id].phases[phaseIdx].style || 'skirmish';
+  assert.equal(styleOf('moon_devourer', 1), 'skirmish');
+  assert.equal(styleOf('crystal_queen', 1), 'shatter');
+  assert.equal(styleOf('void_predator', 1), 'hunt');
+  assert.equal(styleOf('void_predator', 0), 'skirmish');
+});
+
+test('a zoning boss keeps more distance than a shattering one', () => {
+  // Each style owns a different preferred standoff, so "she zones" and "she
+  // presses in" are things the player can feel, not words in the data file.
+  const ring = (id, phaseIdx) => {
+    const run = new Run({ catId: 'tabby', skills: ['claw_slash'], perks: {}, seed: 9 });
+    run.night = 14;
+    run.start();
+    for (let i = 0; i < 90; i++) run.step(1 / 60, {});
+    run.enemies.length = 0;
+    run.pendingSpawns.length = 0;
+    run.waveEnemiesLeft = 0;
+    run.spawnBoss(id);
+    const b = run.boss;
+    b.hp = b.hpMax = 1e9;
+    b.phase = phaseIdx;
+    // Freeze attacks for this measurement. Dashes, beams and walls displace the
+    // boss far more than walking does, so with attacks live both styles average
+    // out to the same number and the standoff is invisible. What is being tested
+    // is where she chooses to WALK to, so let her only walk.
+    b.attackTimer = 1e9;
+    let sum = 0;
+    let n = 0;
+    for (let i = 0; i < 60 * 14; i++) {
+      run.player.x = 800;
+      run.player.y = 420;
+      run.step(1 / 60, {});
+      // she spawns far away and walks in, so skip the approach
+      if (i > 60 * 6) { sum += Math.hypot(b.x - 800, b.y - 420); n++; }
+    }
+    return sum / n;
+  };
+  const zone = ring('crystal_queen', 0);
+  const shatter = ring('crystal_queen', 1);
+  assert.ok(zone > shatter + 15,
+    `zoning (${zone.toFixed(0)}px) should keep more room than shattering (${shatter.toFixed(0)}px)`);
+});
