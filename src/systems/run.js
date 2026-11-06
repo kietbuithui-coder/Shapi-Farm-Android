@@ -95,6 +95,7 @@ export class Run {
     this.uid = 1;
     this.enemySpawnTimer = 0;
     this.pendingSpawns = [];
+    this.discoveredKeys = new Set();
     this.waveEnemiesLeft = 0;
     this.waveSpawned = 0;
     this.waveBudget = 0;
@@ -128,6 +129,17 @@ export class Run {
   /* ── lifecycle ─────────────────────────────────────────────────────────── */
   start() {
     this.emit('run:start', { cat: this.cat });
+    if (this.cat && this.cat.id) this.discover(`cat:${this.cat.id}`);
+    // The loadout is reported from start(), not from the constructor: the game
+    // subscribes to codex:unlock after building the Run, so anything announced
+    // during construction would be shouted into an empty room.
+    for (const slot of this.slots) if (slot && slot.def) this.discover(`skill:${slot.def.id}`);
+    // These are rules the player has now experienced, so the codex may explain
+    // them. They are not "achievements" — the codex is a manual, and a manual
+    // that withholds basic rules until you have already died to them is worse
+    // than no manual.
+    this.discover('world:night');
+    this.discover('world:terrace');
     this.beginWave(1);
     this.setState(RUN_STATE.INTRO);
   }
@@ -139,6 +151,25 @@ export class Run {
   }
 
   emit(type, payload) { this.events.emit(type, payload); }
+
+  /**
+   * Record that the player has now MET something.
+   *
+   * The codex only reveals entries the player has actually encountered, so
+   * discovery is reported from the run rather than being inferred later from a
+   * save diff. The run does not know about the profile: it emits a key and the
+   * game decides what to persist, which keeps the combat layer free of
+   * persistence concerns and makes the codex testable without a save file.
+   */
+  discover(key) {
+    if (!key) return;
+    // Lazy init: the skill slots are built in the constructor before this set
+    // exists, and they already want to report themselves.
+    if (!this.discoveredKeys) this.discoveredKeys = new Set();
+    if (this.discoveredKeys.has(key)) return;
+    this.discoveredKeys.add(key);
+    this.emit('codex:unlock', { key });
+  }
   on(type, fn) { return this.events.on(type, fn); }
 
   /* ── waves ─────────────────────────────────────────────────────────────── */
@@ -306,6 +337,10 @@ export class Run {
   }
 
   makeEnemy(def, mod, opts = {}) {
+    // Single choke point for every enemy that enters the arena, so the codex
+    // learns about a creature the moment it appears rather than when it dies.
+    // Meeting something and surviving is itself the achievement.
+    if (def && def.id) this.discover(opts.boss || opts.mini ? `boss:${def.id}` : `enemy:${def.id}`);
     const scale = opts.scale || difficultyScale(this.night, this.wave);
     const eliteMod = opts.elite ? ELITE_MODS[Math.floor(this.rng.float() * ELITE_MODS.length)] : null;
     let hp = def.hp * scale.hp;
@@ -501,6 +536,7 @@ export class Run {
     // so gate on this.energy — reading p.energy silently disabled the dash.
     if (input?.dodge && p.dashCd == null) p.dashCd = 0;
     if (input?.dodge && (p.dashCd || 0) <= 0 && this.energy >= DASH_COST) {
+      this.discover('world:dodge');
       this.dashPlayer();
     }
     p.dashCd = Math.max(0, (p.dashCd || 0) - dt);
@@ -2557,6 +2593,7 @@ export class Run {
   chooseOffer(index) {
     const offer = this.offers[index];
     if (!offer) return false;
+    this.discover('world:levelup');
     if (offer.type === 'skillup') {
       const slot = this.slots[offer.slot];
       if (slot) slot.rank = offer.rank;
@@ -2564,6 +2601,7 @@ export class Run {
       this.applyUpgrade(offer);
       this.upgradeLevels = this.upgradeLevels || {};
       this.upgradeLevels[offer.id] = (this.upgradeLevels[offer.id] || 0) + 1;
+      this.discover(`upgrade:${offer.id}`);
     }
     this.emit('upgrade:chosen', { offer });
     this.pendingLevelUps = Math.max(0, this.pendingLevelUps - 1);

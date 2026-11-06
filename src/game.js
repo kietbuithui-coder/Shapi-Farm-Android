@@ -20,6 +20,7 @@ import { Hud } from './ui/hud.js';
 import { TouchControls } from './ui/touch.js';
 import { Input } from './input/input.js';
 import * as Scenes from './ui/scenes.js';
+import { buildWiki } from './data/wiki.js';
 import { CATS, CAT_BY_ID } from './data/cats.js';
 import { PALETTE } from './data/palette.js';
 import { SKILLS, SKILL_BY_ID, STARTER_SKILLS } from './data/skills.js';
@@ -280,6 +281,18 @@ export class Game {
       seed: seed ?? rng,
       profile: this.profile,
     });
+    // Codex discovery. The run reports what the player has now met; the game
+    // owns the profile, so it is the game that persists it. New discoveries are
+    // flushed on the normal save tick rather than written per unlock, so a
+    // first night does not queue twenty disk writes.
+    this.run.on('codex:unlock', ({ key }) => {
+      if (!key) return;
+      if (!this.profile.seen) this.profile.seen = {};
+      if (this.profile.seen[key]) return;
+      this.profile.seen[key] = true;
+      this.codexUnseen = (this.codexUnseen || 0) + 1;
+      this.store.markDirty?.();
+    });
     this.pres = new Presentation(this.run, { camera: this.camera, settings: this.profile.settings });
     this.bot = this.botMode ? new BotBrain(this.run) : null;
     this.botTimer = 0;
@@ -353,6 +366,17 @@ export class Game {
     }
   }
 
+  /* ── codex ────────────────────────────────────────────────────────────── */
+
+  /**
+   * The codex is rebuilt from live data every time it is opened, not cached in
+   * the profile. That is what keeps it honest: a balance change to a skill shows
+   * up in the codex with no migration, and there is no second copy to drift.
+   */
+  wikiTabs() {
+    return buildWiki(this.profile, this.lang);
+  }
+
   /* ── pause ────────────────────────────────────────────────────────────── */
   togglePause(force) {
     if (this.scene !== 'run' || !this.run) return;
@@ -383,8 +407,29 @@ export class Game {
         else if (id === 'skills') this.go('skills');
         else if (id === 'upgrades') this.go('upgrades');
         else if (id === 'collection') this.go('collection');
+        else if (id === 'codex') { this.codexTab = 0; this.codexPage = 0; this.codexEntry = null; this.go('codex'); }
         else if (id === 'settings') this.go('settings');
         break;
+      case 'codex': {
+        if (id === 'back') return this.go('home');
+        if (id === 'codex-close') { this.codexEntry = null; return; }
+        if (id.startsWith('codex-tab:')) {
+          this.codexTab = Number(id.split(':')[1]) || 0;
+          this.codexPage = 0;
+          this.codexEntry = null;
+          return;
+        }
+        if (id === 'codex-page:prev') { this.codexPage = Math.max(0, (this.codexPage || 0) - 1); return; }
+        if (id === 'codex-page:next') { this.codexPage = (this.codexPage || 0) + 1; return; }
+        if (id.startsWith('codex:')) {
+          const key = id.slice('codex:'.length);
+          const tab = this.wikiTabs()[this.codexTab] || { entries: [] };
+          const entry = tab.entries.find((e) => e.id === key && !e.locked);
+          if (entry) this.codexEntry = entry;
+          return;
+        }
+        break;
+      }
       case 'cats': {
         if (id === 'back') return this.go('home');
         if (id.startsWith('cat:')) {
@@ -768,6 +813,13 @@ export class Game {
       case 'skills': rects = Scenes.drawSkillSelect(ctx, { ...base, selectedSkills: this.selectedSkills, botMode: this.botMode, page: this.skillPage }); break;
       case 'upgrades': rects = Scenes.drawUpgrades(ctx, base); break;
       case 'collection': rects = Scenes.drawCollection(ctx, base); break;
+      case 'codex': {
+        rects = Scenes.drawCodex(ctx, { ...base, wiki: this.wikiTabs(), tab: this.codexTab, page: this.codexPage });
+        if (this.codexEntry) {
+          rects = rects.concat(Scenes.drawCodexDetail(ctx, { ...base, entry: this.codexEntry, wiki: this.wikiTabs() }));
+        }
+        break;
+      }
       case 'settings': rects = Scenes.drawSettings(ctx, { ...base, confirmReset: this.resetArmed }); break;
       case 'results': rects = Scenes.drawResults(ctx, { ...base, summary: this.summary || {}, victory: !!this.summary?.victory }); break;
       default: break;

@@ -7,6 +7,7 @@ import { PALETTE, FONT, RARITY, ELEMENT_COLORS } from '../data/palette.js';
 import { UI, roundRect, panel, text, button, meter, heading, divider, iconButton, statChip, easeOut, easeInOut, measure } from './theme.js';
 import { drawIcon } from '../art/icons.js';
 import { drawCat, drawCatFace } from '../art/catart.js';
+import { drawCreature } from '../art/creatureart.js';
 import { CATS, CAT_BY_ID } from '../data/cats.js';
 import { SKILLS, SKILL_BY_ID, SKILL_CATEGORIES } from '../data/skills.js';
 import { PERK_LINES, PERK_COST, PERK_TIERS } from '../data/perks.js';
@@ -185,11 +186,12 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
     { id: 'skills', label: tr(lang, 'skills'), icon: 'sigil' },
     { id: 'upgrades', label: tr(lang, 'upgrades'), icon: 'ember' },
     { id: 'collection', label: tr(lang, 'collection'), icon: 'star' },
+    { id: 'codex', label: L({ vi: 'Sổ tay', en: 'Codex' }, lang), icon: 'book' },
     { id: 'settings', label: tr(lang, 'settings'), icon: 'clock' },
   ];
   let sx = left;
   const gapT = 10;
-  const sw = (btnW - gapT * 4) / 5;
+  const sw = (btnW - gapT * (secondaries.length - 1)) / secondaries.length;
   const sh = 86;
   for (const s of secondaries) {
     const active = hover === s.id;
@@ -1356,5 +1358,204 @@ export function drawRunSetup(ctx, { w, h, safe, t, lang, hover, difficulty, botM
   const goY = py + ph - 66;
   rects.push({ id: 'go', ...button(ctx, { x: px + 26, y: goY, w: goW - 6, h: 46, label: tr(lang, 'enterNight'), icon: 'pounce', primary: true, hover: hover === 'go', font: '14px' }) });
   rects.push({ id: 'cancel', ...button(ctx, { x: px + 26 + goW + 6, y: goY, w: goW - 6, h: 46, label: tr(lang, 'back'), hover: hover === 'cancel', font: '13px' }) });
+  return rects;
+}
+
+/* ─────────────────────────────── codex / wiki ───────────────────────────────
+   A manual, not a second game database. Every entry is built from the live def
+   objects by src/data/wiki.js, so nothing here can drift from what the combat
+   code actually runs. What this screen adds is the reading experience: which
+   tabs exist, what is still locked, and how much of each shelf you have filled.
+
+   Locked entries are shown as sealed tiles rather than hidden rows. A codex
+   that silently omits things gives you no sense of what is left to find, which
+   is the only reason to open a codex twice.
+────────────────────────────────────────────────────────────────────────────── */
+
+export function drawCodex(ctx, { w, h, safe, t, lang, profile, hover, wiki, tab = 0, page = 0 }) {
+  drawBackdrop(ctx, w, h, t, PALETTE.lilac, 0.9);
+  const rects = [];
+  const cats = wiki || [];
+  const cat = cats[tab] || cats[0] || { entries: [], label: '', discovered: 0, total: 0 };
+
+  // header
+  const left = safe.left + 44;
+  const top = safe.top + 26;
+  iconButton(ctx, { x: left + 19, y: top + 25, r: 19, icon: 'back', hover: hover === 'back' });
+  rects.push({ id: 'back', x: left, y: top + 6, w: 38, h: 38 });
+  heading(ctx, L({ vi: 'Sổ Tay', en: 'Codex' }, lang), left + 54, top + 32, 240, { size: 17 });
+  const stat = `${cat.discovered} / ${cat.total}`;
+  text(ctx, stat, w - safe.right - 44, top + 30, { size: 15, weight: 700, align: 'right', color: 'rgba(255,201,102,0.85)' });
+
+  // Category rail. Eight shelves do not fit across a portrait phone, so the rail
+  // wraps into two rows rather than shrinking every tile until the label and the
+  // count are drawn on top of each other.
+  const gap = 8;
+  const railW = Math.min(w - safe.left - safe.right - 88, 8 * 150 + 7 * gap);
+  const perRow = railW < 640 ? 4 : 8;
+  const rowsN = Math.ceil(cats.length / perRow);
+  const railH = 40;
+  const railY = top + 56;
+  const tileW = (railW - gap * (perRow - 1)) / perRow;
+  let rx = left;
+  let rowY = railY;
+  cats.forEach((c, i) => {
+    if (i > 0 && i % perRow === 0) { rx = left; rowY += railH + gap; }
+    const active = i === tab;
+    const isHover = hover === `codex-tab:${i}`;
+    roundRect(ctx, rx, rowY, tileW, railH, 12);
+    ctx.fillStyle = active ? 'rgba(255,201,102,0.16)' : isHover ? 'rgba(255,255,255,0.06)' : 'rgba(10,14,26,0.6)';
+    ctx.fill();
+    ctx.strokeStyle = active ? 'rgba(255,201,102,0.5)' : 'rgba(255,201,102,0.13)';
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+    // Narrow tiles get a stacked layout instead of a squeezed row. On a 360px-
+    // tall phone the eight shelves are ~60px wide each, and label + count on one
+    // line ran straight through each other.
+    const tight = tileW < 120;
+    const countTxt = `${c.discovered}/${c.total}`;
+    if (tight) {
+      drawIcon(ctx, c.icon || 'star', rx + tileW / 2, rowY + 13, 14, active ? '#ffe8a8' : 'rgba(190,202,228,0.8)');
+      text(ctx, trimTo(ctx, c.label, tileW - 6, 8.5, 700), rx + tileW / 2, rowY + 27, {
+        size: 8.5, weight: 700, align: 'center', color: active ? '#ffe8a8' : 'rgba(176,188,214,0.92)',
+      });
+      text(ctx, countTxt, rx + tileW / 2, rowY + 36, {
+        size: 8, weight: 700, align: 'center',
+        color: c.discovered === c.total ? 'rgba(127,232,176,0.9)' : 'rgba(150,162,190,0.7)',
+      });
+    } else {
+      drawIcon(ctx, c.icon || 'star', rx + 18, rowY + 20, 17, active ? '#ffe8a8' : 'rgba(190,202,228,0.8)');
+      const countW = measure(ctx, countTxt, 9.5, 700) + 10;
+      text(ctx, trimTo(ctx, c.label, tileW - 44 - countW + 14, 10, 700), rx + 32, rowY + 24, {
+        size: 10.5, weight: 700, color: active ? '#ffe8a8' : 'rgba(176,188,214,0.92)',
+      });
+      text(ctx, countTxt, rx + tileW - 8, rowY + 24, {
+        size: 9.5, weight: 700, align: 'right',
+        color: c.discovered === c.total ? 'rgba(127,232,176,0.9)' : 'rgba(150,162,190,0.7)',
+      });
+    }
+    rects.push({ id: `codex-tab:${i}`, x: rx, y: rowY, w: tileW, h: railH });
+    rx += tileW + gap;
+  });
+
+  // entry grid — needs its own scrolling because categories differ in size
+  const gridY = railY + rowsN * (railH + gap) + 18;
+  // Two columns, not three, when the screen cannot hold a readable title beside
+  // the icon: "Sâ..." is worse than showing fewer cards.
+  const cols = w > 1100 ? 5 : w > 760 ? 4 : w > 520 ? 3 : 2;
+  const cardW = (railW - gap * (cols - 1)) / cols;
+  const cardH = 92;
+  const rows = Math.ceil(cat.entries.length / cols);
+  const perPage = cols * Math.max(1, Math.floor((h - gridY - safe.bottom - 76) / (cardH + gap)));
+  const maxPage = Math.max(0, Math.ceil(cat.entries.length / perPage) - 1);
+  const pg = clamp(page, 0, maxPage);
+  const slice = cat.entries.slice(pg * perPage, pg * perPage + perPage);
+
+  slice.forEach((e, i) => {
+    const cx = left + (i % cols) * (cardW + gap);
+    const cy = gridY + Math.floor(i / cols) * (cardH + gap);
+    const isHover = hover === `codex:${e.id}`;
+    roundRect(ctx, cx, cy, cardW, cardH, 13);
+    ctx.fillStyle = e.locked ? 'rgba(8,11,20,0.72)' : isHover ? 'rgba(255,255,255,0.075)' : 'rgba(14,19,34,0.82)';
+    ctx.fill();
+    ctx.strokeStyle = e.locked ? 'rgba(120,132,164,0.16)' : isHover ? 'rgba(255,201,102,0.42)' : 'rgba(255,201,102,0.12)';
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+
+    if (e.locked) {
+      // sealed: a question-mark sigil, no name, no spoilers
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      drawIcon(ctx, 'close', cx + cardW / 2, cy + cardH / 2 - 6, 20, 'rgba(150,162,190,0.75)');
+      ctx.restore();
+      text(ctx, L({ vi: 'Chưa gặp', en: 'Undiscovered' }, lang), cx + cardW / 2, cy + cardH - 18, {
+        size: 9.5, weight: 700, align: 'center', color: 'rgba(130,142,172,0.75)',
+      });
+    } else {
+      // Icon disc. Uses the entry's own colour so shelves read at a glance.
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(cx + 30, cy + 32, 2, cx + 30, cy + 32, 26);
+      g.addColorStop(0, `${e.color}55`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx + 30, cy + 32, 26, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+      drawIcon(ctx, e.icon || 'star', cx + 30, cy + 32, 21, e.color || '#ffe8a8');
+      text(ctx, trimTo(ctx, e.title, cardW - 70, 11.5, 700), cx + 52, cy + 26, { size: 11.5, weight: 700, color: '#f4ecd8' });
+      text(ctx, trimTo(ctx, e.subtitleText, cardW - 70, 9.5, 600), cx + 52, cy + 43, { size: 9.5, weight: 600, color: 'rgba(154,168,200,0.92)' });
+      // first line of body only — the grid is an index, not the article
+      const line = e.body && e.body[0] ? e.body[0] : '';
+      text(ctx, trimTo(ctx, line, cardW - 24, 9, 500), cx + 12, cy + 68, { size: 9, weight: 500, color: 'rgba(176,188,214,0.8)' });
+    }
+    if (!e.locked) rects.push({ id: `codex:${e.id}`, x: cx, y: cy, w: cardW, h: cardH });
+  });
+
+  // empty shelf
+  if (!cat.entries.length) {
+    text(ctx, L({ vi: 'Chưa có gì ở đây.', en: 'Nothing here yet.' }, lang), left, gridY + 40, {
+      size: 13, weight: 600, color: 'rgba(150,162,190,0.8)',
+    });
+  }
+
+  // pager
+  if (maxPage > 0) {
+    const py = h - safe.bottom - 34;
+    rects.push({ id: 'codex-page:prev', x: left, y: py, w: 34, h: 30 });
+    rects.push({ id: 'codex-page:next', x: left + 42, y: py, w: 34, h: 30 });
+    iconButton(ctx, { x: left + 15, y: py + 15, r: 15, icon: 'back', hover: hover === 'codex-page:prev' });
+    iconButton(ctx, { x: left + 57, y: py + 15, r: 15, icon: 'play', hover: hover === 'codex-page:next' });
+    text(ctx, `${pg + 1} / ${maxPage + 1}`, left + 88, py + 20, { size: 10.5, weight: 700, color: 'rgba(154,168,200,0.9)' });
+  }
+  return rects;
+}
+
+/**
+ * Detail panel for one codex entry. Drawn as an overlay above the grid so the
+ * shelf stays visible behind it and the player keeps their place.
+ */
+export function drawCodexDetail(ctx, { w, h, safe, lang, entry, hover, wiki }) {
+  if (!entry) return [];
+  const rects = [];
+  ctx.save();
+  ctx.fillStyle = 'rgba(4,6,12,0.72)';
+  ctx.fillRect(0, 0, w, h);
+  const pw = Math.min(560, w - safe.left - safe.right - 60);
+  const ph = Math.min(440, h - safe.top - safe.bottom - 80);
+  const x = (w - pw) / 2;
+  const y = (h - ph) / 2;
+  panel(ctx, x, y, pw, ph, { radius: 20, top: 'rgba(16,21,38,0.99)', bottom: 'rgba(10,14,26,0.99)' });
+
+  drawIcon(ctx, entry.icon || 'star', x + 46, y + 52, 30, entry.color || '#ffe8a8');
+  text(ctx, entry.title, x + 78, y + 46, { size: 21, weight: 700, color: '#fff3dc' });
+  text(ctx, entry.subtitleText, x + 78, y + 68, { size: 11, weight: 600, color: 'rgba(255,201,102,0.8)' });
+  divider(ctx, x + 30, y + 92, pw - 60);
+
+  // wrapText returns the y it finished drawing at, so advance from that rather
+  // than guessing a line count (guessing overflowed the panel on long entries).
+  let ty = y + 122;
+  for (const line of entry.body) {
+    ty = wrapText(ctx, line, x + 30, ty, pw - 60, 20, { size: 12.5, weight: 500, color: 'rgba(224,232,248,0.94)' }) + 26;
+  }
+
+  // sprite, when the entry has one — this is the whole point of the bestiary
+  if (entry.def && entry.shape) {
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    drawCreature(ctx, entry.def, { t: 0.6, phase: 0 }, { x: x + pw - 92, y: y + ph - 104, scale: 1.4, facing: -1 });
+    ctx.restore();
+  } else if (entry.catArt) {
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    drawCat(ctx, entry.catArt, { t: 0.6, gait: 0, lean: 0, tail: 0.3, blink: 0, ears: 0.1, mouth: 0 }, { x: x + pw - 92, y: y + ph - 96, scale: 1.0, facing: -1 });
+    ctx.restore();
+  }
+
+  const closeR = button(ctx, { x: x + pw - 128, y: y + ph - 52, w: 98, h: 36, label: L({ vi: 'Đóng', en: 'Close' }, lang), hover: hover === 'codex-close' });
+  rects.push({ id: 'codex-close', ...closeR });
+  ctx.restore();
+  void wiki;
   return rects;
 }
