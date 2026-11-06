@@ -374,3 +374,56 @@ test('phase 2 is visible, not only behavioural', () => {
   }
   assert.ok(diff > 800, `phase 2 looks nearly identical to phase 1 (${diff} pixels differ)`);
 });
+
+test('every dangerous attack on every boss is telegraphed and reactable', () => {
+  // Phase 8 guard, applied to the whole roster rather than only the new bosses.
+  // Two attacks shipped with no warning at all (moonBeam swept three beams in
+  // invisibly; every summon materialised enemies on top of the player), so this
+  // checks the property directly instead of trusting the author to remember.
+  const { run, b } = bossFight('moon_devourer');
+  const seen = [];
+  for (const [id, def] of Object.entries(BOSS_BY_ID)) {
+    const ids = new Set();
+    for (const ph of def.phases) for (const a of ph.attacks) ids.add(typeof a === 'string' ? a : a.id);
+    for (const atk of ids) {
+      if (atk === 'enrage') continue;              // not an attack aimed at you
+      let tells = 0;
+      const origEmit = run.emit.bind(run);
+      run.emit = (ev, payload) => { if (ev === 'enemy:tell') tells++; return origEmit(ev, payload); };
+      run.boss = b;
+      b.def = def;
+      const hzBefore = run.hazards.length;
+      let threw = null;
+      try { run.runBossAttack(b, atk); } catch (err) { threw = err; }
+      run.emit = origEmit;
+      run.boss = b;
+      b.def = BOSS_BY_ID.moon_devourer;
+      assert.equal(threw, null, `${id}.${atk} threw: ${threw && threw.message}`);
+      assert.ok(tells > 0, `${id}.${atk} has no telegraph — the player gets no warning`);
+
+      // Any delayed area/beam must also leave enough time to walk out of it.
+      // 0.35s is the floor: below that a human cannot react, so it would be
+      // unavoidable damage dressed up as a telegraph.
+      for (const h of run.hazards.slice(hzBefore)) {
+        const fuse = h.delay ?? h.warn ?? 0;
+        if (fuse > 0) assert.ok(fuse >= 0.35, `${id}.${atk} resolves after only ${fuse}s — unreactable`);
+      }
+      seen.push(`${id}.${atk}`);
+    }
+  }
+  assert.ok(seen.length >= 20, `only audited ${seen.length} attacks`);
+});
+
+test('summoned minions cannot hit on the frame they appear', () => {
+  // A summon that lands enemies already attacking is not counterable: there is
+  // no frame in which the player could have moved. Summons therefore carry a
+  // short materialisation window.
+  const { run, b } = bossFight('crystal_queen');
+  const before = run.enemies.length;
+  run.runBossAttack(b, 'summonMinions');
+  const added = run.enemies.slice(before);
+  assert.ok(added.length >= 2, 'summonMinions added no enemies');
+  for (const e of added) {
+    assert.ok((e.spawnGrace || 0) > 0, `${e.def && e.def.id} spawned with no grace window`);
+  }
+});

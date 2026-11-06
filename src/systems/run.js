@@ -1262,6 +1262,11 @@ export class Run {
       if (e.root > 0) { e.root -= dt; continue; }
       e.spawnT += dt;
       if (e.behaviour === 'boss') continue; // bosses run their own state machine
+      // Summoned minions get a short materialisation window in which they cannot
+      // attack. Without it a boss could drop three enemies straight into melee
+      // range and they would all hit on the same frame the summon landed, which
+      // reads as unavoidable damage rather than a summon the player misplayed.
+      if (e.spawnGrace > 0) { e.spawnGrace -= dt; continue; }
       const speedMul = 1 - (e.slow || 0);
       const tx = p.x;
       const ty = p.y;
@@ -1881,11 +1886,13 @@ export class Run {
         boss.attackTimer = 0.4;
         break;
       case 'summonMoths':
+        this.emit('enemy:tell', { enemy: boss, kind: 'summon', color: '#a48bff' });
         for (let i = 0; i < 3; i++) {
           const e = this.makeEnemy(ENEMY_BY_ID.wisp, {}, { scale: difficultyScale(this.night, this.wave) });
           e.x = boss.x + this.rng.range(-70, 70);
           e.y = boss.y + this.rng.range(-30, 30);
           e.spawnT = 0;
+          e.spawnGrace = 0.7;
           this.enemies.push(e);
         }
         this.emit('fx:summonRing', { x: boss.x, y: boss.y, color: '#a48bff' });
@@ -1895,6 +1902,10 @@ export class Run {
         pushHazard({ kind: 'nova', x: boss.x, y: boss.y, radius: 220, delay: 1.15, damage: boss.dmg * 1.15, color: '#a48bff', warn: 1.15 });
         break;
       case 'moonBeam':
+        // This had no telegraph at all: three beams swept in with a 0.7s fuse
+        // and nothing on screen to say so. A 0.7s fuse the player cannot see is
+        // not a dodge window, it is a coin flip.
+        this.emit('enemy:tell', { enemy: boss, kind: 'beam', color: '#ffe8a8' });
         for (let i = 0; i < 3; i++) {
           const a = dirA + (i - 1) * 0.4;
           this.hazards.push({ kind: 'beam', x: boss.x, y: boss.y - 40, angle: a, length: 620, width: 34, delay: 0.7 + i * 0.18, t: 0, damage: boss.dmg * 1.2, source: 'enemy', tint: '#ffe8a8' });
@@ -1922,9 +1933,11 @@ export class Run {
         }
         break;
       case 'summonImps':
+        this.emit('enemy:tell', { enemy: boss, kind: 'summon', color: '#ff8f4d' });
         for (let i = 0; i < 3; i++) {
           const e = this.makeEnemy(ENEMY_BY_ID.bomber, {}, { scale: difficultyScale(this.night, this.wave) });
           e.x = boss.x + this.rng.range(-80, 80); e.y = boss.y;
+          e.spawnGrace = 0.7;
           this.enemies.push(e);
         }
         break;
@@ -1940,9 +1953,11 @@ export class Run {
         for (let i = 0; i < 3; i++) pushHazard({ kind: 'ring', x: boss.x, y: boss.y, radius: 140 + i * 80, delay: 0.6 + i * 0.35, damage: boss.dmg * 0.7, color: '#3fd6a8' });
         break;
       case 'summonShades':
+        this.emit('enemy:tell', { enemy: boss, kind: 'summon', color: '#3fd6a8' });
         for (let i = 0; i < 2; i++) {
           const e = this.makeEnemy(ENEMY_BY_ID.stalker, {}, { scale: difficultyScale(this.night, this.wave) });
           e.x = boss.x + this.rng.range(-100, 100); e.y = boss.y;
+          e.spawnGrace = 0.7;
           this.enemies.push(e);
         }
         break;
@@ -2096,6 +2111,7 @@ export class Run {
         break;
       }
       case 'summonMinions': {
+        this.emit('enemy:tell', { enemy: boss, kind: 'summon', color: '#7fd4d8' });
         this.emit('fx:summonRing', { x: boss.x, y: boss.y, color: '#7fd4d8' });
         const kinds = ['crystal_crawler', 'arcane_bat', 'explosive_slime'];
         for (let i = 0; i < 3; i++) {
@@ -2105,6 +2121,7 @@ export class Run {
           e.x = clamp(boss.x + this.rng.range(-100, 100), PLAY.left, PLAY.right);
           e.y = clamp(boss.y + this.rng.range(-40, 40), PLAY.top, PLAY.bottom);
           e.spawnT = 0;
+          e.spawnGrace = 0.8;
           this.enemies.push(e);
         }
         break;

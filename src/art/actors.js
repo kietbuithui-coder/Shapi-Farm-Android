@@ -139,6 +139,33 @@ export function drawEnemyActor(ctx, e, t, opts = {}) {
     ctx.fill();
     ctx.restore();
   }
+  // Materialisation window for summoned minions. The summon grace is a real
+  // gameplay window (they cannot attack yet), so it has to be visible or the
+  // player will read the first hit as unfair instead of as their own mistiming.
+  if (e.spawnGrace > 0) {
+    const g = clamp(e.spawnGrace / 0.8, 0, 1);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const r = (e.radius || 16) * 2.2 * (1.25 - g * 0.35);
+    const grad = ctx.createRadialGradient(e.x, e.y - 14, 1, e.x, e.y - 14, r);
+    grad.addColorStop(0, `rgba(210,240,255,${0.5 * g})`);
+    grad.addColorStop(1, 'rgba(210,240,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y - 14, r, 0, TAU);
+    ctx.fill();
+    // contracting ring that closes exactly when the minion becomes dangerous
+    ctx.beginPath();
+    ctx.ellipse(e.x, e.y + 1, r * (0.55 + g * 0.5), r * (0.24 + g * 0.2), 0, 0, TAU);
+    ctx.strokeStyle = `rgba(190,235,255,${0.35 + (1 - g) * 0.45})`;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.lineDashOffset = -t * 40;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
   const pose = {
     t: t + e.uid * 0.7,
     crouchOut: e.attackCd > 1.9 ? clamp((e.attackCd - 1.9) * 2, 0, 1) : 0,
