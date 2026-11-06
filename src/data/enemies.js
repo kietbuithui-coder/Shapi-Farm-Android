@@ -52,6 +52,54 @@ export const ENEMIES = [
     xp: 15, gold: 0.4, behaviour: 'stalk', attack: 'lunge', windup: 0.45, lunge: 300,
     color: '#3c3358', color2: '#171228', eye: '#ff4f5e',
   },
+
+  /* ── second wave of enemies ───────────────────────────────────────────────
+     Added for the update brief. Each one is a different PROBLEM for the player,
+     not a reskin: a flanker that refuses to be outrun, a slow wall you have to
+     route around, a flyer that ignores your spacing, a walking bomb that makes
+     you leave the spot you wanted, and a siege unit that punishes turtling. */
+
+  {
+    // Fades to near-invisible, then commits from behind. The counter is to keep
+    // moving sideways; standing still inside its ring is what gets you hit.
+    id: 'shadow_stalker', tier: 'eliteish', shape: 'shadowstalker', hp: 46, speed: 74, damage: 14, radius: 16,
+    xp: 14, gold: 0.36, behaviour: 'phaseStalk', attack: 'backstab', windup: 0.5,
+    fadeRange: 260, strikeRange: 96, color: '#2f2a48', color2: '#0d0b18', eye: '#b06bff',
+  },
+  {
+    // Slow, armoured, and it leaves crystal shards where it walks. You route
+    // around it instead of through it.
+    // 88 hp made this the single biggest damage source in the game (18.9% of all
+    // damage taken, ~3x the next enemy): a slow, bulky body keeps the player in
+    // contact range far longer than a fast one does, so its contact attack
+    // landed repeatedly while it refused to die. Lowered hp and damage; the
+    // threat it is designed to pose (area denial from walk-dropped shards) is
+    // unchanged.
+    id: 'crystal_crawler', tier: 'tank', shape: 'crystalcrawler', hp: 62, speed: 24, damage: 9, radius: 20,
+    xp: 12, gold: 0.3, behaviour: 'advance', attack: 'touch', windup: 0.34,
+    drops: 'crystal', dropCd: 2.6, color: '#7fd4d8', color2: '#1d4a52', eye: '#e8ffff',
+  },
+  {
+    // Flying, so it ignores the ground spacing the player has been winning with.
+    // Dives along a curved path rather than a straight line.
+    id: 'arcane_bat', tier: 'fast', shape: 'arcanebat', hp: 22, speed: 96, damage: 10, radius: 12,
+    xp: 8, gold: 0.2, behaviour: 'diveBomb', attack: 'touch', windup: 0.22, diveCd: 2.2,
+    color: '#6a5fa8', color2: '#241d3f', eye: '#ffd24a',
+  },
+  {
+    // A delayed fuse. The explosion is telegraphed with a growing ring, and it
+    // leaves a short-lived pool, so the safe answer is "leave", not "trade".
+    id: 'explosive_slime', tier: 'suicide', shape: 'slime', hp: 34, speed: 56, damage: 26, radius: 16,
+    xp: 9, gold: 0.24, behaviour: 'creep', attack: 'burst', windup: 0.9, blast: 84,
+    burstCd: 4.2, color: '#8ad14b', color2: '#2a4416', eye: '#f6ffb0',
+  },
+  {
+    // Area denial. Roots a thorn patch under the player, so hiding in a corner
+    // stops working and the fight keeps moving.
+    id: 'thorn_beast', tier: 'ranged', shape: 'thornbeast', hp: 66, speed: 30, damage: 16, radius: 20,
+    xp: 13, gold: 0.34, behaviour: 'siege', attack: 'thorns', windup: 0.85,
+    preferred: 300, thornRadius: 62, color: '#5c7a3a', color2: '#22300f', eye: '#ffb84d',
+  },
 ];
 
 export const ENEMY_BY_ID = Object.fromEntries(ENEMIES.map((e) => [e.id, e]));

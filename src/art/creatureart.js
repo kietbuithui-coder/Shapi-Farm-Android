@@ -10,8 +10,17 @@ const INK = '#0a0812';
 const RIM = (a) => `rgba(255,240,203,${a})`;
 
 function ell(ctx, x, y, rx, ry, rot = 0) {
+  // Guard every input. A NaN radius reaches Skia as an invalid ellipse and
+  // ABORTS the process — not an exception that a try/catch can absorb, a native
+  // panic that kills the tab. `Math.max(0.5, NaN)` is still NaN, which is
+  // exactly how a missing pose field took the whole renderer down.
+  const fx = Number.isFinite(x) ? x : 0;
+  const fy = Number.isFinite(y) ? y : 0;
+  const frx = Number.isFinite(rx) ? Math.max(0.5, rx) : 0.5;
+  const fry = Number.isFinite(ry) ? Math.max(0.5, ry) : 0.5;
+  const frot = Number.isFinite(rot) ? rot : 0;
   ctx.beginPath();
-  ctx.ellipse(x, y, Math.max(0.5, rx), Math.max(0.5, ry), rot, 0, TAU);
+  ctx.ellipse(fx, fy, frx, fry, frot, 0, TAU);
 }
 function ink(ctx, fill, lw = 2.1) {
   if (fill) { ctx.fillStyle = fill; ctx.fill(); }
@@ -694,7 +703,262 @@ function siren(ctx, c, p, s) {
   ctx.fill();
 }
 
-const SHAPES = { grub, rat, golem, spitter, wisp, frog, mushroom, turtle, banshee, cat_shade: catShade, devourer, lanternking: lanternKing, hollow, broodmother, wardenbig, siren };
+
+/* ── second wave: five new anatomies ──────────────────────────────────────
+   Each one is built from a different primary silhouette so it reads at a glance
+   in a crowd — low-and-long, tall-and-narrow, airborne, blobby, spiky. */
+
+// Shadow Stalker: a low four-legged prowler that thins out to a smear while
+// fading. The tell is that it stops being translucent and its eyes brighten.
+function shadowStalker(ctx, c, p, s) {
+  const base = hex(c.color);
+  const fade = clamp(p.fade == null ? 1 : p.fade, 0, 1);
+  const a = 0.28 + fade * 0.72;
+  ctx.save();
+  ctx.globalAlpha = a;
+  // tail: long, low, whipping
+  ctx.beginPath();
+  ctx.moveTo(-10 * s, -7 * s);
+  ctx.quadraticCurveTo(-22 * s, -4 * s + Math.sin(p.t * 5) * 4 * s, -28 * s, -11 * s + Math.sin(p.t * 5) * 5 * s);
+  ctx.strokeStyle = rgbCss(shade(base, -0.35));
+  ctx.lineWidth = 2.4 * s;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  // four legs, splayed
+  ctx.strokeStyle = rgbCss(shade(base, -0.45));
+  ctx.lineWidth = 2 * s;
+  for (const [lx, ph] of [[-6, 0], [-2, 1.6], [5, 3.1], [8, 4.4]]) {
+    const swing = Math.sin(p.t * 7 + ph) * 2.4 * s;
+    ctx.beginPath();
+    ctx.moveTo(lx * s, -7 * s);
+    ctx.lineTo(lx * s + swing, -1 * s);
+    ctx.stroke();
+  }
+  // body: long and low
+  body(ctx, -2 * s, -9 * s, 11 * s, 6.2 * s, base, -0.06);
+  // head: wedge, thrust forward
+  ctx.beginPath();
+  ctx.moveTo(6 * s, -13.5 * s);
+  ctx.quadraticCurveTo(17 * s, -12 * s, 19 * s, -8 * s);
+  ctx.quadraticCurveTo(16 * s, -4.4 * s, 6 * s, -6 * s);
+  ctx.closePath();
+  ctx.fillStyle = rgbCss(base);
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2 * s;
+  ctx.stroke();
+  // ears: swept back, the silhouette marker
+  for (const k of [0, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(7 * s + k * 4 * s, -13 * s);
+    ctx.lineTo(3 * s + k * 4 * s, -19 * s);
+    ctx.lineTo(11 * s + k * 3 * s, -14.5 * s);
+    ctx.closePath();
+    ctx.fillStyle = rgbCss(shade(base, -0.2));
+    ctx.fill();
+    ctx.stroke();
+  }
+  // eyes: brighten as it commits
+  ctx.globalAlpha = 0.4 + fade * 0.6;
+  eye(ctx, 12 * s, -10 * s, 2.3 * s, c.eye, 'slit', 0.6);
+  eye(ctx, 16.4 * s, -9.6 * s, 1.9 * s, c.eye, 'slit', 0.6);
+  ctx.restore();
+}
+
+// Crystal Crawler: a wide, segmented armoured dome with crystal spikes along
+// the spine — reads as "do not walk through this".
+function crystalCrawler(ctx, c, p, s) {
+  const base = hex(c.color);
+  const dark = hex(c.color2);
+  // legs: six stubby crab legs
+  ctx.strokeStyle = rgbCss(shade(dark, 0.1));
+  ctx.lineWidth = 2 * s;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 3; i++) {
+    for (const side of [-1, 1]) {
+      const lx = (-8 + i * 8) * s;
+      const step = Math.sin(p.t * 6 + i * 1.4 + (side > 0 ? 1.6 : 0)) * 1.8 * s;
+      ctx.beginPath();
+      ctx.moveTo(lx, -5 * s);
+      ctx.lineTo(lx + side * 5 * s + step, 0);
+      ctx.stroke();
+    }
+  }
+  // shell: wide dome
+  body(ctx, 0, -11 * s, 15 * s, 9.4 * s, base, 0);
+  // plating
+  ctx.strokeStyle = rgbCss(shade(dark, 0.15), 0.75);
+  ctx.lineWidth = 1.4 * s;
+  for (let i = -1; i <= 1; i++) {
+    ctx.beginPath();
+    ctx.arc(0, -11 * s, (9 + i * 0.5) * s, Math.PI * 1.12, Math.PI * 1.88);
+    ctx.stroke();
+  }
+  // crystal spines
+  const spikes = [[-9, 16], [-3, 20], [4, 18], [10, 14]];
+  for (const [sx, sh] of spikes) {
+    const glow = 0.55 + 0.45 * Math.sin(p.t * 2.4 + sx);
+    ctx.beginPath();
+    ctx.moveTo((sx - 3) * s, -17 * s);
+    ctx.lineTo(sx * s, (-17 - sh * 0.42) * s);
+    ctx.lineTo((sx + 3) * s, -17 * s);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(200,255,255,${0.5 + glow * 0.3})`;
+    ctx.fill();
+    ctx.strokeStyle = rgbCss(shade(dark, 0.3));
+    ctx.lineWidth = 1.3 * s;
+    ctx.stroke();
+  }
+  // eyes: a row of four, unsettling
+  for (let i = 0; i < 4; i++) {
+    ell(ctx, (-6 + i * 4.6) * s, -9 * s, 1.5 * s, 1.5 * s);
+    ctx.fillStyle = c.eye;
+    ctx.fill();
+  }
+}
+
+// Arcane Bat: airborne, so it is drawn above the ground line with no shadow
+// contact. Flapping wings are the read.
+function arcaneBat(ctx, c, p, s) {
+  const base = hex(c.color);
+  const flap = Math.sin(p.t * 16);
+  // wings: two swept membranes
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(0, -14 * s);
+    ctx.quadraticCurveTo(side * 12 * s, (-22 + flap * 6) * s, side * 22 * s, (-13 + flap * 4) * s);
+    ctx.quadraticCurveTo(side * 15 * s, (-9 + flap * 2) * s, side * 8 * s, -11 * s);
+    ctx.closePath();
+    ctx.fillStyle = rgbCss(shade(base, side > 0 ? -0.1 : -0.24), 0.92);
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.6 * s;
+    ctx.stroke();
+    // finger struts
+    ctx.strokeStyle = rgbCss(shade(base, -0.45), 0.8);
+    ctx.lineWidth = 1 * s;
+    for (let k = 1; k <= 2; k++) {
+      ctx.beginPath();
+      ctx.moveTo(0, -14 * s);
+      ctx.lineTo(side * (6 + k * 6) * s, (-18 + flap * 5 + k * 2) * s);
+      ctx.stroke();
+    }
+  }
+  // body
+  body(ctx, 0, -12 * s, 5.4 * s, 7 * s, base, 0);
+  // ears
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * 2 * s, -18 * s);
+    ctx.lineTo(side * 5 * s, -25 * s);
+    ctx.lineTo(side * 6.4 * s, -17 * s);
+    ctx.closePath();
+    ctx.fillStyle = rgbCss(shade(base, -0.16));
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.5 * s;
+    ctx.stroke();
+  }
+  eye(ctx, 2 * s, -14 * s, 1.9 * s, c.eye, 'round', 0.5);
+  eye(ctx, -2.2 * s, -14 * s, 1.9 * s, c.eye, 'round', -0.5);
+}
+
+// Explosive Slime: a wobbling blob with a visible core that brightens before it
+// bursts. The swell is the telegraph.
+function slime(ctx, c, p, s) {
+  const base = hex(c.color);
+  const swell = p.swell == null ? 0 : p.swell;
+  const wob = Math.sin(p.t * 9) * 0.05;
+  const k = 1 + swell * 0.38;
+  // puddle
+  ell(ctx, 0, -1 * s, 15 * s, 4 * s);
+  ctx.fillStyle = rgbCss(shade(base, -0.5), 0.5);
+  ctx.fill();
+  // body: squashed dome, squashing as it creeps
+  const rx = 14 * s * k * (1 + wob);
+  const ry = 11 * s * k * (1 - wob);
+  ell(ctx, 0, -ry * 0.9, rx, ry);
+  ctx.fillStyle = rgbCss(base, 0.92);
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.2 * s;
+  ctx.stroke();
+  // gloss
+  ell(ctx, -rx * 0.32, -ry * 1.4, rx * 0.3, ry * 0.28, -0.5);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fill();
+  // core: the fuse
+  const pulse = 0.45 + 0.55 * Math.abs(Math.sin(p.t * (3 + swell * 9)));
+  ell(ctx, 0, -ry * 0.95, 4.6 * s * (0.8 + swell * 0.8), 4.6 * s * (0.8 + swell * 0.8));
+  ctx.fillStyle = `rgba(255,${Math.round(220 - swell * 120)},120,${0.55 + pulse * 0.45})`;
+  ctx.fill();
+  eye(ctx, 4 * s, -ry * 1.25, 1.8 * s, c.eye, 'round', 0.4);
+  eye(ctx, -3.4 * s, -ry * 1.25, 1.8 * s, c.eye, 'round', -0.4);
+}
+
+// Thorn Beast: a heavy quadruped with a bristling mane. It stays at range and
+// plants thorn fields, so its silhouette is "spiky and rooted".
+function thornBeast(ctx, c, p, s) {
+  const base = hex(c.color);
+  const dark = hex(c.color2);
+  // legs
+  ctx.strokeStyle = rgbCss(shade(dark, 0.2));
+  ctx.lineWidth = 3 * s;
+  ctx.lineCap = 'round';
+  for (const [lx, ph] of [[-7, 0], [-3, 1.8], [6, 3.3], [10, 5]]) {
+    const swing = Math.sin(p.t * 4 + ph) * 1.6 * s;
+    ctx.beginPath();
+    ctx.moveTo(lx * s, -8 * s);
+    ctx.lineTo(lx * s + swing, -0.5 * s);
+    ctx.stroke();
+  }
+  // barrel body
+  body(ctx, 0, -12 * s, 14 * s, 8.6 * s, base, -0.04);
+  // thorn mane along the back
+  const thorns = 7;
+  for (let i = 0; i < thorns; i++) {
+    const tx = (-11 + i * 3.6) * s;
+    const len = (7 + Math.sin(i * 1.7) * 3) * s;
+    ctx.beginPath();
+    ctx.moveTo(tx - 1.8 * s, -17 * s);
+    ctx.lineTo(tx + Math.sin(i) * 1.2 * s, -17 * s - len);
+    ctx.lineTo(tx + 1.8 * s, -17 * s);
+    ctx.closePath();
+    ctx.fillStyle = rgbCss(shade(dark, 0.28));
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.2 * s;
+    ctx.stroke();
+  }
+  // heavy low head
+  body(ctx, 12 * s, -11 * s, 7.4 * s, 6.4 * s, shade(base, -0.08), 0.12);
+  // tusks
+  ctx.strokeStyle = 'rgba(240,236,214,0.9)';
+  ctx.lineWidth = 2 * s;
+  for (const k of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(15 * s, (-8 + k * 1.6) * s);
+    ctx.quadraticCurveTo(20 * s, (-8 + k * 3) * s, 19 * s, (-4 + k * 2) * s);
+    ctx.stroke();
+  }
+  eye(ctx, 13.5 * s, -13 * s, 2.1 * s, c.eye, 'slit', 0.4);
+  // ground roots: hints that it is rooted to the floor
+  ctx.strokeStyle = rgbCss(shade(dark, 0.1), 0.5);
+  ctx.lineWidth = 1.2 * s;
+  for (const rx of [-10, -2, 7]) {
+    ctx.beginPath();
+    ctx.moveTo(rx * s, -1 * s);
+    ctx.quadraticCurveTo((rx + 4) * s, 1 * s, (rx + 9) * s, 0);
+    ctx.stroke();
+  }
+}
+
+const SHAPES = {
+  grub, rat, golem, spitter, wisp, frog, mushroom, turtle, banshee, cat_shade: catShade,
+  devourer, lanternking: lanternKing, hollow, broodmother, wardenbig, siren,
+  shadowstalker: shadowStalker, crystalcrawler: crystalCrawler, arcanebat: arcaneBat,
+  slime, thornbeast: thornBeast,
+};
 
 /**
  * Draw any creature.
@@ -704,13 +968,26 @@ const SHAPES = { grub, rat, golem, spitter, wisp, frog, mushroom, turtle, banshe
 export function drawCreature(ctx, def, p = {}, opts = {}) {
   const s = (opts.scale ?? 1) * (def.scale || 1);
   const facing = (opts.facing ?? -1) >= 0 ? 1 : -1;
+  // Fill in the pose fields every shape reads. Callers legitimately pass only
+  // the field they care about (renderer passes {dead}, {hurt}, ...), and an
+  // undefined `t` turns every sin() below into NaN.
+  const pose = {
+    t: Number.isFinite(p.t) ? p.t : 0,
+    fade: p.fade,
+    swell: p.swell,
+    hurt: p.hurt,
+    dead: p.dead,
+    crouchOut: p.crouchOut,
+    excite: p.excite,
+    phase: p.phase,
+  };
   ctx.save();
   ctx.translate(opts.x ?? 0, opts.y ?? 0);
   if (facing < 0) ctx.scale(-1, 1);
   ctx.scale(s, s);
-  if (p.hurt) ctx.rotate(Math.sin(p.hurt * 40) * 0.05 * p.hurt);
+  if (pose.hurt) ctx.rotate(Math.sin(pose.hurt * 40) * 0.05 * pose.hurt);
   const fn = SHAPES[def.shape] || grub;
-  fn(ctx, def, p, 1);
+  fn(ctx, def, pose, 1);
   ctx.restore();
 }
 

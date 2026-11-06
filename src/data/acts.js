@@ -19,6 +19,11 @@ export const ACTS = [
       { id: 'spitter', weight: 12 },
       { id: 'leaper', weight: 12 },
       { id: 'brute', weight: 10 },
+      // Newcomers arrive spread across the three acts rather than all at once:
+      // act 1 teaches the bat (airborne, easy to read), act 2 the slime and the
+      // crawler, act 3 the stalker and the thorn beast.
+      { id: 'arcane_bat', weight: 14 },
+      { id: 'explosive_slime', weight: 8 },
     ],
     intro: { vi: 'Đêm nuốt lấy khu vườn. Ngọn đèn đã tắt.', en: 'Night swallows the garden. The lanterns are out.' },
   },
@@ -39,6 +44,9 @@ export const ACTS = [
       { id: 'wisp', weight: 16 },
       { id: 'warden', weight: 12 },
       { id: 'leaper', weight: 14 },
+      { id: 'explosive_slime', weight: 12 },
+      { id: 'crystal_crawler', weight: 10 },
+      { id: 'arcane_bat', weight: 8 },
     ],
     intro: { vi: 'Phố vắng có đèn. Đèn cháy mà không có lửa.', en: 'The street is lit. The lanterns burn without flame.' },
   },
@@ -53,12 +61,18 @@ export const ACTS = [
     miniBoss: 'siren',
     boss: 'hollow_ninth',
     table: [
-      { id: 'stalker', weight: 20 },
-      { id: 'banshee', weight: 18 },
-      { id: 'brute', weight: 20 },
-      { id: 'bomber', weight: 16 },
-      { id: 'wisp', weight: 14 },
-      { id: 'warden', weight: 12 },
+      // Act 3 previously ran TEN enemy types at once, which was not "more
+      // variety", it was noise: too many simultaneous threat patterns to learn,
+      // and the measured wall of the whole game (18 of 30 bot runs died here).
+      // Trimmed to a focused set of seven with the newcomers as the identity of
+      // the act, and the older crowd thinned rather than deleted.
+      { id: 'stalker', weight: 18 },
+      { id: 'brute', weight: 16 },
+      { id: 'shadow_stalker', weight: 18 },
+      { id: 'thorn_beast', weight: 15 },
+      { id: 'crystal_crawler', weight: 12 },
+      { id: 'explosive_slime', weight: 10 },
+      { id: 'banshee', weight: 12 },
     ],
     intro: { vi: 'Trăng tròn như con mắt. Nó đang tìm bạn.', en: 'The moon is an eye. It is looking for you.' },
   },

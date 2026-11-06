@@ -47,6 +47,8 @@ export class Run {
     this.mods = this.built.mods;
 
     this.hp = this.stats.hpMax;
+    this.playerSlow = null;   // { amount, time } — set by elite/thorn hits
+    this.playerRoot = 0;      // seconds of heavy movement damping
     this.energy = this.stats.energyMax;
     this.level = 1;
     this.xp = 0;
@@ -407,7 +409,18 @@ export class Run {
     const mvx = input?.moveX || 0;
     const mvy = input?.moveY || 0;
     const len = Math.hypot(mvx, mvy) || 1;
-    const speed = this.stats.move * (p.moveSpeedMul || 1) * (1 + this.buffValue('move'));
+    // Debuffs actually apply. playerSlow was set by elite venom/warded hits and
+    // playerRoot by thorn attacks, but nothing read either field, so both were
+    // cosmetic: the effect fired, the aura drew, and the player moved at full
+    // speed anyway.
+    if (this.playerSlow && this.playerSlow.time > 0) {
+      this.playerSlow.time -= dt;
+      if (this.playerSlow.time <= 0) this.playerSlow = null;
+    }
+    if (this.playerRoot > 0) this.playerRoot -= dt;
+    const slowMul = this.playerSlow ? clamp(1 - this.playerSlow.amount, 0.25, 1) : 1;
+    const rootMul = this.playerRoot > 0 ? 0.25 : 1;
+    const speed = this.stats.move * (p.moveSpeedMul || 1) * (1 + this.buffValue('move')) * slowMul * rootMul;
     if (moving) {
       p.vx = (mvx / len) * speed;
       p.vy = (mvy / len) * speed * 0.62; // vertical movement is compressed on the ground plane
@@ -1258,6 +1271,74 @@ export class Run {
             this.emit('enemy:leap', { enemy: e });
           } else if (d > 90) { wantX = Math.cos(dirToPlayer) * 0.5; wantY = Math.sin(dirToPlayer) * 0.3; }
           break;
+        case 'phaseStalk': {
+          // Fades, closes the gap from behind, then snaps solid and strikes.
+          // Counter-play is lateral movement: it commits to a straight line.
+          e.fade = clamp(1 - Math.max(0, d - e.def.strikeRange) / (e.def.fadeRange || 260), 0.18, 1);
+          const strikeRange = e.def.strikeRange || 96;
+          if (d > strikeRange) {
+            const side = Math.sin(this.time * 1.1 + e.uid) * 0.5;
+            wantX = Math.cos(dirToPlayer + side) * 1.25;
+            wantY = Math.sin(dirToPlayer + side) * 0.8;
+          } else {
+            wantX = Math.cos(dirToPlayer) * 1.9;
+            wantY = Math.sin(dirToPlayer) * 1.1;
+          }
+          break;
+        }
+        case 'advance': {
+          // Slow armoured advance. Never stops, never speeds up: you route around
+          // it rather than outrun it.
+          wantX = Math.cos(dirToPlayer);
+          wantY = Math.sin(dirToPlayer) * 0.62;
+          break;
+        }
+        case 'diveBomb': {
+          // Airborne: circles high, then commits to a curved dive. The curve is
+          // what makes it different from the leaper's straight jump.
+          e.diveCd = (e.diveCd || 0) - dt;
+          if (e.diveT > 0) {
+            e.diveT -= dt;
+            const bend = 1.5 * Math.sin(e.diveT * 6);
+            wantX = Math.cos(e.diveDir + bend) * 1.9;
+            wantY = Math.sin(e.diveDir + bend) * 1.1;
+          } else if (e.diveCd <= 0 && d < 380) {
+            e.diveT = 0.55;
+            e.diveDir = dirToPlayer;
+            e.diveCd = e.def.diveCd || 2.2;
+            this.emit('enemy:dive', { enemy: e });
+          } else {
+            const orbit = this.time * 1.3 + e.uid;
+            wantX = Math.cos(orbit) * 0.7 + Math.cos(dirToPlayer) * 0.3;
+            wantY = Math.sin(orbit) * 0.5 + Math.sin(dirToPlayer) * 0.2;
+          }
+          break;
+        }
+        case 'creep': {
+          // Bobs toward the player, then PLANTS while its bomb arms.
+          //
+          // It originally kept creeping through the fuse, so the blast detonated
+          // wherever the player had been forced to — the swell telegraph said
+          // "a circle is coming here" while the slime quietly walked the circle
+          // onto you, and walking away did not help. Rooting it makes the
+          // telegraph mean what it says and gives the fuse a real answer: leave.
+          if (e.burstT > 0) {
+            wantX = 0;
+            wantY = 0;
+          } else {
+            wantX = Math.cos(dirToPlayer) * 0.95;
+            wantY = Math.sin(dirToPlayer) * 0.55;
+          }
+          break;
+        }
+        case 'siege': {
+          // Holds a long range and keeps still while planting thorns.
+          const pref = e.def.preferred || 300;
+          if (d > pref + 60) { wantX = Math.cos(dirToPlayer) * 0.9; wantY = Math.sin(dirToPlayer) * 0.55; }
+          else if (d < pref - 80) { wantX = -Math.cos(dirToPlayer) * 0.7; wantY = -Math.sin(dirToPlayer) * 0.45; }
+          else { wantX = 0; wantY = 0; }
+          break;
+        }
         case 'stalk':
           e.attackCd -= dt;
           if (e.attackCd > 0) {
@@ -1280,8 +1361,20 @@ export class Run {
         e.y += (e.knockY || 0) * dt;
       }
       const sp = e.speed * speedMul;
+      const prevX = e.x;
+      const prevY = e.y;
       e.x += wantX * sp * dt;
       e.y += wantY * sp * dt;
+      // Crystal Crawler seeds shards as it walks: a moving area-denial trail
+      // rather than a one-off attack.
+      if (e.def.drops === 'crystal') {
+        e.dropCd = (e.dropCd || 0) - dt;
+        const moved = Math.hypot(e.x - prevX, e.y - prevY);
+        if (e.dropCd <= 0 && moved > 0.01) {
+          e.dropCd = e.def.dropCd || 2.2;
+          this.spawnHazardPatch(e.x, e.y, 26, e.dmg * 0.3, 1.2, '#7fd4d8');
+        }
+      }
       e.x = clamp(e.x, PLAY.left - 40, PLAY.right + 40);
       e.y = clamp(e.y, PLAY.top - 20, PLAY.bottom + 10);
 
@@ -1307,6 +1400,7 @@ export class Run {
         e.y += Math.sin(dirToPlayer) * e.speed * 0.6 * dt;
       }
       // attacks
+      if (e.burstT > 0) e.burstT -= dt;
       if (e.windupT > 0) {
         e.windupT -= dt;
         if (e.windupT <= 0) {
@@ -1341,6 +1435,22 @@ export class Run {
         } else if (e.def.attack === 'lunge' && d < 300) {
           this.enemyShoot(e);
           e.attackCd = 2.2;
+        } else if (e.def.attack === 'backstab' && d < (e.def.strikeRange || 96) + 40) {
+          // Only strikes from behind. Facing it does not save you from the damage,
+          // but the strike is a straight line, so stepping aside does.
+          this.enemyBackstab(e);
+          e.attackCd = 2.4;
+        } else if (e.def.attack === 'burst' && d < e.def.blast * 1.05) {
+          // Arm at the OUTER edge of the blast, not 75% of it. At 0.75 the slime
+          // was already inside its own radius when the fuse lit: the player had
+          // 0.7s to cross a 92px circle from 24px away and could not, so the
+          // telegraph was decorative. Arming at the rim gives a full radius of
+          // running room — measured: walking away now takes 0 damage.
+          this.enemyBurst(e);
+          e.attackCd = e.def.burstCd || 4.2;
+        } else if (e.def.attack === 'thorns' && d < 520) {
+          this.enemyThorns(e);
+          e.attackCd = 3.6;
         }
       }
     }
@@ -1397,6 +1507,61 @@ export class Run {
   enemyShockwave(enemy) {
     this.hazards.push({ kind: 'ring', x: enemy.x, y: enemy.y, radius: enemy.def.blast || 96, delay: 0.5, t: 0, damage: enemy.dmg, source: 'enemy', tint: '#a8ffe0' });
     this.emit('enemy:attack', { enemy, kind: 'shockwave' });
+  }
+
+  /* ── attacks for the second-wave enemies ──────────────────────────────── */
+
+  /**
+   * Shadow Stalker strike. Delivered after a 0.5s tell that snaps it solid.
+   * It commits to a straight line, so sidestepping avoids it entirely.
+   */
+  enemyBackstab(enemy) {
+    this.emit('enemy:tell', { enemy, kind: 'backstab' });
+    const a = angle(enemy.x, enemy.y, this.player.x, this.player.y);
+    this.hazards.push({
+      kind: 'lance', x: enemy.x, y: enemy.y, angle: a, length: 170, width: 26,
+      delay: 0.5, t: 0, damage: enemy.dmg, source: 'enemy', tint: enemy.def.eye,
+    });
+    // It flickers as it lunges: readable, and tells the player it has committed.
+    this.emit('fx:blink', { x: enemy.x, y: enemy.y, x2: enemy.x + Math.cos(a) * 60, y2: enemy.y + Math.sin(a) * 60, color: enemy.def.eye });
+  }
+
+  /**
+   * Explosive Slime burst. Two stages: it swells in place (wind-up), then the
+   * blast lands as a telegraphed circle, then it leaves a short caustic pool.
+   * The slime survives its own blast — otherwise it is just a bomber clone.
+   */
+  enemyBurst(enemy) {
+    const blast = enemy.def.blast || 92;
+    const fuse = enemy.def.windup || 0.9;
+    enemy.burstT = fuse;
+    this.emit('enemy:tell', { enemy, kind: 'burst', radius: blast });
+    this.hazards.push({
+      kind: 'blast', x: enemy.x, y: enemy.y, radius: blast, delay: fuse, t: 0,
+      damage: enemy.dmg, source: 'enemy', tint: '#b6ff6a',
+      onLand: () => this.spawnHazardPatch(enemy.x, enemy.y, blast * 0.62, enemy.dmg * 0.22, 2.2, '#8ad14b'),
+    });
+  }
+
+  /**
+   * Thorn Beast: roots a thorn field at the player's feet. Deliberately aimed at
+   * where they ARE, not where they will be — it is area denial, not a snipe.
+   */
+  enemyThorns(enemy) {
+    const p = this.player;
+    const r = enemy.def.thornRadius || 62;
+    this.emit('enemy:tell', { enemy, kind: 'thorns', x: p.x, y: p.y, radius: r });
+    this.emit('fx:telegraph', { x: p.x, y: p.y, radius: r, delay: 0.85, kind: 'thorns' });
+    this.hazards.push({
+      kind: 'thorns', x: p.x, y: p.y, radius: r, delay: 0.85, t: 0,
+      damage: enemy.dmg, source: 'enemy', tint: '#9ad14b', root: 0.8,
+    });
+  }
+
+  /** Short-lived ground patch (crystal shards, caustic slime). Purely positional. */
+  spawnHazardPatch(x, y, radius, dps, life, tint) {
+    this.zones.push({ kind: 'hazard', x, y, radius, time: life, t: 0, dps, tint, source: 'enemy' });
+    this.emit('fx:patch', { x, y, radius, tint });
   }
 
   updateBosses(dt) {
@@ -1777,6 +1942,31 @@ export class Run {
           }
         }
         if (age > 0.35) this.hazards.splice(i, 1);
+      } else if (hz.kind === 'lance' || hz.kind === 'blast' || hz.kind === 'thorns') {
+        // Second-wave enemy attacks. All three resolve on the same principle:
+        // one damage tick when the telegraph expires, then a short readable
+        // aftermath. They used to fall through to the final `else` below, which
+        // simply spliced them out — the telegraph drew, then nothing happened.
+        if (age < 0.02) {
+          const px = p.x;
+          const py = p.y;
+          let hit = false;
+          if (hz.kind === 'lance') {
+            // a committed straight line: side-stepping avoids it entirely
+            hit = this.linesHit(hz, px, py - 18, hz.width * 0.5 + p.radius);
+            this.emit('fx:lineStrike', { x: hz.x, y: hz.y, x2: hz.x + Math.cos(hz.angle) * hz.length, y2: hz.y + Math.sin(hz.angle) * hz.length, width: hz.width, color: hz.tint });
+          } else {
+            hit = dist(hz.x, hz.y, px, py) < hz.radius + p.radius * 0.35;
+            this.emit('fx:impact', { x: hz.x, y: hz.y, radius: hz.radius, color: hz.tint });
+          }
+          if (hit) {
+            this.damagePlayer(hz.damage, null);
+            if (hz.root) this.playerRoot = Math.max(this.playerRoot || 0, hz.root);
+          }
+          if (hz.onLand) hz.onLand();
+          if (hz.kind === 'thorns') this.emit('fx:patch', { x: hz.x, y: hz.y, radius: hz.radius * 0.8, tint: hz.tint });
+        }
+        if (age > 0.45) this.hazards.splice(i, 1);
       } else if (hz.kind === 'line') {
         if (age < 0.14) {
           this.emit('fx:lineStrike', { x: hz.x, y: hz.y, x2: hz.x2, y2: hz.y2, width: hz.width, color: hz.tint || hz.color });
@@ -1816,6 +2006,19 @@ export class Run {
           }
         }
         if (z.slow) for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, z.x, z.y) < z.radius * 2.2) { e.slow = Math.max(e.slow, z.slow); e.slowTime = Math.max(e.slowTime, 1.4); }
+      } else if (z.source === 'enemy') {
+        // Enemy hazard patches (crystal shards, caustic slime) damage the PLAYER.
+        // Without this branch they fell into the enemy-damage path below, where
+        // an enemy-owned patch hurt nobody at all — a telegraph that promised
+        // damage it never delivered.
+        const p = this.player;
+        if (dist(p.x, p.y, z.x, z.y) < z.radius + p.radius * 0.4) {
+          z.dmgTick = (z.dmgTick || 0) - dt;
+          if (z.dmgTick <= 0 && z.dps) {
+            z.dmgTick = 0.45;
+            this.damagePlayer(z.dps * 0.45, null);
+          }
+        }
       } else {
         for (const e of this.enemies) {
           if (e.dead) continue;
