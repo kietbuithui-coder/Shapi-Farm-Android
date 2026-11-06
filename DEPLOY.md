@@ -30,6 +30,20 @@ any host — including `file://`, straight off a USB stick.
 
 The simplest permanent home for a project like this.
 
+> **Read this first if the repository is private.** GitHub Pages for a
+> *private* repository requires a paid plan (Pro, Team or Enterprise). On a free
+> account the Pages settings will refuse to publish, without a very clear
+> explanation. Your options are:
+>
+> 1. Make the repository **public**, then follow the steps below (free), or
+> 2. Keep it private and use **Option 2 (Netlify)** or **Option 3 (Vercel)** —
+>    both deploy from a private repo on their free tiers, or
+> 3. Keep it private and upload the single `index.html` to any static host, or
+> 4. Just open `index.html` from disk (`file://`) — it needs no server at all.
+>
+> Do not confuse "private repository" with "private site". A public Pages site
+> built from a public repo is public to anyone with the URL.
+
 1. Build `index.html` and commit it to the branch you serve from.
    GitHub Pages serves from a branch folder or from Actions; the file version
    needs no workflow at all.
@@ -46,7 +60,9 @@ Notes:
 - This game is deployed at a **sub-path** (`/<repo>/`), not a domain root. The
   build uses only relative, inline resources, so this works with no
   configuration. There are no absolute `/assets/...` paths to break.
-- If the repo is private, Pages still works, but the site is public.
+- Serving from an `arena/...` feature branch works, but the PR has to be merged
+  into `main` first for the normal branch setting to find it. You can point
+  Pages at a feature branch to preview without merging.
 
 ## Option 2 — Netlify
 
