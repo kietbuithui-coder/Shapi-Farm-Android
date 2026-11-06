@@ -1,0 +1,15 @@
+# CAT LEGENDS — Netlify deployment.
+#
+# The whole game is one generated file (../index.html from the repo root), so
+# there is nothing to package: build it, publish the root, done.
+[build]
+  command = "npm run build:web"
+  publish = "."
+
+# The build output is a single self-contained HTML file; long cache is safe
+# because an update is an atomic replacement of that one file.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+    X-Content-Type-Options = "nosniff"
