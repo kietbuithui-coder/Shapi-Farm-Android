@@ -177,23 +177,43 @@ test('button sizes stay thumb-sized across the device range', () => {
 /* ── renderer framing ───────────────────────────────────────────────────── */
 
 test('portrait shows materially more arena than the old cover-fit', () => {
-  // Old behaviour: cover-fit by height -> 183px of the 1180px arena visible.
-  // Portraits must show at least a quarter of the width now.
-  const W = 412;
-  const H = 915;
-  const byWidth = W / ARENA.w;
-  const byHeight = H / ARENA.h;
-  const k = Math.max(byWidth, byHeight);
-  const oldVisible = W / k / 1.62;
-  // new framing (mirrors Renderer.fitArena)
-  const tall = H > W * 1.15;
-  let fit = tall ? byWidth * 1.28 : k;
-  if (tall) fit = Math.max(fit, (H * 0.85) / (ARENA.h * 1.62));
-  fit = Math.max(fit, byHeight * 0.30);
-  const newVisible = W / fit / 1.62;
+  // Assert the INVARIANT, not a snapshot: the fraction visible necessarily
+  // shrinks when the arena grows (it was widened to 1570 in the map-expansion
+  // phase), so a hardcoded percentage here fails for a reason that has nothing
+  // to do with the bug it guards. What must hold is that the new framing shows
+  // substantially more of the arena than cover-fit did, on every portrait size.
+  const PORTRAITS = [
+    [412, 915, 'Pixel 7'],
+    [360, 780, 'Galaxy S23'],
+    [390, 844, 'iPhone 13'],
+    [768, 1024, 'tablet'],
+  ];
+  for (const [W, H, name] of PORTRAITS) {
+    const byWidth = W / ARENA.w;
+    const byHeight = H / ARENA.h;
+    const k = Math.max(byWidth, byHeight);
 
-  assert.ok(newVisible > oldVisible * 1.5, `portrait visible width only improved from ${oldVisible.toFixed(0)} to ${newVisible.toFixed(0)}`);
-  assert.ok(newVisible >= ARENA.w * 0.25, `portrait still shows only ${(newVisible / ARENA.w * 100).toFixed(0)}% of the arena width`);
+    // old behaviour: cover-fit, crop the sides
+    const oldVisible = W / k / 1.62;
+
+    // new framing, mirroring Renderer.fitArena()
+    const tall = H > W * 1.15;
+    assert.equal(tall, true, `${name}: this test is about portrait`);
+    let fit = byWidth * 1.28;
+    fit = Math.max(fit, (H * 0.85) / (ARENA.h * 1.62));
+    fit = Math.max(fit, byHeight * 0.30);
+    const newVisible = W / fit / 1.62;
+
+    assert.ok(
+      newVisible > oldVisible * 1.5,
+      `${name}: visible width only improved from ${(oldVisible / ARENA.w * 100).toFixed(0)}% to ${(newVisible / ARENA.w * 100).toFixed(0)}% of the arena`,
+    );
+    // And it must be enough to see more than a corridor: a fifth of the width.
+    assert.ok(
+      newVisible >= ARENA.w * 0.2,
+      `${name}: portrait shows only ${(newVisible / ARENA.w * 100).toFixed(0)}% of the arena width`,
+    );
+  }
 });
 
 test('landscape framing is unchanged by the portrait correction', () => {

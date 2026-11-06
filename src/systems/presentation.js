@@ -5,6 +5,7 @@ import { ParticleSystem } from './pool.js';
 import { clamp, dist, rgbCss } from '../core/math.js';
 import { audio } from '../audio/audio.js';
 import { ENEMY_BY_ID } from '../data/enemies.js';
+import { ARENA } from './run.js';
 
 const FX_TTL = {
   slash: 0.3, ring: 0.55, telegraph: 1, beam: 0.42, impact: 0.45, chain: 0.34,
@@ -43,7 +44,9 @@ export class Presentation {
   binder() {
     const run = this.run;
     const on = (type, fn) => this.offs.push(run.on(type, fn));
-    const pan = (x) => (x / 1180) * 2 - 1;
+    // Pan is normalised against the real arena width; hardcoding 1180 broke
+    // stereo placement the moment the playfield was widened.
+    const pan = (x) => (x / ARENA.w) * 2 - 1;
 
     on('fx:slash', ({ x, y, facing, crit, skill, angle: a }) => {
       const angleBase = a != null ? a : facing > 0 ? -0.35 : Math.PI + 0.35;

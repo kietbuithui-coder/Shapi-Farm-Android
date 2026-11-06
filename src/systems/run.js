@@ -14,7 +14,12 @@ import { wavePlan, actForNight } from '../data/acts.js';
 import { buildStats, emptyMods, computeDamage, computeIncoming, xpForLevel, difficultyScale } from './stats.js';
 import { PERK_TIERS } from '../data/perks.js';
 
-export const ARENA = { x: 0, y: 0, w: 1180, h: 660 };
+// The playfield was widened from 1180 to 1570 (+33%) so the camera has somewhere
+// to pan: at 1180 the visible slice was most of the arena, so backing into a
+// corner left nowhere to retreat to and every fight happened in the same spot.
+// Height is unchanged — the brief asks for a larger playable area, and extra
+// depth would only add empty floor between the horizon and the fight band.
+export const ARENA = { x: 0, y: 0, w: 1570, h: 660 };
 export const GROUND_Y = 512;
 const PLAY = { left: 96, right: ARENA.w - 96, top: 250, bottom: GROUND_Y - 6 };
 
@@ -177,6 +182,94 @@ export class Run {
     this.pendingSpawns = entries;
     this.waveEnemiesLeft = entries.length;
     this.waveSpawnTimer = 0.35;
+  }
+
+  /**
+   * Choose a spot on the arena edge that is far enough from the player to be
+   * fair, preferring the side facing away from where they are looking.
+   * Evidence for fairness: the brief forbids enemies appearing on top of the
+   * player, and this is the one function that decides where they appear.
+   */
+  pickSpawnPoint() {
+    const p = this.player;
+    const pad = 70;
+    const top = PLAY.top + 18;
+    const bottom = PLAY.bottom - 6;
+    const lanes = 3;
+
+    // Choose the wall explicitly rather than scoring candidates.
+    //
+    // Scoring looked tidier but kept collapsing onto one wall: with the player
+    // near the middle, every candidate is roughly equidistant, so a small
+    // "arrive from behind" bonus decided the whole thing and enemies always
+    // entered from the same side — the widened half of the arena never saw a
+    // single spawn.
+    //
+    // Now: usually come from the wall the player is furthest from (so arrivals
+    // are readable and never in their lap), occasionally from the near wall (so
+    // it does not become predictable). A same-wall spawn is only allowed when it
+    // is comfortably far away.
+    const centre = ARENA.w / 2;
+
+    // Distance-band spawn.
+    //
+    // Wall spawns are fair but slow on a wide map: the enemy has to cross the
+    // whole arena, and the player spends that time walking toward a fight that
+    // has not started. When there is room, spawn at a readable distance
+    // (420-620px, i.e. half a screen to a screen away) in the direction the
+    // player is least likely to be looking. The wall path stays as the fallback
+    // so a player camping a corner never gets a spawn in their face.
+    //
+    // Weighted 60/40: enough band spawns that fights start promptly, enough wall
+    // spawns that enemies still walk in from the edges and the whole map is used.
+    if (p && this.rng.chance(0.6)) {
+      const lo = 420;
+      const hi = 620;
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const a = Math.PI + this.rng.range(-1.15, 1.15); // mostly behind
+        const r = this.rng.range(lo, hi);
+        const bx = p.x + Math.cos(a) * r;
+        const by = clamp(p.y + Math.sin(a) * r * 0.45, top, bottom);
+        if (bx > PLAY.left + 12 && bx < PLAY.right - 12) {
+          const d = Math.hypot(bx - p.x, by - p.y);
+          if (d >= lo * 0.9) return { x: bx, y: by };
+        }
+      }
+    }
+
+    const farSide = p ? (p.x < centre ? 1 : -1) : (this.rng.chance(0.5) ? 1 : -1);
+    const side = this.rng.chance(0.72) ? farSide : -farSide;
+    const lane = Math.floor(this.rng.float() * lanes);
+    const jx = this.rng.range(0, 90);
+    const y = clamp(
+      top + ((bottom - top) * (lane + 0.5)) / lanes + this.rng.range(-16, 16),
+      top,
+      bottom,
+    );
+
+    // A wall spawn is only unfair if it lands near the player; distance is not
+    // the metric, proximity is. Rejecting on distance alone made the near wall
+    // unusable whenever the player stood in a corner, which made arrivals
+    // perfectly predictable. So: take the sampled wall unless it is close to the
+    // player, and slide the spawn furthest along that wall instead of jumping to
+    // the opposite one.
+    const wallX = (s) => (s > 0 ? ARENA.w - pad - jx : pad + jx);
+    let x = wallX(side);
+    if (p && Math.hypot(x - p.x, y - p.y) < 260) {
+      // try the other two lanes on the same wall before abandoning it
+      let best = null;
+      let bestD = -1;
+      for (let k = 0; k < lanes; k++) {
+        const cy = clamp(top + ((bottom - top) * (k + 0.5)) / lanes, top, bottom);
+        const d = Math.hypot(x - p.x, cy - p.y);
+        if (d > bestD) { bestD = d; best = cy; }
+      }
+      if (bestD >= 260) {
+        return { x: clamp(x, PLAY.left - 20, PLAY.right + 20), y: best };
+      }
+      x = wallX(-side);
+    }
+    return { x: clamp(x, PLAY.left - 20, PLAY.right + 20), y };
   }
 
   spawnBoss(bossId) {
@@ -2184,9 +2277,13 @@ export class Run {
         if (!entry) break;
         const def = ENEMY_BY_ID[entry.id];
         const e = this.makeEnemy(def, {}, { elite: entry.elite });
-        const side = this.rng.chance(0.5);
-        e.x = side ? this.rng.range(60, 260) : this.rng.range(ARENA.w - 260, ARENA.w - 60);
-        e.y = this.rng.range(PLAY.top + 20, PLAY.bottom);
+        // Spawn from a lane rather than uniformly across a half of the arena.
+        // Uniform placement dropped enemies into the space the player happened
+        // to be standing in, so they materialised on top of the cat instead of
+        // walking in; the lanes keep arrivals readable and off the player.
+        const sp = this.pickSpawnPoint();
+        e.x = sp.x;
+        e.y = sp.y;
         e.spawnT = 0;
         this.enemies.push(e);
         this.emit('enemy:spawn', { enemy: e, x: e.x, y: e.y });

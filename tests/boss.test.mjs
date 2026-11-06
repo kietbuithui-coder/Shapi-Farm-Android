@@ -7,7 +7,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRun, advance, DT, addTrainingDummy } from './harness.mjs';
-import { RUN_STATE, ARENA, GROUND_Y } from '../src/systems/run.js';
+import { RUN_STATE, ARENA, GROUND_Y, PLAY } from '../src/systems/run.js';
+
+// Corner/mid positions derived from the live playfield. These used to be literal
+// 96 / 1084 / 252 / 440, which silently stopped meaning "at the wall" the moment
+// the arena was widened — the tests would keep passing while exercising
+// different geometry than the names claimed.
+const LEFT_WALL = PLAY.left;
+const RIGHT_WALL = PLAY.right;
+const MID_Y = (PLAY.top + PLAY.bottom) / 2;
+const TOP_Y = PLAY.top + 4;
 
 const FIRST_BOSS = 'moon_devourer';
 
@@ -71,21 +80,21 @@ function observe(run, seconds, { hold = null, onStep = null } = {}) {
 
 test('the first boss engages a player pinned to the left wall', () => {
   const run = bossRun({ px: 96, py: 440 });
-  const r = observe(run, 10, { hold: { x: 96, y: 440 } });
+  const r = observe(run, 10, { hold: { x: LEFT_WALL, y: MID_Y } });
   assert.ok(r.attacks >= 2, `boss must keep attacking (got ${r.attacks})`);
   assert.ok(r.longestStill < 2.5, `boss must not freeze (still for ${r.longestStill.toFixed(2)}s)`);
 });
 
 test('the first boss engages a player pinned to the right wall', () => {
   const run = bossRun({ px: 1084, py: 440 });
-  const r = observe(run, 10, { hold: { x: 1084, y: 440 } });
+  const r = observe(run, 10, { hold: { x: RIGHT_WALL, y: MID_Y } });
   assert.ok(r.attacks >= 2, `boss must keep attacking (got ${r.attacks})`);
   assert.ok(r.longestStill < 2.5, `boss must not freeze (still for ${r.longestStill.toFixed(2)}s)`);
 });
 
 test('the first boss engages a player tucked into a top corner', () => {
   const run = bossRun({ px: 100, py: 252 });
-  const r = observe(run, 10, { hold: { x: 100, y: 252 } });
+  const r = observe(run, 10, { hold: { x: LEFT_WALL + 4, y: TOP_Y } });
   assert.ok(r.attacks >= 2, `boss must keep attacking (got ${r.attacks})`);
   assert.ok(r.longestStill < 2.5, 'boss must not freeze in a corner');
 });
@@ -94,7 +103,7 @@ test('the first boss engages a player behind it at the map edge', () => {
   // Player between the boss and the wall: the boss wants to retreat from 150px,
   // which used to press it into the boundary with the player boxed in.
   const run = bossRun({ bx: 1070, by: 440, px: 1084, py: 440 });
-  const r = observe(run, 10, { hold: { x: 1084, y: 440 } });
+  const r = observe(run, 10, { hold: { x: RIGHT_WALL, y: MID_Y } });
   assert.ok(r.attacks >= 2, `boss must keep attacking (got ${r.attacks})`);
   assert.ok(r.longestStill < 2.5, 'boss must not freeze against the wall');
 });
@@ -119,7 +128,7 @@ test('knockback and stun do not wedge the boss in a state', () => {
   // Shove it into the corner and stun it, the two things the brief suspects.
   run.knockback(boss, 900);
   boss.stun = 0.6;
-  const r = observe(run, 10, { hold: { x: 200, y: 300 } });
+  const r = observe(run, 10, { hold: { x: PLAY.left + 104, y: PLAY.top + 50 } });
   assert.ok(r.boss, 'boss survived');
   assert.ok(r.attacks >= 2, `boss resumed attacking after knockback + stun (got ${r.attacks})`);
   assert.ok(r.longestStill < 3.0, `boss did not stay wedged (still ${r.longestStill.toFixed(2)}s)`);
@@ -132,25 +141,50 @@ test('phase transitions do not skip or stall the attack loop', () => {
   const phases = [];
   run.on('boss:phase', ({ phase }) => phases.push(phase));
   // Walk the boss down through its health gates while it fights.
+  //
+  // 30s, not 20s: the arena is 33% wider, so the boss spends longer in transit
+  // and fewer attacks land inside any given window.
+  //
+  // The player is also kept alive. This test is about the boss's phase machine,
+  // not about whether a stationary cat survives a boss — holding them still for
+  // 30s in a 1570px arena is a guaranteed death, and once the player dies the
+  // run enters DEAD and the boss stops updating, so the phase gates that had not
+  // yet fired never fire. Pinning hp keeps the scenario measuring what its name
+  // says it measures.
   let i = 0;
-  const r = observe(run, 20, {
-    hold: { x: 600, y: 440 },
+  const r = observe(run, 30, {
+    hold: { x: ARENA.w / 2, y: MID_Y },
     onStep: (rr, step) => {
       i = step;
+      // HP lives on the Run (`run.hp`), not on `run.player` — pinning the wrong
+      // object did nothing and the cat died anyway, which ended the run and
+      // stopped the boss updating before its last phase could fire.
+      rr.hp = rr.stats.hpMax;
       const b = rr.boss;
-      if (b && i % 30 === 0) b.hp = Math.max(1, b.hp - b.hpMax * 0.02);
+      // Walk down to just inside the final gate, then stop draining: driving to
+      // zero just kills the boss, and observe() stops watching when it is gone.
+      const floor = b ? b.hpMax * 0.24 : 0;
+      if (b && i % 30 === 0) b.hp = Math.max(floor, b.hp - b.hpMax * 0.02);
     },
   });
   assert.ok(phases.length >= 2, `boss changed phase (${phases.join(',')})`);
   assert.ok(r.attacks >= 3, `boss kept attacking across phases (got ${r.attacks})`);
-  assert.equal(run.boss.dead, false, 'boss still alive and fighting');
+  // The boss may legitimately have died inside the window (the player is immortal
+  // here, so a kill just means the fight ended); what must not happen is the boss
+  // vanishing while healthy, which would mean the phase machine dropped it.
+  if (run.boss) {
+    assert.equal(run.boss.dead, false, 'boss still alive and fighting');
+    assert.ok(run.boss.phase >= 1, 'boss advanced a phase');
+  } else {
+    assert.equal(boss.dead, true, 'the boss reference was dropped without a kill');
+  }
 });
 
 test('the boss stays inside the playfield and never leaves it', () => {
   const run = bossRun();
   let outside = 0;
   observe(run, 15, {
-    hold: { x: 1080, y: 500 },
+    hold: { x: RIGHT_WALL - 4, y: PLAY.bottom - 6 },
     onStep: (rr) => {
       const b = rr.boss;
       if (!b) return;

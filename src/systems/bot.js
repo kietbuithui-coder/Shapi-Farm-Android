@@ -9,6 +9,7 @@
 //   4. collect  — drift toward xp / health / gold when safe
 
 import { angle, clamp, dist, dist2, TAU } from '../core/math.js';
+import { PLAY } from './run.js';
 
 const WANTS = {
   physical: { near: 54, far: 120 },
@@ -244,13 +245,20 @@ export class BotBrain {
   }
 
   edgePush(p) {
+    // Derived from the playfield, not hardcoded to 1180x660: when the arena is
+    // resized these numbers used to make the bot steer away from walls that
+    // were no longer there (and into ones that were).
     const m = 70;
+    const left = PLAY.left - 26;
+    const right = PLAY.right + 26;
+    const topY = PLAY.top + 30;
+    const bottomY = PLAY.bottom - 10;
     let x = 0;
     let y = 0;
-    if (p.x < m) x += (m - p.x) / m;
-    if (p.x > 1180 - m) x -= (p.x - (1180 - m)) / m;
-    if (p.y < 280) y += (280 - p.y) / 90;
-    if (p.y > 496) y -= (p.y - 496) / 60;
+    if (p.x < left + m) x += (left + m - p.x) / m;
+    if (p.x > right - m) x -= (p.x - (right - m)) / m;
+    if (p.y < topY) y += (topY - p.y) / 90;
+    if (p.y > bottomY) y -= (p.y - bottomY) / 60;
     return { x: x * 1.4, y: y * 1.4 };
   }
 
