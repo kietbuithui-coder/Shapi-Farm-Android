@@ -11,6 +11,10 @@ works offline.
 
 ## Play
 
+> **Want it on Android?** Read [`APK.md`](APK.md) first. There *is* an APK in
+> this repository's Releases, but it wraps an earlier game, not this one. This
+> build plays in any browser, and on a phone you can add it to the home screen.
+
 You pick a cat, pick four skills, and fight through nine nights of a moonlit
 terrace. Waves get heavier, elites appear mid-run, and each night ends with a
 boss. Die and you keep the **embers** you earned, which buy permanent upgrades

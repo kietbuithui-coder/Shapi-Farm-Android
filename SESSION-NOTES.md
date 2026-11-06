@@ -229,12 +229,37 @@ be, in the order they were investigated.
 
 ### 1. "Is there an APK?"
 
-No. There is no APK, no Gradle project, no `AndroidManifest.xml` and no
-Capacitor/Cordova/React-Native dependency anywhere in the tree — `git ls-files`
-has no `.apk`, and `git log` has no commit that built one. The repo is a pure
-web build whose entire deliverable is `index.html`. Playable: yes, via a browser
-(GitHub Pages or a local server). Installable: not without adding a wrapper
-project. That is a separate piece of work, not a fix to something that failed.
+Yes — but **not of this game**. This is the correction to a first-pass answer
+that searched only the branch it was standing on.
+
+The wide-angle view, which is what was actually being asked about:
+
+- `main` is **not** this project. It holds only `.github/`, `overrides/` and a
+  `README.md`, and its history is about WebView lifecycle, sign-in overlays and
+  Android SDK setup. It is an APK-factory repo.
+- That factory (`build-apk-from-zip.yml`) downloads a ZIP from a Release,
+  checks a hardcoded SHA-256, unpacks it, verifies `public/android-assets-version.txt`,
+  and builds a debug APK with SDK 35 / Gradle 8.9.
+- Release **`apk-source-3.6`** carries **`app-debug.apk`, 63,676,884 bytes
+  (60.7 MB)**, built 2026-10-25, and **`ShapiFarm-3.6-Android-Source.zip`
+  (103.6 MB)**. Download it from the repo's Releases page.
+- That APK wraps **"Hẹn Nhau Dưới Ánh Trăng 3.6"** — a different, older game
+  from the ChatGPT conversation, not this rebuild.
+
+So: an installable APK exists and can be side-loaded, but it does **not** contain
+the game described in this repo. To get *this* game onto a phone the options are
+(a) open the Pages URL in the phone's browser, or (b) build a new wrapper around
+`index.html`, which is a fresh piece of work — the existing workflow can't do it
+because it requires the 3.6 ZIP's exact hash.
+
+Verified: release assets, sizes, workflow steps, `main`'s tree and commits.
+**Not** verified: that the APK installs and runs on a real device — there were
+**0 downloads** recorded on the asset, so it has never been exercised.
+
+Also note the Pages situation, which is where the confusion started: Pages is
+enabled on `main` and is serving that factory repo's README at
+`https://kietbuithui-coder.github.io/Shapi-Farm-Android/`. This branch's
+`index.html` is **not** deployed, and never has been.
 
 ### 2. Levelling felt too fast
 

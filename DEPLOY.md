@@ -30,6 +30,19 @@ any host — including `file://`, straight off a USB stick.
 
 The simplest permanent home for a project like this.
 
+> **Check this before you deploy: Pages may already be occupied.**
+>
+> In this repository, Pages is **already enabled and serving `main`** at
+> `https://kietbuithui-coder.github.io/Shapi-Farm-Android/`. That site is the
+> APK-factory README, not this game — `main` does not contain `index.html`.
+> Because a repository has exactly one Pages site, you cannot simply "turn on
+> Pages" for this build as well: you must either merge it to `main` (replacing
+> what is served there) or host it elsewhere. Options 2–4 below avoid the
+> conflict entirely.
+>
+> Verify the current state at any time with
+> `gh api repos/<owner>/<repo>/pages`.
+
 > **Read this first if the repository is private.** GitHub Pages for a
 > *private* repository requires a paid plan (Pro, Team or Enterprise). On a free
 > account the Pages settings will refuse to publish, without a very clear
