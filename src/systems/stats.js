@@ -30,21 +30,32 @@ export function emptyMods() {
  * @param {object} cat  cat definition
  * @param {object} opts { perks, mods, level, catLevel }
  */
+/**
+ * Global power trim, applied to every cat equally.
+ *
+ * Ten percent off offence and survivability, in one place, so no single cat can
+ * drift out of line with the rest. Deliberately NOT applied to move speed, attack
+ * speed or crit damage: those are pacing and multiplier semantics, where a 10%
+ * cut stops being a 10% nerf (slower cats read as sluggish, and a crit of
+ * 1.35x barely differs from an unmodified hit).
+ */
+const CAT_POWER = 0.9;
+
 export function buildStats(cat, { perks = {}, mods = emptyMods(), level = 1, catLevel = 1 } = {}) {
   const pb = perkBonuses(perks);
   const b = cat.base;
   const m = { ...emptyMods(), ...mods };
   const hpMult = 1 + m.hpMult + pb.hp;
   const stats = {
-    atk: BASE.atk * b.atk * (1 + m.atk + pb.atk),
-    hpMax: BASE.hp * (b.hp / 100) * hpMult,
-    def: clamp(b.def + m.def + pb.def + (level - 1) * 0.004, 0, 0.78),
-    crit: clamp(b.crit + m.crit + pb.crit, 0, 0.85),
+    atk: BASE.atk * b.atk * (1 + m.atk + pb.atk) * CAT_POWER,
+    hpMax: BASE.hp * (b.hp / 100) * hpMult * CAT_POWER,
+    def: clamp((b.def + m.def + pb.def + (level - 1) * 0.004) * CAT_POWER, 0, 0.78),
+    crit: clamp((b.crit + m.crit + pb.crit) * CAT_POWER, 0, 0.85),
     critDmg: b.critDmg + m.critDmg,
     atkSpeed: clamp(b.atkSpeed * (1 + m.atkSpeed), 0.4, 4),
     move: BASE.move * b.move * (1 + m.move + pb.move),
     cdr: clamp(b.cdr + m.cdr + pb.cdr + (catLevel - 1) * 0.01, 0, 0.6),
-    dodge: clamp(b.dodge + m.dodge, 0, 0.6),
+    dodge: clamp((b.dodge + m.dodge) * CAT_POWER, 0, 0.6),
     energyMax: (b.energy || 100) * (1 + pb.energy) + m.energy,
     energyRegen: (b.energyRegen || 8) * (1 + (m.energyRegen || 0)) * (1 + pb.energy * 0.5),
     lifesteal: m.lifesteal,
@@ -95,9 +106,19 @@ export function computeIncoming({
 /** Armour curve used by enemies (kept flat & readable). */
 export const enemyArmor = (tier) => (tier === 'tank' ? 0.18 : tier === 'eliteish' ? 0.1 : 0.02);
 
-/** XP needed for the next level, with a gentle curve. */
+/**
+ * XP needed for the next level.
+ *
+ * Levelling was coming too fast to feel like progress, so every requirement is
+ * scaled by PACE — the amount of XP asked for goes up, the curve keeps its
+ * shape. This is a tuning constant on purpose: nothing in the UI quotes a
+ * level-up rate, so the change is felt as a slower climb rather than read as
+ * a number that moved.
+ */
+const XP_PACE = 1.35;
+
 export function xpForLevel(level) {
-  return Math.floor(11 + level * 9 + Math.pow(level, 1.72) * 2.4);
+  return Math.floor((11 + level * 9 + Math.pow(level, 1.72) * 2.4) * XP_PACE);
 }
 
 /** Difficulty ramp for enemy stat scaling by night + wave. */

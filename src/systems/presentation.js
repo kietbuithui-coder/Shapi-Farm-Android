@@ -2,13 +2,14 @@
 // visuals + audio + camera feel. Keeps gameplay completely free of draw code.
 
 import { ParticleSystem } from './pool.js';
-import { clamp, dist, rgbCss } from '../core/math.js';
+import { clamp, dist, rgbCss, TAU } from '../core/math.js';
 import { audio } from '../audio/audio.js';
 import { ENEMY_BY_ID } from '../data/enemies.js';
 import { ARENA } from './run.js';
 
 const FX_TTL = {
   slash: 0.3, ring: 0.55, telegraph: 1, beam: 0.42, impact: 0.45, chain: 0.34,
+  castCharge: 0.26, castRune: 0.3,
   nova: 0.7, blast: 0.5, lineStrike: 0.38, lightning: 0.3, zonePulse: 0.6,
   minionHit: 0.3, trap: 0.4, drain: 0.5, heal: 0.9, shield: 0.7, blink: 0.34,
   dashTrail: 0.5, execute: 0.6, mark: 0.7, soul: 0.6, timeSlow: 1, castTell: 0.5,
@@ -76,10 +77,33 @@ export class Presentation {
       const jx = (Math.random() - 0.5) * 14;
       this.float(Math.round(d.amount).toString(), d.x + jx, d.y, { size, color: isPlayer ? '#ff8f9b' : crit ? '#ffe066' : '#fff3dc', crit });
     });
+    // Casting a skill is the moment the player chose to do something, so it
+    // should read before the effect it spawns: a charge-up ring, a rune
+    // gathering inward, and a bright flash at release. Previously this was a
+    // 26px ring and six particles — the same weight as walking into a bush.
     on('fx:skill', (e) => {
       const color = e.tint || '#b48bff';
-      this.addFx('castTell', { x: e.x, y: e.y, radius: 26, color, life: 0.3 });
-      this.particles.burst(e.x, e.y, 6, { speed: 90, life: 0.35, size: 2.6, color, kind: 'glow', up: -20 });
+      const big = e.pattern === 'ultimate' || !!e.ultimate;
+      // Charge-up: a ring collapsing inward toward the caster, so the eye is
+      // pulled to the origin and arrives exactly as the skill fires.
+      this.addFx('castCharge', { x: e.x, y: e.y, radius: big ? 64 : 44, color, life: 0.26 });
+      this.addFx('castTell', { x: e.x, y: e.y, radius: big ? 40 : 30, color, life: 0.34 });
+      // Runes: short radial spokes around the glyph, like a sigil being drawn.
+      for (let i = 0; i < (big ? 8 : 5); i++) {
+        const a = (i / (big ? 8 : 5)) * TAU + (e.castIndex || 0) * 0.7;
+        this.addFx('castRune', {
+          x: e.x, y: e.y, angle: a, radius: big ? 46 : 32, color,
+          life: 0.3, delay: i * 0.012,
+        });
+      }
+      this.particles.burst(e.x, e.y, big ? 20 : 11, {
+        speed: big ? 190 : 130, life: 0.42, size: big ? 3.4 : 2.8,
+        color: [color, '#ffffff'], kind: 'spark', up: -30,
+      });
+      this.particles.burst(e.x, e.y, big ? 10 : 6, {
+        speed: 60, life: 0.55, size: 4, color, kind: 'glow', up: -44,
+      });
+      if (this.camera) this.camera.addTrauma((big ? 0.14 : 0.06) * (this.settings.shake ?? 1));
     });
     on('fx:nova', ({ x, y, radius, color }) => {
       this.addFx('ring', { x, y, radius, color, life: 0.55, fill: true });

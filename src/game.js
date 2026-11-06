@@ -20,6 +20,9 @@ import { Hud } from './ui/hud.js';
 import { TouchControls } from './ui/touch.js';
 import { Input } from './input/input.js';
 import * as Scenes from './ui/scenes.js';
+
+/** Settings drawn as 0..1 sliders (see drawSettings) rather than on/off rows. */
+const SLIDER_SETTINGS = ['music', 'sfx', 'voice', 'shake'];
 import { buildWiki } from './data/wiki.js';
 import { CATS, CAT_BY_ID } from './data/cats.js';
 import { PALETTE } from './data/palette.js';
@@ -45,7 +48,8 @@ export class Game {
     this.store = new ProfileStore({ isKnown: (cat, id) => (KNOWN[cat] ? KNOWN[cat](id) : true) });
     this.profile = this.store.load();
     applyFrame(this.profile.settings.lang);
-    audio.setVolumes(this.profile.settings);
+    audio.setVolumes(this.profile.settings);   // first chance to touch audio
+
 
     this.renderer = new Renderer(canvas);
     this.camera = new Camera();
@@ -139,6 +143,10 @@ export class Game {
       this.hover = this.hitTest(x, y);
       this.mouseX = x;
       this.mouseY = y;
+      // A slider that has been pressed follows the pointer until release.
+      // `sliderGrabbed` used to be assigned on press and never read, which is
+      // why dragging a volume control did nothing at all.
+      if (this.sliderGrabbed) this.dragSlider(x);
     });
     this.canvas.addEventListener('pointerdown', (e) => {
       const { x, y } = this.localPoint(e);
@@ -160,6 +168,31 @@ export class Game {
       this.hover = this.hitTest(x, y);
       this.click(this.hover, x, y);
     });
+    // Any release, wherever it happens, ends the drag. Listening on the window
+    // (not the canvas) also catches the pointer leaving the canvas mid-drag.
+    const release = () => { this.sliderGrabbed = null; };
+    this.canvas.addEventListener('pointerup', release);
+    this.canvas.addEventListener('pointercancel', release);
+    addEventListener('pointerup', release);
+  }
+
+  /**
+   * Set the grabbed slider from an absolute pointer x.
+   * Shared by press and drag so a tap and a drag can never disagree.
+   */
+  dragSlider(x) {
+    const id = this.sliderGrabbed;
+    if (!id) return false;
+    const row = (this._cachedRects || []).find((r) => r.id === id && r.slider);
+    if (!row) return false;
+    const t = clamp((x - row.x) / Math.max(1, row.w), 0, 1);
+    const P = this.profile;
+    // Shake reads better as "off / weak / strong" than as a fraction, so it
+    // snaps to quarters; the audio buses keep 5% steps.
+    P.settings[id] = id === 'shake' ? Math.round(t * 4) / 4 : Math.round(t * 20) / 20;
+    this.applySettings();
+    this.store.saveNow();
+    return true;
   }
 
   localPoint(e) {
@@ -374,7 +407,24 @@ export class Game {
    * up in the codex with no migration, and there is no second copy to drift.
    */
   wikiTabs() {
-    return buildWiki(this.profile, this.lang);
+    // `this.lang` never existed, so the wiki was built with undefined and
+    // always fell back to Vietnamese regardless of the language setting.
+    return buildWiki(this.profile, this.profile.settings.lang);
+  }
+
+  /**
+   * Push the saved settings into the systems that use them.
+   *
+   * Called once at boot AND after every change. It used to be called only at
+   * boot, so the volume sliders were write-only: the value was stored, drawn
+   * and saved, but nothing read it again until the page was reloaded.
+   */
+  applySettings() {
+    const st = this.profile.settings || {};
+    audio.setVolumes({ music: st.music, sfx: st.sfx, voice: st.voice });
+    // Presentation reads shake per-event, so it only needs the new profile.
+    if (this.pres) this.pres.settings = st;
+    if (this.run && this.run.applySettings) this.run.applySettings(st);
   }
 
   /* ── pause ────────────────────────────────────────────────────────────── */
@@ -541,6 +591,26 @@ export class Game {
         break;
       case 'settings':
         if (id === 'back') return this.go(this.settingsReturn || 'home');
+        // Volume and shake are SLIDERS: the value comes from where you tapped
+        // across the row, not from the fact that you tapped. There was no
+        // handler for any of them at all, so music/sfx/voice/shake were four
+        // controls that did nothing when touched — the only reason it was not
+        // obvious is that they still drew at their saved values.
+        if (SLIDER_SETTINGS.includes(id)) {
+          // Take the grab first, then set the value: dragSlider is shared with
+          // pointermove, so press-and-slide and tap-to-set cannot disagree.
+          this.sliderGrabbed = id;
+          const moved = this.dragSlider(x);
+          if (!moved) {
+            // No geometry (keyboard/automation): step through useful values.
+            const cur = typeof P.settings[id] === 'number' ? P.settings[id] : 0;
+            P.settings[id] = id === 'shake' ? (Math.round(cur * 4 + 1) % 5) / 4 : (Math.round(cur * 20 + 5) % 21) / 20;
+            this.applySettings();
+          }
+          this.store.saveNow();
+          audio.ui?.('tap');
+          return;
+        }
         if (id.startsWith('hud:')) {
           P.settings.hudMode = id.slice(4);
           this.syncHudConfig();
@@ -581,6 +651,7 @@ export class Game {
         }
         if (['damageNumbers', 'reduceMotion', 'aimAssist'].includes(id)) {
           P.settings[id] = !P.settings[id];
+          this.applySettings();
           this.store.saveNow();
           return;
         }
@@ -618,9 +689,6 @@ export class Game {
         break;
       default:
         break;
-    }
-    if (id.startsWith('music') || id.startsWith('sfx') || id.startsWith('voice') || id.startsWith('shake')) {
-      this.sliderGrabbed = id;
     }
   }
 

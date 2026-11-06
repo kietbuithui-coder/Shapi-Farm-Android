@@ -486,6 +486,54 @@ export class Renderer {
           ctx.restore();
           break;
         }
+        case 'castCharge': {
+          // Ring collapsing inward onto the caster: the eye tracks it and
+          // arrives at the origin right as the skill fires.
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          const r = f.radius * (1 - p * 0.72);
+          ctx.beginPath();
+          ctx.ellipse(f.x, f.y, r, r * 0.62, 0, 0, TAU);
+          ctx.strokeStyle = hexA(f.color, 0.55 * (1 - p * 0.5));
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          // soft inner pool so the origin reads even against bright floor
+          const g = ctx.createRadialGradient(f.x, f.y, 1, f.x, f.y, Math.max(6, r * 0.8));
+          g.addColorStop(0, hexA(f.color, 0.22 * (1 - p)));
+          g.addColorStop(1, hexA(f.color, 0));
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.ellipse(f.x, f.y, r * 0.8, r * 0.8 * 0.62, 0, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+          break;
+        }
+        case 'castRune': {
+          // A short spoke sweeping outward from the sigil ring.
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.translate(f.x, f.y);
+          ctx.rotate(f.angle);
+          const r0 = f.radius * 0.72;
+          const r1 = f.radius * (0.72 + 0.7 * (1 - Math.pow(1 - p, 2)));
+          // wide soft body + bright core: two passes so the spoke survives a
+          // bright background instead of dissolving into it.
+          ctx.beginPath();
+          ctx.moveTo(r0, 0);
+          ctx.lineTo(r1, 0);
+          ctx.strokeStyle = hexA(f.color, (1 - p) * 0.5);
+          ctx.lineWidth = 5.5 * (1 - p * 0.4);
+          ctx.lineCap = 'round';
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(r0, 0);
+          ctx.lineTo(r1, 0);
+          ctx.strokeStyle = hexA('#ffffff', (1 - p) * 0.75);
+          ctx.lineWidth = 1.6 * (1 - p * 0.4);
+          ctx.stroke();
+          ctx.restore();
+          break;
+        }
         case 'castTell': {
           ctx.save();
           ctx.globalCompositeOperation = 'lighter';

@@ -23,7 +23,7 @@ node tools/render-bosses.mjs  # both new bosses, in-engine, both phases
 
 Live preview: `npm start` → <http://localhost:8080/>.
 
-Deliverable: **`index.html`**, 580 KB, 344 KB JS, 11 inlined fonts, no network
+Deliverable: **`index.html`**, 583 KB, 346 KB JS, 11 inlined fonts, no network
 access at runtime.
 
 ---
@@ -219,3 +219,106 @@ re-rolled, and the sweep was measuring the new world rather than the new boss.
    - **`index.html` head polish.** It currently has no `og:` tags or favicon
      beyond what the build inlines. Harmless, but it is the one rough edge on
      the deliverable.
+
+---
+
+## Post-release tuning round
+
+Seven pieces of feedback after the first playable build. What each turned out to
+be, in the order they were investigated.
+
+### 1. "Is there an APK?"
+
+No. There is no APK, no Gradle project, no `AndroidManifest.xml` and no
+Capacitor/Cordova/React-Native dependency anywhere in the tree — `git ls-files`
+has no `.apk`, and `git log` has no commit that built one. The repo is a pure
+web build whose entire deliverable is `index.html`. Playable: yes, via a browser
+(GitHub Pages or a local server). Installable: not without adding a wrapper
+project. That is a separate piece of work, not a fix to something that failed.
+
+### 2. Levelling felt too fast
+
+`xpForLevel` now multiplies by `XP_PACE = 1.35`, so the requirement is 35%
+higher at every level (30 → 30 at level 1, 1114 → 1504 at level 30, +35.0–36.4%).
+The curve keeps its shape. Nothing in the UI quotes a level-up rate, so the
+change is experienced as a slower climb, per the "don't show it" instruction.
+
+### 3. "The spider boss or its attacks don't work"
+
+Could not reproduce. `hollow_ninth` (in-game *Mang Thứ Chín*) is the spider, and
+a god-mode 60-second probe measured 1947px of movement and five attacks —
+`summonShades`, `echoRing`, `blinkClaw`, `enrage`, `nineLash` — across all three
+phases. Its behaviour was already working.
+
+What **was** broken was nearby and would have read as unfair: bosses could kill
+from full health in one frame (see below). That is the most likely thing being
+noticed.
+
+### 4. Smaller attack hitboxes
+
+`SKILL_HITBOX = 0.85` scales every skill pattern's radius and width at the one
+place they are all derived from, and the basic attack's 150px reach drops to
+127px with it. Because these are radii, the covered area shrinks by more than
+15%. Per-cat skill-area upgrades still apply on top, so the perk still reads as
+a gain rather than being cancelled out.
+
+### 5. Cat stats down 10%
+
+`CAT_POWER = 0.9` on atk, hp, def, crit and dodge in `buildStats`, so every cat
+moves by the same amount. **Not** applied to move speed or attack speed: a 10%
+cut there changes how the cat handles rather than how strong it is, and mostly
+just reads as sluggish. `tests/settings.test.mjs` asserts both halves of that.
+
+### 6. Better skill VFX
+
+Casting used to be a 26px ring and six particles — invisible next to the skill it
+announced. It now has a charge ring collapsing inward onto the caster (so the
+eye arrives at the origin exactly as the skill fires), radial rune spokes, two
+particle bursts and a small camera kick. Ultimates get roughly double the size
+and particle count. Two new FX primitives, `castCharge` and `castRune`, drawn in
+the renderer's existing `lighter` pipeline. Presented only `if (this.camera)`, so
+a headless run is unaffected. Rune spokes needed a second wide pass to stay
+visible against a bright floor.
+
+### 7. "Settings not working"
+
+Two separate defects, and neither could throw:
+
+- **The four sliders were inert.** `music`, `sfx`, `voice`, `shake` are drawn
+  as sliders and were never handled in the settings `switch` — tapping one did
+  nothing. Worse, `pointerdown` set `this.sliderGrabbed = id` and **nothing ever
+  read it**: the drag path was assigned and abandoned, so the sliders could not
+  be dragged either. They still drew at their saved values, which is why they
+  looked functional.
+- **The language switch only half worked.** `P.settings.lang` flipped correctly,
+  but the codex was built with `buildWiki(profile, this.lang)` — a property that
+  does not exist. `undefined` fell back to Vietnamese, so the whole wiki stayed
+  Vietnamese in English mode.
+
+Fixed by routing press and move through one `dragSlider(x)`, clearing the grab
+on release (window-level, so a pointer that leaves the canvas still releases),
+and passing `this.profile.settings.lang`. A tap now sets the value at the tapped
+position; a press-and-slide tracks continuously.
+
+### Bonus fix found while investigating: one-shot deaths
+
+`crystal_queen` could kill a full-health player in a single frame. Night 10
+multiplies enemy damage by ~4.78×, and `groundSpikes` fires `boss.dmg * 0.8` per
+hazard: 110.5 damage into a 106 HP tabby. No dodge, no shield, no revive window —
+unwinnable. A per-hit cap of `MAX_HIT_SHARE = 0.5` now applies at the single
+point all incoming damage passes through, so one hit can never remove the whole
+bar but three still kill. This is also what let the existing crystal_queen test
+pass again: it had been failing because the player died and the simulated
+`run.state` left `'fight'`, not because the boss misbehaved.
+
+### Numbers
+
+| | before | after |
+|---|---|---|
+| tests | 145 | **153** (8 new in `tests/settings.test.mjs`) |
+| avg depth / 45 | 27.5 | **15.3** |
+| `index.html` | 594,271 B | **596,627 B** |
+
+Attribution of the depth change, each reverted alone and re-measured: stat cut
+−6.1, hitbox tightening −1.6, XP curve −4.5 (27.5 → 23.0 → 16.9 → 15.3). All
+three were requested, so the new figure is recorded rather than tuned away.

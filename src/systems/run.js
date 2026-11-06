@@ -6,6 +6,20 @@
 import { Rng } from '../core/rng.js';
 import { Emitter } from '../core/events.js';
 import { clamp, dist, dist2, angle, TAU, lerp, damp, weightedIndex, mulberry32 } from '../core/math.js';
+
+/**
+ * Global multiplier on every skill hitbox (see the `area` line in executeSkill).
+ * 0.85 = 15% smaller radii and widths, for all cats equally. Because these are
+ * radii, the covered *area* falls by more than 15%: that is the point — tight
+ * aim should pay off instead of being optional.
+ */
+const SKILL_HITBOX = 0.85;
+
+/**
+ * Hard cap on a single incoming hit, as a share of the player's full health.
+ * 0.5 = two clean hits can kill, one never can. See damagePlayer().
+ */
+const MAX_HIT_SHARE = 0.5;
 import { CAT_BY_ID } from '../data/cats.js';
 import { SKILL_BY_ID, skillValues } from '../data/skills.js';
 import { ENEMY_BY_ID, ELITE_MODS, MINIBOSS_BY_ID, BOSS_BY_ID } from '../data/enemies.js';
@@ -527,7 +541,10 @@ export class Run {
     // basic attack (auto)
     p.attackCd -= dt;
     if (p.attackCd <= 0 && !this.skillsBusy()) {
-      const target = this.nearestEnemy(p.x, p.y, 150);
+      // 150 was generous enough to hit things a third of the screen away; 127
+      // keeps melee feeling melee. Matches SKILL_HITBOX so the basic attack and
+      // the skills share one notion of reach.
+      const target = this.nearestEnemy(p.x, p.y, 150 * SKILL_HITBOX);
       if (target) this.basicAttack(target);
       else p.attackCd = 0.06;
     }
@@ -718,7 +735,11 @@ export class Run {
       x: p.x, y: p.y - 22, target, values, castIndex, ...extra,
     });
     const power = values.dmg * (this.mods.skillArea ? 1 : 1);
-    const area = 1 + this.mods.skillArea;
+    // Base skill hitbox size. Areas were wide enough that damage landed on
+    // enemies the player never aimed at; this trims every pattern by the same
+    // factor, then adds the player's own skillArea upgrades on top so the perk
+    // still reads as a gain. Done here, once, so no pattern can be missed.
+    const area = SKILL_HITBOX * (1 + this.mods.skillArea);
     const rv = values.rankValues || {};
     switch (def.pattern) {
       case 'melee': {
@@ -2751,6 +2772,18 @@ export class Run {
       return;
     }
     let dmg = res.damage;
+    // No single hit may take more than this share of a full health bar.
+    //
+    // Enemy damage scales hard with depth (night 10 multiplies it by ~4.8x)
+    // while the player's health pool grows mostly through level-ups and perks,
+    // so late boss attacks were arriving at 100%+ of max HP. A hit that removes
+    // the whole bar is not difficulty, it is an unwinnable coin flip: there is
+    // no dodge, no shield and no revive window worth playing around. Clamping
+    // the per-hit share keeps the fight dangerous — three of these still kill —
+    // while guaranteeing the player always gets to see the attack that killed
+    // them and react.
+    const maxHit = this.stats.hpMax * MAX_HIT_SHARE;
+    if (dmg > maxHit) dmg = maxHit;
     // shield absorbs first
     if (p.shield > 0) {
       const absorbed = Math.min(p.shield, dmg);

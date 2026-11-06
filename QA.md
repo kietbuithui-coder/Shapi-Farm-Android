@@ -69,6 +69,20 @@ node tools/tune.mjs         # balance sweep (deterministic)
 - [x] Absurd numbers are clamped (`embers` capped at 1e9, `-5` kills → 0).
 - [x] Round-trip through JSON preserves embers and discoveries.
 
+## 4b. Settings (post-release fix)
+
+- [x] All 18 settings controls are reachable on the scene and change state.
+- [x] `music`, `sfx`, `voice`, `shake` respond to a **tap** at the value the
+      player tapped, and to a **drag** that keeps updating until release.
+      (They had no click handler and the drag pointer was never read; both are
+      now covered by `tests/settings.test.mjs`.)
+- [x] Volume changes reach the audio buses immediately — no reload needed.
+- [x] The VI/EN switch changes the codex language (`Sổ Tay Sinh Vật` →
+      `Bestiary`). It previously read an undefined `this.lang` and always
+      rendered Vietnamese.
+- [x] The same tap/drag behaviour is verified in the **built** `index.html`,
+      not only in source.
+
 ## 5. Codex
 
 - [x] Exactly 8 categories.
@@ -83,8 +97,11 @@ node tools/tune.mjs         # balance sweep (deterministic)
 
 ## 6. Balance
 
-- [x] Deterministic sweep (`node tools/tune.mjs`): **27.5 / 45** final against
-      **25.0** at the start of the upgrade pass — no regression.
+- [x] Deterministic sweep (`node tools/tune.mjs`): **15.3 / 45** after the
+      post-release tuning round, against **27.5** immediately before it.
+- [x] The 12.2-point drop is attributed, not assumed — each change was reverted
+      on its own and the sweep re-run: XP curve −4.5, stat cut −6.1, hitbox
+      tightening −1.6. All three were requested; none is a regression to undo.
 - [x] 20 full-length bot runs across all cats complete without crashing.
 
 ---

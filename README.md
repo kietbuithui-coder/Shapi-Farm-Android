@@ -171,7 +171,7 @@ substitute for a human looking at it.
 
 ### Build output
 
-`index.html` is ~580 KB (344 KB of JS + 11 inlined WOFF faces). `npm run verify`
+`index.html` is ~583 KB (346 KB of JS + 11 inlined WOFF faces). `npm run verify`
 enforces that:
 
 - no `<script src>`, no external stylesheet, no `http(s)://` URL
@@ -182,7 +182,13 @@ enforces that:
 ### Balance
 
 `node tools/tune.mjs` runs the bot across cats and seeds and reports depth
-reached. Current spread sits around **avg depth 27 / 45** on a fresh profile.
+reached. Current spread sits around **avg depth 15 / 45** on a fresh profile.
+
+That number is deliberately lower than it used to be (27.5). The tuning round
+after release applied a 10% cut to cat stats, tightened every attack hitbox to
+85% and stretched the XP curve by 35%; measured one at a time, those cost 6.1,
+1.6 and 4.5 depth respectively. Each was asked for, and each makes the game
+harder — the sweep is reported as it is, not adjusted back to the old figure.
 
 The sweep is **deterministic**: the bot's strafe timer used `Math.random`, which
 made two runs of the same build differ by three whole nights and made every
