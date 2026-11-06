@@ -9,7 +9,7 @@ import { drawIcon } from '../art/icons.js';
 import { drawCat, drawCatFace } from '../art/catart.js';
 import { drawCreature } from '../art/creatureart.js';
 import { CATS, CAT_BY_ID } from '../data/cats.js';
-import { SKILLS, SKILL_BY_ID, SKILL_CATEGORIES } from '../data/skills.js';
+import { SKILLS, SKILL_BY_ID, SKILL_CATEGORIES, skillScaling } from '../data/skills.js';
 import { PERK_LINES, PERK_COST, PERK_TIERS } from '../data/perks.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { localize, t as tr } from '../data/strings.js';
@@ -672,6 +672,9 @@ export function drawSkillSelect(ctx, { w, h, safe, t, lang, profile, hover, sele
       });
       wrapText(ctx, localize(detail.desc, lang), railX + 20, top + 138, railW - 40, 15, { size: 11.5, color: 'rgba(200,210,232,0.8)' });
 
+      const scaleName = { health: t2(lang, 'Máu', 'Health'), speed: t2(lang, 'Tốc độ', 'Speed'), armor: t2(lang, 'Giáp', 'Armor'), damage: t2(lang, 'Sát thương', 'Damage') }[skillScaling(detail)];
+      text(ctx, `Scale: ${scaleName}`, railX + 20, top + 164, { size: 10, color: 'rgba(255,201,102,0.85)' });
+
       // rank ladder — the four upgrades above rank 1. `ranks[0].note` is the base
       // description, already covered by `desc`, so it is not repeated here.
       const ranks = (detail.ranks || []).slice(1);
@@ -885,6 +888,8 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
   sceneTitle(ctx, tr(lang, 'settings'), '', safe.left + 30, titleY, { size: shortScreen ? 26 : 40 });
   const rects = [];
   const sx = safe.left + 34;
+  // Seven taps on the title opens the hidden scaling controls.
+  rects.push({ id: 'secretScale', x: safe.left + 46, y: titleY - 30, w: Math.min(208, w - safe.left - 66), h: 38 });
 
   // ── layout, derived from the space that actually exists.
   //
@@ -1131,6 +1136,34 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
     }
   }
 
+  iconButton(ctx, { x: safe.left + 26, y: safe.top + 26, r: 19, icon: 'back', hover: hover === 'back' });
+  rects.push({ id: 'back', x: safe.left + 7, y: safe.top + 7, w: 38, h: 38 });
+  return rects;
+}
+
+/** Secret tuning screen: 0–300% for each stat family. */
+export function drawSkillScaling(ctx, { w, h, safe, t, lang, profile, hover }) {
+  drawBackdrop(ctx, w, h, t, PALETTE.slate, 0.8);
+  const top = safe.top + (h < 480 ? 68 : 94);
+  sceneTitle(ctx, t2(lang, 'TỈ LỆ KỸ NĂNG', 'SKILL SCALING'), '', safe.left + 30, top, { size: h < 480 ? 22 : 34 });
+  const rects = [];
+  const rows = [
+    ['skillScaleHealth', t2(lang, 'Máu', 'Health')],
+    ['skillScaleSpeed', t2(lang, 'Tốc độ', 'Speed')],
+    ['skillScaleArmor', t2(lang, 'Giáp', 'Armor')],
+    ['skillScaleDamage', t2(lang, 'Sát thương', 'Damage')],
+  ];
+  const x = safe.left + 34, width = Math.min(520, w - safe.left - safe.right - 68);
+  const pitch = Math.min(54, (h - safe.bottom - top - 48) / 4);
+  rows.forEach(([id, label], i) => {
+    const y = top + 35 + i * pitch, value = profile.settings[id] ?? 1;
+    text(ctx, `${label} ${Math.round(value * 100)}%`, x, y + 4, { size: 12, weight: 600, color: '#f4ecd8' });
+    const bx = x + Math.min(145, width * 0.4), bw = width - (bx - x);
+    roundRect(ctx, bx, y - 4, bw, 8, 4); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
+    roundRect(ctx, bx, y - 4, Math.max(1, bw * value / 3), 8, 4); ctx.fillStyle = '#ffc966'; ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + bw * value / 3, y, 7, 0, TAU); ctx.fillStyle = '#f4ecd8'; ctx.fill();
+    rects.push({ id, x: bx, y: y - 14, w: bw, h: 28, slider: true });
+  });
   iconButton(ctx, { x: safe.left + 26, y: safe.top + 26, r: 19, icon: 'back', hover: hover === 'back' });
   rects.push({ id: 'back', x: safe.left + 7, y: safe.top + 7, w: 38, h: 38 });
   return rects;

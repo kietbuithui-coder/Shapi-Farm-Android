@@ -21,7 +21,7 @@ const SKILL_HITBOX = 0.85;
  */
 const MAX_HIT_SHARE = 0.5;
 import { CAT_BY_ID } from '../data/cats.js';
-import { SKILL_BY_ID, skillValues } from '../data/skills.js';
+import { SKILL_BY_ID, skillValues, skillScaling } from '../data/skills.js';
 import { ENEMY_BY_ID, ELITE_MODS, MINIBOSS_BY_ID, BOSS_BY_ID } from '../data/enemies.js';
 import { UPGRADES, UPGRADE_BY_ID } from '../data/upgrades.js';
 import { wavePlan, actForNight, bossForNight } from '../data/acts.js';
@@ -333,6 +333,7 @@ export class Run {
   }
 
   spawnBoss(bossId) {
+    if ((this.boss && !this.boss.dead) || (this.miniBoss && !this.miniBoss.dead)) return null;
     const def = BOSS_BY_ID[bossId];
     const scale = difficultyScale(this.night, this.wave);
     const boss = this.makeEnemy(def, {}, { boss: true, scale });
@@ -348,6 +349,7 @@ export class Run {
   }
 
   spawnMiniBoss(id) {
+    if ((this.boss && !this.boss.dead) || (this.miniBoss && !this.miniBoss.dead)) return null;
     const def = MINIBOSS_BY_ID[id];
     const scale = difficultyScale(this.night, this.wave);
     const e = this.makeEnemy(def, {}, { elite: 1, scale, mini: true });
@@ -548,16 +550,7 @@ export class Run {
       if (target) p.aim = angle(p.x, p.y, target.x, target.y);
     }
 
-    // basic attack (auto)
-    p.attackCd -= dt;
-    if (p.attackCd <= 0 && !this.skillsBusy()) {
-      // 150 was generous enough to hit things a third of the screen away; 127
-      // keeps melee feeling melee. Matches SKILL_HITBOX so the basic attack and
-      // the skills share one notion of reach.
-      const target = this.nearestEnemy(p.x, p.y, 150 * SKILL_HITBOX);
-      if (target) this.basicAttack(target);
-      else p.attackCd = 0.06;
-    }
+    // Attacks are manual: the player chooses when to use a skill.
 
     // dodge / dash input. Energy lives on the Run (the HUD reads run.energy),
     // so gate on this.energy — reading p.energy silently disabled the dash.
@@ -683,7 +676,11 @@ export class Run {
       const cdrMul = 1 - this.stats.cdr;
       if (slot.cd > 0) {
         slot.cd = Math.max(0, slot.cd - dt);
-        if (slot.cd === 0) this.emit('skill:ready', { slot: slot.index, id: slot.id });
+        if (slot.cd === 0) {
+          // Single-charge skills must become visibly ready again after cooldown.
+          if (slot.maxCharges === 1) slot.charges = 1;
+          this.emit('skill:ready', { slot: slot.index, id: slot.id });
+        }
       }
       if (slot.recharge > 0) {
         slot.recharge -= dt * cdrMul;
@@ -715,10 +712,18 @@ export class Run {
     const values = skillValues(def, slot.rank, slot.branch ? this.branchMods(slot) : {});
     this.energy -= def.cost;
     const casts = this.rng.chance(this.mods.echo) ? 2 : 1;
+    // Powerful instant skills wind up briefly. Skills with their own impact
+    // telegraph (meteor, beam, volley) already have a longer built-in delay.
+    const windup = (def.rarity === 'epic' || def.rarity === 'mythic') &&
+      !['meteor', 'beam', 'volley'].includes(def.pattern) ? 0.25 : 0;
     for (let i = 0; i < casts; i++) {
-      this.executeSkill(slot, values, i);
+      if (windup) {
+        this.emit('fx:skill', { id: def.id, pattern: def.pattern, glyph: def.icon.glyph,
+          tint: def.icon.tint, x: this.player.x, y: this.player.y - 22, ultimate: true });
+        (this.slotsTimeouts ||= []).push({ at: this.time + windup, fn: () => this.executeSkill(slot, values, i) });
+      } else this.executeSkill(slot, values, i);
     }
-    slot.cd = Math.max(0.1, values.cd);
+    slot.cd = Math.max(0.1, values.cd * (1 - this.stats.cdr) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed'))));
     slot.charges = Math.max(0, slot.charges - 1);
     if (slot.maxCharges > 1 && slot.charges < slot.maxCharges && slot.recharge <= 0) slot.recharge = values.cd;
     this.statsTotals.casts++;
@@ -744,13 +749,15 @@ export class Run {
       id: def.id, pattern: def.pattern, glyph: def.icon.glyph, tint: def.icon.tint,
       x: p.x, y: p.y - 22, target, values, castIndex, ...extra,
     });
-    const power = values.dmg * (this.mods.skillArea ? 1 : 1);
+    const rv = values.rankValues || {};
+    const baseDamage = typeof rv.damage === 'number' ? rv.damage : (def.params.damage ?? def.params.dmg ?? 1);
+    const power = values.dmg * baseDamage;
+    const potency = this.skillPotency(def);
     // Base skill hitbox size. Areas were wide enough that damage landed on
     // enemies the player never aimed at; this trims every pattern by the same
     // factor, then adds the player's own skillArea upgrades on top so the perk
     // still reads as a gain. Done here, once, so no pattern can be missed.
     const area = SKILL_HITBOX * (1 + this.mods.skillArea);
-    const rv = values.rankValues || {};
     switch (def.pattern) {
       case 'melee': {
         emitCast();
@@ -786,7 +793,7 @@ export class Run {
         const dx = target ? Math.cos(dir) : p.facing;
         const dy = target ? Math.sin(dir) * 0.4 : 0;
         p.invuln = Math.max(p.invuln, def.params.invuln ? 0.35 : 0.1);
-        this.dashTo(p, dx, dy, p.x + dx * values.range * area, p.y + dy * values.range * area);
+        this.dashTo(p, dx, dy, p.x + dx * values.range * area * potency, p.y + dy * values.range * area * potency);
         this.arcDamage(p.x, p.y, 78 * area, 78 * area, p.facing, TAU, def, power, rv, true);
         this.emit('fx:dashTrail', { x: p.x, y: p.y, color: def.icon.tint });
         break;
@@ -796,14 +803,15 @@ export class Run {
         let dx = p.held.x, dy = p.held.y;
         if (!dx && !dy) dx = p.facing;
         const len = Math.hypot(dx, dy) || 1;
-        const nx = clamp(p.x + (dx / len) * values.range * area, PLAY.left, PLAY.right);
-        const ny = clamp(p.y + (dy / len) * values.range * area * 0.6, PLAY.top, PLAY.bottom);
+        const nx = clamp(p.x + (dx / len) * values.range * area * potency, PLAY.left, PLAY.right);
+        const ny = clamp(p.y + (dy / len) * values.range * area * potency * 0.6, PLAY.top, PLAY.bottom);
         this.emit('fx:blink', { x: p.x, y: p.y, x2: nx, y2: ny, color: def.icon.tint });
         p.x = nx; p.y = ny;
         p.invuln = Math.max(p.invuln, def.params.invuln || 0.2);
         if (rv.damage || rv.decoyBoom) this.arcDamage(p.x, p.y, 86 * area, 86 * area, p.facing, TAU, def, power, rv, true);
         break;
       }
+      case 'fish':
       case 'projectile': {
         emitCast();
         const count = rv.count || def.params.count || 1;
@@ -818,7 +826,7 @@ export class Run {
             homing: def.params.homing || 0,
             explode: def.params.explode ? def.params.explode * (rv.blast || 1) * area : 0,
             burn: !!rv.burnZone, tint: def.icon.tint, shape: def.icon.glyph,
-            source: 'skill', owner: 'player', life: 2.6,
+            source: 'skill', owner: 'player', life: 2.6, knock: def.pattern === 'fish' ? 220 : 0,
           });
         }
         break;
@@ -829,7 +837,7 @@ export class Run {
         for (let i = 0; i < repeats; i++) {
           const t = this.slotsTimeouts = this.slotsTimeouts || [];
           t.push({ at: this.time + i * 0.22, fn: () => {
-            const R = (rv.radius || def.params.radius || values.radius) * area * (1 + i * 0.08);
+            const R = values.radius * area * (1 + i * 0.08);
             this.arcDamage(p.x, p.y, R, R, p.facing, TAU, def, power, rv, true);
             this.emit('fx:nova', { x: p.x, y: p.y, radius: R, color: def.icon.tint, delay: i });
             if (def.params.knock) this.knockbackArea(p.x, p.y, R, def.params.knock * (1 + this.mods.knock));
@@ -934,7 +942,7 @@ export class Run {
         emitCast();
         const tgt = target;
         if (!tgt) break;
-        tgt.mark = rv.amp || def.params.amp;
+        tgt.mark = (rv.amp || def.params.amp) * potency;
         tgt.markTime = def.params.time;
         tgt.markTick = !!rv.tick;
         this.emit('fx:mark', { x: tgt.x, y: tgt.y - 24, color: def.icon.tint });
@@ -954,9 +962,19 @@ export class Run {
         const zy = target ? target.y : p.y;
         this.zones.push({
           kind: 'zone', x: zx, y: zy, radius, time: rv.time || def.params.time, t: 0,
-          slow: rv.pull ? 0.8 : def.params.slow || 0, dps: (def.params.dps || 0) * area + (rv.dps || 0), pull: rv.pull || 0,
+          slow: clamp((rv.pull ? 0.8 : rv.slow || def.params.slow || 0) * potency, 0, 0.9), dps: this.skillDamage(def, power * ((def.params.dps || 0) + (rv.dps || 0))), pull: rv.pull || 0,
           tint: def.icon.tint, def, damagePerTick: this.skillDamage(def, power),
         });
+        break;
+      }
+      case 'banana': {
+        emitCast();
+        const count = rv.count || 1;
+        for (let i = 0; i < count; i++) {
+          this.traps.push({ x: clamp(p.x + p.facing * (65 + i * 48), PLAY.left, PLAY.right), y: p.y,
+            radius: def.params.radius * area, root: (rv.root || def.params.root) * potency,
+            time: def.params.time, t: 0, damage: this.skillDamage(def, power), tint: def.icon.tint, banana: true });
+        }
         break;
       }
       case 'trap': {
@@ -964,7 +982,7 @@ export class Run {
         const count = rv.count || 1;
         for (let i = 0; i < count; i++) {
           const tx = p.x + this.rng.range(-140, 140);
-          this.traps.push({ x: tx, y: clamp(p.y + this.rng.range(-50, 50), PLAY.top, PLAY.bottom), radius: def.params.radius * area * (rv.radius || 1), root: rv.root || def.params.root, time: def.params.time, t: 0, damage: rv.damage ? this.skillDamage(def, power) : 0, tint: def.icon.tint });
+          this.traps.push({ x: tx, y: clamp(p.y + this.rng.range(-50, 50), PLAY.top, PLAY.bottom), radius: def.params.radius * area * (rv.radius || 1), root: (rv.root || def.params.root) * potency, time: def.params.time, t: 0, damage: rv.damage ? this.skillDamage(def, values.dmg) : 0, tint: def.icon.tint });
         }
         break;
       }
@@ -991,8 +1009,8 @@ export class Run {
           this.minions.push({
             kind, x: p.x + this.rng.range(-40, 40), y: p.y, t: 0,
             life: (rv.time || def.params.duration),
-            cd: 0.2, damage: this.stats.atk * 0.5 * power2, hp: 40 * power2,
-            maxHp: 40 * power2, attackCd: 0, facing: p.facing,
+            cd: 0.2, damage: this.skillDamage(def, power * 0.5) * power2, hp: 40 * power2 * potency,
+            maxHp: 40 * power2 * potency, attackCd: 0, facing: p.facing,
             power: power2, ranged: !!rv.ranged, taunt: !!rv.taunt, area: !!rv.aura && rv.aura === 'heal',
             tint: def.icon.tint, def,
           });
@@ -1005,11 +1023,11 @@ export class Run {
         const time = rv.time || def.params.time;
         this.addBuff({
           id: def.id, time,
-          atkSpeed: rv.atkSpeed ?? def.params.atkSpeed ?? 0,
-          move: rv.move ?? def.params.move ?? 0,
-          armor: rv.armor ?? def.params.armor ?? 0,
-          reflect: rv.reflect ?? def.params.reflect ?? 0,
-          crit: rv.crit ?? 0,
+          atkSpeed: (rv.atkSpeed ?? def.params.atkSpeed ?? 0) * potency,
+          move: (rv.move ?? def.params.move ?? 0) * potency,
+          armor: (rv.armor ?? def.params.armor ?? 0) * potency,
+          reflect: (rv.reflect ?? def.params.reflect ?? 0) * potency,
+          crit: (rv.crit ?? def.params.crit ?? 0) * potency,
           regen: rv.regen ? def.params.regen || 6 : 0,
           drawback: rv.noDrawback ? 0 : def.params.drawback || 0,
           forceCrit: !!rv.forceCrit,
@@ -1022,7 +1040,7 @@ export class Run {
       }
       case 'shield': {
         emitCast({ buff: true });
-        const amount = this.stats.hpMax * (def.params.shield || 0.3) * (rv.shield || 1);
+        const amount = this.stats.hpMax * (def.params.shield || 0.3) * (rv.shield || 1) * potency;
         this.applyShield(amount, def.params.time || 7);
         if (def.params.reviveWard) { this.reviveWard = true; this.reviveWardTime = def.params.time || 8; }
         this.emit('fx:shield', { x: p.x, y: p.y, color: def.icon.tint });
@@ -1030,9 +1048,9 @@ export class Run {
       }
       case 'heal': {
         emitCast({ buff: true });
-        const amount = this.stats.hpMax * (rv.heal ?? def.params.heal ?? 0.2);
+        const amount = this.stats.hpMax * (rv.heal ?? def.params.heal ?? 0.2) * this.skillCoefficient(def);
         this.heal(amount);
-        this.energy = Math.min(this.stats.energyMax, this.energy + (def.params.energy || 0) + (rv.energy || 0));
+        this.energy = Math.min(this.stats.energyMax, this.energy + ((rv.energy ?? def.params.energy) || 0) * potency);
         if (rv.overTime) this.addBuff({ id: def.id + '_hot', time: 5, regen: amount / 5, tint: def.icon.tint });
         if (rv.cdr) this.stats.cdr = Math.min(0.6, this.stats.cdr + rv.cdr);
         this.emit('fx:heal', { x: p.x, y: p.y, color: def.icon.tint });
@@ -1053,8 +1071,8 @@ export class Run {
         this.addBuff({
           id: def.id, time: def.params.time || 7, aura: def.icon.tint,
           radius: (def.params.radius || 100) * area * (rv.radius || 1),
-          heal: rv.heal || def.params.heal || 0, armor: rv.armor || def.params.armor || 0,
-          burn: rv.burn || def.params.burn || 0, tint: def.icon.tint,
+          heal: (rv.heal || def.params.heal || 0) * potency, armor: (rv.armor || def.params.armor || 0) * potency,
+          burn: (rv.burn || def.params.burn || 0) * potency, tint: def.icon.tint,
         });
         break;
       }
@@ -1064,7 +1082,7 @@ export class Run {
         for (const e of this.enemies) {
           if (e.dead) continue;
           if (dist2(e.x, e.y, p.x, p.y) < radius * radius) {
-            e.slow = Math.max(e.slow, rv.slow || def.params.slow);
+            e.slow = Math.max(e.slow, clamp((rv.slow || def.params.slow) * potency, 0, 0.9));
             e.slowTime = Math.max(e.slowTime, rv.time || def.params.time);
             if (rv.amp) e.mark = Math.max(e.mark || 0, rv.amp), e.markTime = Math.max(e.markTime || 0, rv.time || 3);
           }
@@ -1083,10 +1101,10 @@ export class Run {
         const tgt = this.nearestEnemy(p.x, p.y, values.range * area);
         if (!tgt) break;
         const frac = tgt.hp / tgt.hpMax;
-        const killed = frac <= (rv.threshold || def.params.threshold);
+        const killed = frac <= clamp((rv.threshold || def.params.threshold) * potency, 0, 0.8);
         this.hitEnemy(tgt, killed ? tgt.hp + 1 : this.skillDamage(def, power), { source: 'skill', crit: true });
         if (killed) {
-          this.heal(this.stats.hpMax * (rv.heal || def.params.heal || 0.08));
+          this.heal(this.stats.hpMax * (rv.heal || def.params.heal || 0.08) * this.skillCoefficient(def));
           this.mods.atk += (rv.stack || def.params.stack || 0.04);
           this.emit('fx:soul', { x: tgt.x, y: tgt.y - 20, color: def.icon.tint });
         }
@@ -1142,6 +1160,18 @@ export class Run {
     return this.nearestEnemy(p.x, p.y, range) || null;
   }
 
+  skillCoefficient(def) {
+    const key = { health: 'skillScaleHealth', speed: 'skillScaleSpeed', armor: 'skillScaleArmor', damage: 'skillScaleDamage' }[skillScaling(def)];
+    const value = this.profile?.settings?.[key];
+    return Number.isFinite(value) ? clamp(value, 0, 3) : 1;
+  }
+
+  skillPotency(def) {
+    const base = { health: this.stats.hpMax / 90, speed: this.stats.move / 210,
+      armor: 1 + this.stats.def * 2, damage: this.stats.atk / 9 }[skillScaling(def)];
+    return Math.max(0, base) * this.skillCoefficient(def);
+  }
+
   skillDamage(def, power) {
     let mult = power;
     if (this.cat.passive.id === 'raw_channel' && (def.category === 'magic')) {
@@ -1149,7 +1179,7 @@ export class Run {
     }
     if (this.mods.goldenFur > 0 && this.hp / this.stats.hpMax > 0.7) mult *= 1 + this.mods.goldenFur;
     if (this.mods.lastStand > 0 && this.hp / this.stats.hpMax < 0.25) mult *= 1.3;
-    return this.stats.atk * mult;
+    return 9 * this.skillPotency(def) * mult;
   }
 
   applyShield(amount, time) {
@@ -1176,7 +1206,7 @@ export class Run {
     for (let i = p.buffs.length - 1; i >= 0; i--) {
       const b = p.buffs[i];
       b.time -= dt;
-      if (b.regen) this.heal(b.regen * dt, { silent: true });
+      if (b.regen || b.heal) this.heal(((b.regen || 0) + (b.heal || 0)) * dt, { silent: true });
       if (b.burn) {
         for (const e of this.enemies) if (!e.dead && dist2(e.x, e.y, p.x, p.y) < (b.radius || 100) ** 2) this.hitEnemy(e, b.burn * dt, { source: 'aura', silent: true, tick: true });
       }
@@ -1200,14 +1230,15 @@ export class Run {
       }
       hitAny = true;
       const res = computeDamage({
-        base: power, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg,
+        base: def ? this.skillDamage(def, power) : power, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg,
         roll: this.rng.float(), forceCrit: this.consumeForceCrit(),
         execute: this.mods.execute, amp: e.mark || 0,
         targetHpFrac: e.hp / e.hpMax,
       });
       this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
       if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, 3);
-      if (rv.stun) e.stun = Math.max(e.stun, rv.stun);
+      if (rv.stun || def?.params?.freeze) e.stun = Math.max(e.stun, (rv.stun || def.params.freeze) * (def ? this.skillPotency(def) : 1));
+      if (def?.params?.slow) this.applyStatus(e, 'slow', clamp(def.params.slow * this.skillPotency(def), 0, 0.9), def.params.slowTime || 2);
       if (rv.knock) this.knockback(e, rv.knock);
       if (def?.params?.knock) this.knockback(e, def.params.knock * (1 + this.mods.knock));
       const leech = rv.lifesteal || def?.params?.lifesteal || 0;
@@ -1240,8 +1271,18 @@ export class Run {
 
   /** Single damage funnel. Returns the damage actually dealt. */
   hitEnemy(enemy, amount, opts = {}) {
-    if (!enemy || enemy.dead) return 0;
+    if (!enemy || enemy.dead || !(amount > 0)) return 0;
     let dmg = amount;
+    // On-hit upgrades used to trigger only from the removed auto attack.
+    // Keep them useful on deliberate skill hits instead.
+    if (opts.source === 'skill' && !opts.tick) {
+      this.attackCounter++;
+      if (this.mods.everyThird > 0 && this.attackCounter % 3 === 0) dmg *= 1 + this.mods.everyThird;
+      if (this.mods.slowOnHit > 0) this.applyStatus(enemy, 'slow', this.mods.slowOnHit, 1.5);
+      if (this.mods.stunChance > 0 && this.rng.chance(this.mods.stunChance)) enemy.stun = Math.max(enemy.stun, 0.5);
+      if (this.mods.moonPact > 0 && this.moonPactReady) { dmg *= 3; this.moonPactReady = false; this.moonPactTimer = this.mods.moonPact; }
+      if (this.stats.lifesteal > 0) this.heal(dmg * this.stats.lifesteal, { silent: true });
+    }
     if (enemy.mark) dmg *= 1 + enemy.mark;
     if (enemy.mini || enemy.boss) dmg *= 1;
     // Bosses and wardens take reduced damage from summons so a passive build
@@ -1284,6 +1325,12 @@ export class Run {
     this.spawnPickup(enemy.x, enemy.y, 'xp', xp);
     if (this.rng.chance(clamp(enemy.gold, 0.02, 1))) this.spawnPickup(enemy.x + this.rng.range(-12, 12), enemy.y, 'gold', Math.max(1, Math.round(enemy.gold * 3 * (1 + this.mods.goldGain))));
     if (this.rng.chance(0.035) && !enemy.boss) this.spawnPickup(enemy.x, enemy.y, 'hp', 0.08);
+    // Permanent-upgrade currency drops often enough to make early progress.
+    if (enemy.boss || enemy.mini) {
+      // Credit boss rewards immediately: the wave can end before loot is collected.
+      this.embersFound = (this.embersFound || 0) + (enemy.boss ? 20 : 10);
+      this.emit('pickup', { kind: 'ember', x: enemy.x, y: enemy.y, auto: true });
+    } else if (this.rng.chance(0.18)) this.spawnPickup(enemy.x + 10, enemy.y, 'ember', 2);
     if (this.mods.killHeal) this.heal(this.stats.hpMax * this.mods.killHeal, { silent: true });
     if (this.mods.killBoom) {
       this.arcDamage(enemy.x, enemy.y, 70, 70, 1, TAU, null, this.mods.killBoom, {}, true);
@@ -2252,7 +2299,7 @@ export class Run {
   spawnProjectile(opt) {
     const p = {
       x: opt.x, y: opt.y, angle: opt.angle, speed: opt.speed || 300,
-      damage: opt.damage || 1, radius: opt.radius || 6, life: opt.life || 2.4,
+      damage: opt.damage ?? 1, radius: opt.radius || 6, life: opt.life || 2.4,
       t: 0, owner: opt.owner || 'player', source: opt.source || 'skill',
       pierce: opt.pierce || 0, hits: new Set(), tint: opt.tint || '#ffffff',
       shape: opt.shape || 'orb', homing: opt.homing || 0, explode: opt.explode || 0,

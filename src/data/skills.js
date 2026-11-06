@@ -401,7 +401,30 @@ export const SKILLS = [
     cost: 34, cd: 10, range: 100, ranks: [R(1, 'Ba cầu lửa'), R(1, 'Bốn cầu', { count: 4 }), R(1, 'Sát thương +25%', { mult: 1.25 }), R(1, 'Để lại vệt cháy', { burnTrail: true }), R(1, 'Lâu hơn', { time: 8 })],
     params: { damage: 0.8, count: 3, radius: 72, time: 6, burn: true }, icon: { glyph: 'fireorbit', tint: '#ff8f4d' },
   },
+  // Two playful skills are free to equip, with different, usable mechanics.
+  {
+    id: 'banana_peel', category: 'control', rarity: 'common', pattern: 'banana',
+    name: { vi: 'Vỏ Chuối Phản Chủ', en: 'Banana Peel' },
+    desc: { vi: 'Thả vỏ chuối làm địch trượt chân và choáng.', en: 'Drop a banana peel to trip and stun enemies.' },
+    cost: 12, cd: 5, range: 130, ranks: [R(1, 'Trượt chân'), R(1, 'Choáng lâu hơn', { root: 1.8 }), R(1, 'Sát thương +25%', { mult: 1.25 }), R(1, 'Hai vỏ chuối', { count: 2 }), R(1, 'Ba vỏ chuối', { count: 3 })],
+    params: { radius: 38, root: 1.2, time: 9, damage: 1.2 }, icon: { glyph: 'banana', tint: '#ffe066' }, starter: true,
+  },
+  {
+    id: 'flying_fish', category: 'projectile', rarity: 'rare', pattern: 'fish',
+    name: { vi: 'Cá Bay Tới Công Chuyện', en: 'Flying Fish' },
+    desc: { vi: 'Ném cá vào mặt địch, gây sát thương và đẩy lùi.', en: 'Throw a fish at a foe, dealing damage and knocking it back.' },
+    cost: 14, cd: 3, range: 360, ranks: [R(1, 'Cá bay'), R(1, 'Cá đau hơn', { mult: 1.25 }), R(1, 'Hai con cá', { count: 2 }), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Ba con cá', { count: 3 })],
+    params: { speed: 420, damage: 1.5, spread: 0.2 }, icon: { glyph: 'fish', tint: '#77d9ff' }, starter: true,
+  },
 ];
+
+// Every family declares which character stat drives its power.
+export const SKILL_SCALING = {
+  physical: 'damage', magic: 'damage', projectile: 'damage', aoe: 'damage',
+  mobility: 'speed', defense: 'armor', control: 'armor', heal: 'health',
+  summon: 'health', utility: 'speed',
+};
+export const skillScaling = (skill) => skill.scaling || SKILL_SCALING[skill.category] || 'damage';
 
 export const SKILL_BY_ID = Object.fromEntries(SKILLS.map((s) => [s.id, s]));
 export const STARTER_SKILLS = SKILLS.filter((s) => s.starter).map((s) => s.id);
@@ -417,16 +440,20 @@ export function skillValues(skill, rank = 1, mods = {}) {
   let dmg = 1; let range = skill.range; let radius = skill.params.radius ?? skill.range;
   let count = skill.params.count ?? 1;
   let cost = skill.cost; let cd = skill.cd;
+  const rankValues = {};
   for (let i = 1; i <= idx; i++) {
     const r = skill.ranks?.[i];
     if (!r) continue;
+    for (const [key, value] of Object.entries(r)) {
+      if (!['note', 'dmg', 'mult'].includes(key)) rankValues[key] = value;
+    }
     if (r.mult) dmg *= r.mult;
     if (r.count) count = r.count;
     if (r.range) range = r.range;
-    if (r.radius) radius = r.radius;
+    if (r.radius) radius = r.radius < 4 ? (skill.params.radius ?? skill.range) * r.radius : r.radius;
     if (r.cdCut) cd -= r.cdCut;
   }
   if (mods.blast) radius *= mods.blast;
   cd = Math.max(0.1, cd);
-  return { dmg, range, radius, count, cost, cd, rankValues: skill.ranks?.[idx] || {}, mods };
+  return { dmg, range, radius, count, cost, cd, rankValues, mods };
 }

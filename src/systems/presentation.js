@@ -92,7 +92,7 @@ export class Presentation {
       // Charge-up: a ring collapsing inward toward the caster, so the eye is
       // pulled to the origin and arrives exactly as the skill fires.
       this.addFx('castCharge', { x: e.x, y: e.y, radius: big ? 64 : 44, color, life: 0.26 });
-      this.addFx('castTell', { x: e.x, y: e.y, radius: big ? 40 : 30, color, life: 0.34 });
+      this.addFx('castTell', { x: e.x, y: e.y, radius: big ? 40 : 30, color, glyph: e.glyph, life: 0.34 });
       // Runes: short radial spokes around the glyph, like a sigil being drawn.
       for (let i = 0; i < (big ? 8 : 5); i++) {
         const a = (i / (big ? 8 : 5)) * TAU + (e.castIndex || 0) * 0.7;

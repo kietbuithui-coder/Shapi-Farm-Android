@@ -22,7 +22,8 @@ import { Input } from './input/input.js';
 import * as Scenes from './ui/scenes.js';
 
 /** Settings drawn as 0..1 sliders (see drawSettings) rather than on/off rows. */
-const SLIDER_SETTINGS = ['music', 'sfx', 'voice', 'shake', 'viewDistance'];
+const SCALE_SETTINGS = ['skillScaleHealth', 'skillScaleSpeed', 'skillScaleArmor', 'skillScaleDamage'];
+const SLIDER_SETTINGS = ['music', 'sfx', 'voice', 'shake', 'viewDistance', ...SCALE_SETTINGS];
 import { buildWiki } from './data/wiki.js';
 import { CATS, CAT_BY_ID } from './data/cats.js';
 import { PALETTE } from './data/palette.js';
@@ -198,7 +199,8 @@ export class Game {
     const P = this.profile;
     // Shake reads better as "off / weak / strong" than as a fraction, so it
     // snaps to quarters; the audio buses keep 5% steps.
-    P.settings[id] = id === 'viewDistance' ? 1 + Math.round(t * 20) / 20
+    P.settings[id] = SCALE_SETTINGS.includes(id) ? Math.round(t * 60) / 20
+      : id === 'viewDistance' ? 1 + Math.round(t * 20) / 20
       : id === 'shake' ? Math.round(t * 4) / 4 : Math.round(t * 20) / 20;
     this.applySettings();
     this.store.saveNow();
@@ -300,7 +302,9 @@ export class Game {
   setupScene(next, payload) {
     if (next === 'skills') this.skillPage = 0;
     if (next === 'run') {
-      this.startRun(payload);
+      // Returning from settings must resume the existing paused run, not
+      // silently create a new one and discard the player's progress.
+      if (!(this.prevScene === 'settings' && this.run && !payload)) this.startRun(payload);
     } else if (next === 'results') {
       this.summary = payload;
       this.teardownRun();
@@ -664,7 +668,20 @@ export class Game {
       case 'collection':
         if (id === 'back') return this.go('home');
         break;
+      case 'skillScaling':
+        if (id === 'back') return this.go('settings', { return: this.settingsReturn });
+        if (SCALE_SETTINGS.includes(id)) {
+          this.sliderGrabbed = id;
+          this.dragSlider(x);
+          return;
+        }
+        break;
       case 'settings':
+        if (id === 'secretScale') {
+          this.secretScaleTaps = (this.secretScaleTaps || 0) + 1;
+          if (this.secretScaleTaps >= 7) { this.secretScaleTaps = 0; this.go('skillScaling'); }
+          return;
+        }
         if (id === 'back') return this.go(this.settingsReturn || 'home');
         // Volume and shake are SLIDERS: the value comes from where you tapped
         // across the row, not from the fact that you tapped. There was no
@@ -971,6 +988,7 @@ export class Game {
         }
         break;
       }
+      case 'skillScaling': rects = Scenes.drawSkillScaling(ctx, base); break;
       case 'settings': rects = Scenes.drawSettings(ctx, { ...base, confirmReset: this.resetArmed }); break;
       case 'results': rects = Scenes.drawResults(ctx, { ...base, summary: this.summary || {}, victory: !!this.summary?.victory }); break;
       default: break;

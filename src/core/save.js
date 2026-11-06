@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   sfx: 0.75,
   voice: 0.8,
   shake: 1,
+  skillScaleHealth: 1, skillScaleSpeed: 1, skillScaleArmor: 1, skillScaleDamage: 1,
   viewDistance: 1.5, // visible width and height relative to the original view
   damageNumbers: true,
   quality: 'auto',
@@ -149,6 +150,9 @@ export function sanitizeSettings(raw) {
   s.voice = num(raw.voice, s.voice, 0, 1);
   s.shake = num(raw.shake, s.shake, 0, 1);
   s.viewDistance = num(raw.viewDistance, s.viewDistance, 1, 2);
+  for (const key of ['skillScaleHealth', 'skillScaleSpeed', 'skillScaleArmor', 'skillScaleDamage']) {
+    s[key] = num(raw[key], s[key], 0, 3);
+  }
   s.damageNumbers = raw.damageNumbers !== false;
   s.aimAssist = raw.aimAssist !== false;
   s.reduceMotion = !!raw.reduceMotion;

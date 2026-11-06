@@ -64,6 +64,15 @@ function starPath(ctx, cx, cy, r1, r2, n, rot = -Math.PI / 2) {
 
 /* ── glyphs ───────────────────────────────────────────────────────────────── */
 const G = {
+  fish(ctx) {
+    ctx.beginPath(); ctx.ellipse(1, 0, 8, 5, 0, 0, TAU); fill(ctx); stroke(ctx);
+    ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-11, -5); ctx.lineTo(-11, 5); ctx.closePath(); fill(ctx); stroke(ctx);
+    ctx.fillStyle = INK; dot(ctx, 5, -1, 1); fill(ctx);
+  },
+  banana(ctx) {
+    ctx.beginPath(); ctx.moveTo(-10, -5); ctx.quadraticCurveTo(-4, 11, 9, 1);
+    ctx.quadraticCurveTo(5, 11, -5, 9); ctx.quadraticCurveTo(-12, 7, -10, -5); ctx.closePath(); fill(ctx); stroke(ctx);
+  },
   /* claws & fangs ------------------------------------------------------- */
   claw(ctx) {
     for (let i = -1; i <= 1; i++) {

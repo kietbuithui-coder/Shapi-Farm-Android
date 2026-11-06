@@ -72,6 +72,7 @@ export function computeDamage({
   variance = 0.06, defense = 0, penetration = 0,
 }) {
   const isCrit = forceCrit || roll < crit;
+  if (!(base > 0) || !(atk > 0)) return { damage: 0, isCrit };
   let dmg = base * atk;
   // execute bonus ramps in below 40% health
   if (execute > 0 && targetHpFrac < 0.4) {

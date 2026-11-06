@@ -355,6 +355,7 @@ export class Renderer {
       ctx.fill();
     }
     ctx.restore();
+    if (tr.banana) drawIcon(ctx, 'banana', tr.x, tr.y - 5, 26, tr.tint);
   }
 
   drawProjectiles(ctx, run, t) {
@@ -379,6 +380,10 @@ export class Renderer {
       ctx.arc(pr.x, pr.y, pr.radius * 2.6, 0, TAU);
       ctx.fill();
       ctx.restore();
+      if (pr.shape === 'fish') {
+        ctx.save(); ctx.translate(pr.x, pr.y); ctx.rotate(pr.angle + Math.sin(t * 12) * 0.25);
+        drawIcon(ctx, 'fish', 0, 0, 24, tint); ctx.restore();
+      }
       if (pr.shape === 'needle') {
         ctx.save();
         ctx.translate(pr.x, pr.y);
@@ -579,6 +584,10 @@ export class Renderer {
           ctx.strokeStyle = hexA(f.color, (1 - p) * 0.7);
           ctx.lineWidth = 2;
           ctx.stroke();
+          if (f.glyph) {
+            ctx.globalAlpha = 1 - p;
+            drawIcon(ctx, f.glyph, f.x, f.y - 18 - p * 12, 20 + p * 10, f.color);
+          }
           ctx.restore();
           break;
         }

@@ -149,6 +149,9 @@ test('waves advance: a run never soft-locks on an empty wave', () => {
   advance(run, 1.5);
   const seen = new Set();
   for (let i = 0; i < 60 * 240; i++) {
+    // Progress now requires deliberate attacks; clear live enemies explicitly
+    // so this test continues to isolate wave bookkeeping from combat AI.
+    for (const enemy of run.enemies) if (!enemy.dead) run.hitEnemy(enemy, enemy.hp + 1, { source: 'skill' });
     run.step(DT, {});
     while (run.state === RUN_STATE.LEVELUP) run.chooseOffer(0);
     while (run.state === RUN_STATE.REWARD) run.chooseReward(0);
