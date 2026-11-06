@@ -97,6 +97,7 @@ export class Game {
     this.fpsMeter = { frames: 0, t: 0, value: 60 };
     this.settingsReturn = null;
     this.resetTimer = 0;
+    this.showHitboxes = false;   // debug overlay, F1
 
     this.initLoadout();
     this.bind();
@@ -135,6 +136,13 @@ export class Game {
     const unlock = () => audio.unlock?.();
     addEventListener('pointerdown', unlock, { once: true });
     addEventListener('keydown', unlock, { once: true });
+    // Hitbox overlay. The player asked to be able to see the hitboxes; rather
+    // than permanently clutter the screen this is a toggle, and it is not in
+    // the HUD so it never appears in normal play. F1 on desktop, the same row
+    // in Settings on a phone.
+    addEventListener('keydown', (e) => {
+      if (e.code === 'F1') { e.preventDefault(); this.toggleHitboxes(); }
+    });
     addEventListener('visibilitychange', () => {
       if (document.hidden && this.run && this.scene === 'run' && !this.paused) this.togglePause(true);
     });
@@ -332,8 +340,12 @@ export class Game {
     this.run.start();
     this.ending = false;
     this.paused = false;
-    this.camera.zoom = 1;
-    this.camera.targetZoom = 1;
+    // The run wraps a follow-camera: it tracks the cat and picks a zoom that
+    // frames it for this screen (see Camera.fitZoom). Menus stay at 1:1.
+    this.camera.autoZoom = true;
+    this.camera.zoom = this.camera.fitZoom(this.w, this.h);
+    this.camera.targetZoom = this.camera.zoom;
+    this.camera.snapNext = true;
     this.hud.lastLevel = 1;
     this.hud.lastCombo = 0;
     this.touch.layout(this.w, this.h, this.safe, this.run);
@@ -425,6 +437,66 @@ export class Game {
     // Presentation reads shake per-event, so it only needs the new profile.
     if (this.pres) this.pres.settings = st;
     if (this.run && this.run.applySettings) this.run.applySettings(st);
+  }
+
+  /** Show/hide the debug hitbox overlay (player hurtbox, attack reach). */
+  toggleHitboxes() {
+    this.showHitboxes = !this.showHitboxes;
+    return this.showHitboxes;
+  }
+
+  /**
+   * Debug overlay: draws the hurtbox of the player and every enemy, plus the
+   * player's reach. Off unless toggled (F1), and never part of the HUD.
+   *
+   * This exists because "the hitbox is big" and "the character needs a hitbox"
+   * are impossible to act on from a description alone — the numbers were
+   * already sensible (the cat's hurtbox is r=17 against boss hitboxes of 46-56)
+   * but there was no way for a player to see that. Seeing it settles the
+   * question, and it also makes any future mismatch obvious at a glance.
+   */
+  drawHitboxes(ctx, dpr) {
+    const run = this.run;
+    if (!run) return;
+    const cam = this.camera;
+    const sx = this.w, sy = this.h;
+    // The world is drawn by the renderer's own arena fit (fitArena), NOT by a
+    // centred camera transform — so this overlay has to use the same numbers or
+    // it draws circles that do not line up with the sprites. The renderer owns
+    // scale/offset; cam.zoom is already folded into renderer.scale.
+    const k = this.renderer.scale;
+    const ox = this.renderer.offsetX;
+    const oy = this.renderer.offsetY;
+    const toScreen = (x, y) => ({
+      x: ox + x * k + cam.shakeX,
+      y: oy + y * k + cam.shakeY,
+    });
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineWidth = 1.5;
+    // player hurtbox
+    const p = toScreen(run.player.x, run.player.y - 18);
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, run.player.radius * k, run.player.radius * 0.72 * k, 0, 0, TAU);
+    ctx.strokeStyle = 'rgba(120,255,170,0.95)';
+    ctx.stroke();
+    // every enemy's hitbox
+    for (const e of run.enemies) {
+      if (e.dead) continue;
+      const q = toScreen(e.x, e.y - 14);
+      ctx.beginPath();
+      ctx.ellipse(q.x, q.y, e.radius * k, e.radius * 0.72 * k, 0, 0, TAU);
+      ctx.strokeStyle = e.boss ? 'rgba(255,90,90,0.95)' : e.mini ? 'rgba(255,170,60,0.9)' : 'rgba(255,120,160,0.7)';
+      ctx.stroke();
+    }
+    // player reach: the radius the basic attack acquires at
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 150 * 0.85 * k, 150 * 0.85 * 0.72 * k, 0, 0, TAU);
+    ctx.strokeStyle = 'rgba(120,200,255,0.45)';
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   /* ── pause ────────────────────────────────────────────────────────────── */
@@ -799,9 +871,15 @@ export class Game {
     this.pres?.update(dt);
     this.touch.update(dt);
     this.hud.update(dt, run);
+    // A little lead in the direction the cat is facing: on a phone the zoom is
+    // tight enough that the cat sat dead-centre with the wave arriving from the
+    // edge of the screen. The lead is deliberately small (26 world units) so
+    // aiming does not feel like the camera is fighting the player.
+    const lead = (run.player.facing || 1) * 26;
     this.camera.update(dt, this.time, {
-      x: run.player.x, y: run.player.y - 20, worldW: ARENA.w, worldH: ARENA.h,
+      x: run.player.x + lead, y: run.player.y - 20, worldW: ARENA.w, worldH: ARENA.h,
     }, this.w / Math.max(0.001, this.renderer.scale || 1), this.h / Math.max(0.001, this.renderer.scale || 1));
+    this.camera.snapNext = false;
 
     // run state → overlays
     if (run.state === RUN_STATE.LEVELUP && this.overlay !== 'levelup') {
@@ -855,6 +933,7 @@ export class Game {
       this.renderer.fitArena(this.camera);
       this.renderer.drawWorld(this.run, this.pres, this.camera, this.time, {});
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (this.showHitboxes) this.drawHitboxes(ctx, dpr);
       this.drawRunOverlays(ctx, w, h);
     } else {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

@@ -49,9 +49,14 @@ export class Presentation {
     // stereo placement the moment the playfield was widened.
     const pan = (x) => (x / ARENA.w) * 2 - 1;
 
-    on('fx:slash', ({ x, y, facing, crit, skill, angle: a }) => {
+    on('fx:slash', ({ x, y, facing, crit, skill, angle: a, radius }) => {
       const angleBase = a != null ? a : facing > 0 ? -0.35 : Math.PI + 0.35;
-      this.addFx('slash', { x, y, radius: skill ? 96 : 74, angle: angleBase, spread: 1.7, color: crit ? '#ffe066' : '#ffd7a8', life: 0.2 });
+      // Draw the arc at the REACH THE ATTACK ACTUALLY HAS. This used to be a
+      // hardcoded 96 for every skill slash, so the effect was drawn a fixed
+      // size no matter what the hitbox was — after the hitbox pass the visual
+      // was lying to the player about where the attack ended.
+      const r = radius || (skill ? 96 : 74);
+      this.addFx('slash', { x, y, radius: r, angle: angleBase, spread: 1.7, color: crit ? '#ffe066' : '#ffd7a8', life: 0.2 });
       this.particles.burst(x, y, crit ? 7 : 4, { speed: 130, life: 0.25, size: 2.4, color: crit ? '#ffe066' : '#ffd0a0', spread: 1.6, dir: angleBase });
       audio.hit('slash', crit ? 0.9 : 0.5, pan(x));
     });

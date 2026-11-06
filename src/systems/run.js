@@ -202,6 +202,16 @@ export class Run {
     }
     const plan = wavePlan(this.night, wave);
     this.act = plan.act;
+    // A boss or miniboss from the PREVIOUS wave must never stand in this one.
+    //
+    // Wave 4 is a miniboss and wave 5 is the boss, so a player who out-damages
+    // the miniboss into the next wave was fighting `grub_mother` and
+    // `moon_devourer` at the same time — reported as "the boss fight has 2
+    // bosses". The wave-clear check requires `!this.miniBoss`, but
+    // `beginWave` was reachable with one still standing, and boss and miniboss
+    // are tracked by different fields, so neither cleared the other.
+    if (this.boss) { this.boss.dead = true; this.boss = null; }
+    if (this.miniBoss) { this.miniBoss.dead = true; this.miniBoss = null; }
     // From night 10 the campaign keeps going and the boss roster rotates; below
     // that this is exactly the authored act boss.
     this.actBoss = bossForNight(this.night, plan.act);
@@ -749,7 +759,7 @@ export class Run {
         const hits = rv.hits || def.params.hits || 1;
         for (let h = 0; h < hits; h++) {
           const swingDir = facing * (h % 2 ? -0.55 : 0.35);
-          this.emit('fx:slash', { x: p.x + facing * 24, y: p.y - 24, facing: Math.sign(swingDir), crit: false, skill: true, angle: swingDir });
+          this.emit('fx:slash', { x: p.x, y: p.y - 24, facing: Math.sign(swingDir), crit: false, skill: true, angle: swingDir, radius: arcR });
           this.arcDamage(p.x, p.y, arcR, arcR, facing, def.params.arc || 1.2, def, power, rv);
         }
         break;
@@ -763,7 +773,7 @@ export class Run {
             const tgt = this.nearestEnemy(p.x, p.y, 150);
             if (!tgt) return;
             this.hitEnemy(tgt, this.skillDamage(def, power), { source: 'skill', crit: this.rng.chance(this.stats.crit) });
-            this.emit('fx:slash', { x: tgt.x, y: tgt.y - 18, facing: tgt.x > p.x ? 1 : -1, skill: true });
+            this.emit('fx:slash', { x: tgt.x, y: tgt.y - 18, facing: tgt.x > p.x ? 1 : -1, skill: true, radius: 150 * SKILL_HITBOX });
             if (i === count - 1 && rv.knock) this.knockback(tgt, rv.knock);
             if (rv.energyOnHit) this.energy = Math.min(this.stats.energyMax, this.energy + rv.energyOnHit);
           } });
@@ -1668,13 +1678,24 @@ export class Run {
   }
 
   updateBosses(dt) {
-    if (!this.boss || this.boss.dead) return;
-    const b = this.boss;
+    // Minibosses run the SAME brain. They are stored in `miniBoss`, not `boss`,
+    // and this function used to bail out when `boss` was null — so during a
+    // miniboss wave nothing drove it: Stone Warden never moved, never attacked
+    // and never reached a phase, which is exactly "the thạch vệ hộ doesn't
+    // work". Boss first, otherwise the miniboss.
+    const b = (this.boss && !this.boss.dead) ? this.boss
+      : (this.miniBoss && !this.miniBoss.dead) ? this.miniBoss
+        : null;
+    if (!b) return;
     const def = b.def;
     b.tellCount += dt;
     // phase transitions
     const frac = b.hp / b.hpMax;
-    const nextPhase = def.phases.findIndex((ph, i) => frac <= ph.at && i > b.phase);
+    // Minibosses are authored without phases: they have one behaviour, so the
+    // phase list is empty rather than missing. Guarding here keeps the shared
+    // brain usable by both kinds instead of crashing on the first tick.
+    const phases = def.phases || [];
+    const nextPhase = phases.findIndex((ph, i) => frac <= ph.at && i > b.phase);
     if (nextPhase > b.phase) {
       b.phase = nextPhase;
       b.attackTimer = 0.9;
@@ -1688,9 +1709,11 @@ export class Run {
     if (b.stun > 0) { b.stun -= dt; b.attackTimer = Math.max(b.attackTimer, 0.15); return; }
     if (b.root > 0) { b.root -= dt; }
 
-    const phase = def.phases[Math.min(b.phase, def.phases.length - 1)];
+    // A phaseless miniboss runs on its base numbers; a boss runs on the phase
+    // it is in. One shared line each, so neither kind can be silently skipped.
+    const phase = phases.length ? phases[Math.min(b.phase, phases.length - 1)] : {};
     b.speed = def.speed * (phase.speed || 1);
-    b.dmg = def.damage * (phase.dmgMult || 1) * (this.difficulty === 'hard' ? 1.2 : 1);
+    b.dmg = (def.damage ?? def.dmg ?? 0) * (phase.dmgMult || 1) * (this.difficulty === 'hard' ? 1.2 : 1);
     // movement: drift toward mid-range, keep the player in view
     const p = this.player;
     const d = dist(b.x, b.y, p.x, p.y);
@@ -1874,7 +1897,13 @@ export class Run {
    * go through the same rules so nothing changed for the existing fights.
    */
   chooseBossAttack(b, phase) {
-    const list = phase.attacks;
+    // Minibosses declare a single `attack` on the definition instead of a phase
+    // attack list, so without this fallback every miniboss chose `null` and
+    // stood there swinging at nothing. Bosses are unchanged: their phase list
+    // still wins whenever it exists.
+    const list = (phase && phase.attacks && phase.attacks.length)
+      ? phase.attacks
+      : (b.def && b.def.attack ? [b.def.attack] : null);
     if (!list || !list.length) return null;
     const norm = list.map((a) => (typeof a === 'string' ? { id: a, tag: null } : a));
     const p = this.player;

@@ -175,7 +175,7 @@ substitute for a human looking at it.
 
 ### Build output
 
-`index.html` is ~583 KB (346 KB of JS + 11 inlined WOFF faces). `npm run verify`
+`index.html` is ~585 KB (349 KB of JS + 11 inlined WOFF faces). `npm run verify`
 enforces that:
 
 - no `<script src>`, no external stylesheet, no `http(s)://` URL

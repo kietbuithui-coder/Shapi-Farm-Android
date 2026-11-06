@@ -174,7 +174,12 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   ctx.restore();
 
   // primary action: one wide, warm entry point
+  // The rail is not the button: the tiles need more horizontal room than the
+  // Play button, and the play button's width was being used as the rail width.
+  // Room to the hero cat is the real limit; stay clear of it.
+  const heroLeftEdge = w * 0.73 - Math.min(w, h) * 0.42;
   const btnW = Math.min(420, w * 0.34);
+  const railW = Math.max(btnW, Math.min(w - left - 24, heroLeftEdge - left - 18));
   const btnH = 58;
   let by = topY + 74;
   const playR = button(ctx, { x: left, y: by, w: btnW, h: btnH, label: tr(lang, 'play'), icon: 'pounce', primary: true, hover: hover === 'play', font: '19px' });
@@ -184,28 +189,60 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   const secondaries = [
     { id: 'cats', label: tr(lang, 'cats'), icon: 'paw' },
     { id: 'skills', label: tr(lang, 'skills'), icon: 'sigil' },
-    { id: 'upgrades', label: tr(lang, 'upgrades'), icon: 'ember' },
-    { id: 'collection', label: tr(lang, 'collection'), icon: 'star' },
+    // Short labels: "Cường Hóa" / "Bộ Sưu Tập" do not fit a six-across rail on a
+    // phone and were being drawn as "Cuộn…" and "Bộ Sư…". The full names are
+    // still used as each screen's title, so nothing is lost — the tile is a
+    // signpost, and a signpost that has to be guessed at is worse than a short
+    // one.
+    { id: 'upgrades', label: L({ vi: 'Cường H.', en: 'Boosts' }, lang), icon: 'ember' },
+    { id: 'collection', label: L({ vi: 'Bộ Sưu', en: 'Album' }, lang), icon: 'star' },
     { id: 'codex', label: L({ vi: 'Sổ tay', en: 'Codex' }, lang), icon: 'book' },
     { id: 'settings', label: tr(lang, 'settings'), icon: 'clock' },
   ];
-  let sx = left;
   const gapT = 10;
-  const sw = (btnW - gapT * (secondaries.length - 1)) / secondaries.length;
-  const sh = 86;
-  for (const s of secondaries) {
+  // Available height for the rail, so the grid never runs off a short screen.
+  const railBottomLimit = h - safe.bottom - 14;
+  const availH = Math.max(120, railBottomLimit - by);
+  // Six tiles in one row only works if each gets enough width for its label.
+  // On a phone that rail is ~340px wide, so each tile got 56px and every label
+  // was truncated to "Kỹ Nă…", "Bộ S…" — the menu looked broken. Measure the
+  // widest label at the smallest acceptable type size and choose the number of
+  // columns from that, so the rail is 1 or 2 rows depending on the screen.
+  const minTileW = 104;
+  let cols = Math.max(1, Math.min(secondaries.length, Math.floor((railW + gapT) / (minTileW + gapT))));
+  let rows = Math.ceil(secondaries.length / cols);
+  // Fewer columns is only a win if the extra rows fit. If they do not, go back
+  // to a single row and accept narrower tiles rather than clipping the menu.
+  const fits = (c, r) => r * 64 + (r - 1) * gapT <= availH;
+  if (!fits(cols, rows)) {
+    cols = secondaries.length;
+    rows = 1;
+  }
+  const sw = (railW - gapT * (cols - 1)) / cols;
+  // Tile height is whatever the budget allows, clamped to a comfortable band.
+  const sh = clamp((availH - (rows - 1) * gapT) / rows, 56, 86);
+  const tileScale = clamp(Math.min(sw / 108, sh / 86), 0.68, 1.1);
+  secondaries.forEach((s, i) => {
+    const sx = left + (i % cols) * (sw + gapT);
+    const sy = by + Math.floor(i / cols) * (sh + gapT);
     const active = hover === s.id;
-    roundRect(ctx, sx, by, sw, sh, 14);
+    roundRect(ctx, sx, sy, sw, sh, 14);
     ctx.fillStyle = active ? 'rgba(255,255,255,0.075)' : 'rgba(10,14,26,0.66)';
     ctx.fill();
     ctx.strokeStyle = active ? 'rgba(255,201,102,0.45)' : 'rgba(255,201,102,0.15)';
     ctx.lineWidth = 1.1;
     ctx.stroke();
-    drawIcon(ctx, s.icon, sx + sw / 2, by + 30, 26, active ? '#ffe8a8' : 'rgba(206,216,238,0.78)');
-    text(ctx, trimTo(ctx, s.label, sw - 8, 9.5, 700), sx + sw / 2, by + 66, { size: 9.5, weight: 700, color: active ? '#ffe8a8' : 'rgba(170,182,210,0.95)', align: 'center' });
-    rects.push({ id: s.id, x: sx, y: by, w: sw, h: sh });
-    sx += sw + gapT;
-  }
+    const iconSize = Math.max(19, 26 * tileScale);
+    const labSize = Math.max(9, 9.5 * tileScale);
+    drawIcon(ctx, s.icon, sx + sw / 2, sy + sh * 0.36, iconSize, active ? '#ffe8a8' : 'rgba(206,216,238,0.78)');
+    text(ctx, trimTo(ctx, s.label, sw - 6, labSize, 700), sx + sw / 2, sy + sh - 12, {
+      size: labSize, weight: 700, color: active ? '#ffe8a8' : 'rgba(170,182,210,0.95)', align: 'center',
+    });
+    rects.push({ id: s.id, x: sx, y: sy, w: sw, h: sh });
+  });
+  // The rail can now end lower than before; block the next section from
+  // overlapping it by advancing `by` past the last row.
+  by += rows * sh + (rows - 1) * gapT;
 
   // ember purse (top-right, always visible)
   const purseW = 116;
@@ -319,7 +356,12 @@ export function drawCatSelect(ctx, { w, h, safe, t, lang, profile, hover, select
   const cat = CAT_BY_ID[selected] || CATS[0];
   const unlocked = isCatUnlocked(profile, cat);
   const prevCat = selectedPrev && selectedPrev !== selected ? CAT_BY_ID[selectedPrev] : null;
-  const prevA = prevCat ? clamp(fadeT, 0, 1) : 0;
+  // Cross-fade from the OLD cat to the NEW one. `fadeT` ramps 0 -> 1 after a
+  // pick, so it is the *outgoing* alpha: the previous cat fades out and the
+  // selected one fades in. This was inverted, so choosing a cat drew the
+  // previous cat at full opacity and the chosen one at zero — the rail showed
+  // the wrong cat forever after the first selection, which is the reported bug.
+  const prevA = prevCat ? 1 - clamp(fadeT, 0, 1) : 0;
 
   ctx.save();
   roundRect(ctx, railX, railY, railW, railH, 18);

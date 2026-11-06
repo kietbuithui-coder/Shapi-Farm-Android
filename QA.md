@@ -83,6 +83,20 @@ node tools/tune.mjs         # balance sweep (deterministic)
 - [x] The same tap/drag behaviour is verified in the **built** `index.html`,
       not only in source.
 
+## 4c. Phone play (post-release fixes)
+
+- [x] All three minibosses move and use their own attack (`stone_warden` →
+      `ringSlam`, `grub_mother` → `spawner`, `siren` → `screamPlus`). They ran
+      no AI at all before this round.
+- [x] A boss wave never contains a leftover miniboss.
+- [x] The cat-select rail previews the cat you selected, at every selection.
+- [x] Player position is on screen and clear of the thumb pad at the extremes
+      of the field, at 840×380, 780×360, 915×412, 640×360 and 1280×720.
+- [x] Home menu tiles show full labels with no ellipsis at 840×380.
+- [x] The stick's grab ellipse covers the bottom-left corner of the screen.
+- [x] `F1` toggles a hitbox overlay (player hurtbox, enemy hitboxes, basic
+      attack reach); it is off by default and absent from the HUD.
+
 ## 5. Codex
 
 - [x] Exactly 8 categories.

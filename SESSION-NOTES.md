@@ -23,7 +23,7 @@ node tools/render-bosses.mjs  # both new bosses, in-engine, both phases
 
 Live preview: `npm start` → <http://localhost:8080/>.
 
-Deliverable: **`index.html`**, 583 KB, 346 KB JS, 11 inlined fonts, no network
+Deliverable: **`index.html`**, 585 KB, 349 KB JS, 11 inlined fonts, no network
 access at runtime.
 
 ---
@@ -347,3 +347,126 @@ pass again: it had been failing because the player died and the simulated
 Attribution of the depth change, each reverted alone and re-measured: stat cut
 −6.1, hitbox tightening −1.6, XP curve −4.5 (27.5 → 23.0 → 16.9 → 15.3). All
 three were requested, so the new figure is recorded rather than tuned away.
+
+---
+
+## Phone play-test round
+
+Reported from a real device: "I try to play in phone but can't because of these
+things", plus a screenshot of the run screen. Six separate defects, five of them
+invisible to the whole existing test suite because none of them throw.
+
+### The minibosses were not fighting at all
+
+`Thạch Vệ Hộ` (Stone Warden) was completely inert: 0px moved, 0 attacks, no
+phases. So were Grub Mother and Siren.
+
+`updateBosses` opened with `if (!this.boss || this.boss.dead) return`. Bosses
+live in `this.boss` and minibosses in `this.miniBoss`, so during a miniboss wave
+the condition was always true and the function returned before doing anything.
+`updateEnemies` doesn't drive them either (they are excluded from the normal AI),
+so nothing was moving them. They had a full data definition, correct damage,
+telegraphed attacks and phase-less behaviour — and no code path that read any of
+it.
+
+Three fixes, all in the shared boss brain:
+1. `updateBosses` resolves `boss ?? miniBoss` instead of only `boss`.
+2. A phaseless miniboss runs on its base numbers (`phases = def.phases || []`)
+   instead of crashing on `phases.findIndex`.
+3. `chooseBossAttack` falls back to the miniboss's own single `def.attack`
+   instead of returning `null` — before this they moved but attacked nothing.
+
+After: `stone_warden` 1006px / 15 `ringSlam`, `grub_mother` 1156px / 16
+`spawner`, `siren` 1636px / 15 `screamPlus`. Re-verified inside the built
+`index.html`: 460px and 8 attacks in 20 seconds.
+
+### Two bosses in one fight
+
+Wave 4 is a miniboss, wave 5 is the boss. `beginWave` never cleared the previous
+wave's miniboss, so out-damaging the miniboss into the next wave left Grub Mother
+standing while Moon Devourer spawned. `beginWave` now retires any boss or
+miniboss still alive; they are tracked in different fields, so neither was
+clearing the other.
+
+### The cats screen showed the wrong cat
+
+The preview rail cross-fades from the previous selection to the new one.
+`prevA = clamp(fadeT, 0, 1)` and the new cat was drawn at `1 - prevA` — but
+`fadeT` ramps 0 → 1 *after* a pick, so it is the outgoing alpha. The result was
+inverted: choose Mèo Mun and the rail kept showing Mướp Cam at full opacity
+while the black cat sat at zero. Every cat after the first selection showed the
+previous one. Now `prevA = 1 - clamp(fadeT, 0, 1)`.
+
+Visible in the before/after screenshots: selecting `black` with the label
+reading "Mèo Mun" while an orange tabby filled the panel.
+
+### The player could be drawn behind the skill pad
+
+On a landscape phone the whole 1570×660 arena was cover-fitted into 840×380,
+which put the play strip in a ~140px band and mapped its bottom-right corner to
+(817, 291) — directly under the skill buttons. Enemies there could not be seen,
+let alone hit, and neither could the player.
+
+Fixed by giving the run a scrolling camera (see below) and biasing the framing
+upward so the action sits at ~40–44% of the height rather than 50%. Verified at
+840×380, 780×360, 915×412, 640×360 and 1280×720: every extreme of the playable
+field now maps on screen and clear of the thumb pad.
+
+While fixing this, a second framing bug surfaced: the static "tall screen" crop
+offsets ran *after* the camera offsets and silently overwrote them, putting the
+player ~180px off screen at the left edge. Those offsets are now skipped when
+the camera scrolls.
+
+### Camera follow
+
+The camera already tracked the player, but `zoom` was pinned at 1 and the
+renderer used its own cover-fit, so "follow" was mostly static framing. Added
+`Camera.fitZoom` (fits ~430 world units of height, clamped 0.62–1.0, opt-in via
+`autoZoom` so menu and test framing is unchanged) and a 26px lead in the facing
+direction. On a phone the world now renders at ~1.27× with the cat framed, and
+`snapNext` prevents the visible slide at the start of a run.
+
+### Home menu labels were truncated
+
+Six tiles across a 285px rail at 9.5px type: "Kỹ Năng" → "Kỹ Nă…", "Bộ Sưu Tập"
+→ "Bộ S…". The rail now measures the available width, picks 1 or 2 rows, and
+sizes tiles/type from that; the two longest labels ("Cường Hóa", "Bộ Sưu Tập")
+use short forms on the tile because the full names are already the screen
+titles. No ellipsis at 840×380.
+
+### The stick's grab zone was partly off screen
+
+The ring was centred `edge + r` from the corner while `inStickZone` tests an
+ellipse of 1.55–1.7r, so a slice of the grabbable area fell outside the
+viewport. Inset now keeps the ring visible and the ellipse covers the corner.
+
+Note on how it actually works: `Input._touchDown` accepts a touch anywhere on
+the movement half of the screen and uses the finger's own landing point as the
+origin, so the ring position is presentation. That is why the game was still
+playable at all — and it is now documented at the call site so nobody "fixes"
+it into a hit-test against the ring.
+
+### Hitboxes: made visible instead of guessed at
+
+The reported "the hitbox (attack) is big … and the main char needs a hitbox
+too" was not reproducible as a defect: the player's hurtbox is r=17 against
+boss hitboxes of 46–56, and every skill radius is derived from one
+`SKILL_HITBOX = 0.85` constant. Rather than keep guessing, **F1 now toggles a
+hitbox overlay** (player hurtbox, every enemy hitbox, and the basic-attack reach
+circle). It is off by default and never part of the HUD.
+
+That overlay immediately paid for itself: it showed the player sprite mapping to
+the skill pad, which is how the framing bug above was found.
+
+One real mismatch it did confirm: skill slashes were drawn at a hardcoded
+radius 96 regardless of the attack's actual reach, so after the previous
+round's hitbox pass the effect was lying about where the attack ended. The slash
+FX now carries the real radius from `executeSkill`.
+
+### Numbers
+
+| | before | after |
+|---|---|---|
+| tests | 153 | **159** (6 new in `tests/phone.test.mjs`) |
+| `index.html` | 596,627 B | **599,165 B** |
+| minibosses functional | 0 / 3 | **3 / 3** |

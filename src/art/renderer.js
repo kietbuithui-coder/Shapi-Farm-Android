@@ -70,15 +70,52 @@ export class Renderer {
     }
     // Never shrink so far that characters become specks.
     fit = Math.max(fit, byHeight * 0.30);
+    // Scrolling view. Squeezing the whole 1570x660 arena into a landscape phone
+    // put the play strip in a ~140px band and pushed its bottom-right corner
+    // UNDER the skill pad, so enemies there were literally untouchable. When the
+    // camera is allowed to scroll (autoZoom) the world is drawn at a readable
+    // scale and shifted so the player stays framed; the camera supplies that
+    // offset below. Without it, behaviour is exactly as before.
+    const scrolling = !!camera?.autoZoom;
+    if (scrolling) {
+      // Aim for a comfortable band instead of the whole arena: roughly 300px of
+      // on-screen height for the play strip plus context.
+      const band = Math.max(byHeight * 1.45, this.height / 300);
+      fit = Math.max(fit, band);
+    }
     this.scale = fit * (camera?.zoom || 1);
     this.offsetX = (this.width - ARENA.w * fit) / 2;
     this.offsetY = (this.height - ARENA.h * fit) / 2;
+    if (scrolling) {
+      // Centre the camera's target, clamped so the world never slides past its
+      // own edges (no void at the rim of the terrace).
+      const s2 = this.scale;
+      const halfW = this.width / (2 * s2);
+      const halfH = this.height / (2 * s2);
+      const cx = clamp(camera.x, halfW, Math.max(halfW, ARENA.w - halfW));
+      const cy = clamp(camera.y, halfH, Math.max(halfH, ARENA.h - halfH));
+      this.offsetX = this.width / 2 - cx * s2;
+      // Bias the framing UP: the bottom of the screen is occupied by the thumb
+      // pad (skills right, stick left), and a cat drawn there is behind a
+      // button. Aim the action at 44% of the height instead of 50% so the
+      // character and the floor band sit clear of the controls.
+      // Smaller screens give the pad a bigger share, so bias further up there.
+      const bias = this.height < 460 ? 0.40 : 0.44;
+      this.offsetY = this.height * bias - cy * s2;
+    }
     // On tall phones the playfield is taller than the screen: bias the crop down
     // so the ground band (where the action happens) stays in view.
-    const extraX = (ARENA.w * fit - this.width) / 2;
-    const extraY = (ARENA.h * fit - this.height) / 2;
-    if (extraY > 0) this.offsetY = -extraY * 0.72;
-    if (extraX > 0) this.offsetX = -extraX * 0.5;
+    //
+    // This must NOT run when scrolling: those offsets are the static crop for a
+    // fixed framing, and applying them after the camera offset silently
+    // overwrote it — which put the player hundreds of pixels off screen at the
+    // edges of the arena.
+    if (!scrolling) {
+      const extraX = (ARENA.w * fit - this.width) / 2;
+      const extraY = (ARENA.h * fit - this.height) / 2;
+      if (extraY > 0) this.offsetY = -extraY * 0.72;
+      if (extraX > 0) this.offsetX = -extraX * 0.5;
+    }
     this.tall = tall;
   }
 

@@ -109,11 +109,24 @@ export class TouchControls {
       return pos;
     };
 
+    // The stick is centred a radius in from the edge, but its GRAB ZONE is
+    // 1.55r wide (thumbs are imprecise). At edge=12 and r=49 that put 76px of
+    // grab zone against 62px of room, so a third of the thumb target hung off
+    // the left edge — and the same at the bottom, where the ring was clipped by
+    // the screen. Players reported the game as unplayable on a phone for this
+    // reason alone: the part of the stick you actually grab was outside the
+    // viewport. Centre on the bigger of the two margins instead.
+    // The grab zone extends BEYOND the drawn ring (see inStickZone, which uses
+    // 1.55r). If the ring is centred a radius in from the edge, part of that
+    // grab zone hangs off screen and a thumb at the very edge is ignored — the
+    // reported "can't play on phone". Inset the ring so the *grab zone* fits.
+    const stickGrab = 1.55;
+    const inset = Math.min(edge + stickR, stickR * stickGrab + 4);
     const placeStick = (anchorRight) => {
       const cx = anchorRight
-        ? w - (safe.right || 0) - edge - stickR
-        : (safe.left || 0) + edge + stickR;
-      const cy = bottom - stickR;
+        ? Math.max(stickR, w - (safe.right || 0) - inset)
+        : Math.max(stickR, (safe.left || 0) + inset);
+      const cy = Math.max(stickR, h - (safe.bottom || 0) - inset);
       return { cx, cy, r: stickR };
     };
 
@@ -158,8 +171,14 @@ export class TouchControls {
   /** True if the point is inside the stick's grab area (generous, for thumbs). */
   inStickZone(x, y) {
     const s = this.stick;
-    // A wider grab zone than the drawn ring: thumbs are imprecise.
-    return Math.hypot(x - s.cx, y - s.cy) < s.r * 1.55;
+    // An ellipse, not a circle: thumbs sweep wide and low. The vertical radius
+    // is smaller than the horizontal one because the ring already sits near the
+    // bottom edge, so extending upward costs arena space while extending
+    // outward costs nothing. A circle here made edge taps fall through to the
+    // scene behind and could open a menu mid-run.
+    const dx = (x - s.cx) / (s.r * 1.7);
+    const dy = (y - s.cy) / (s.r * 1.45);
+    return dx * dx + dy * dy <= 1;
   }
 
   hitTest(x, y) {

@@ -92,6 +92,12 @@ export class Input {
     const y = e.clientY - r.top;
     // Skill buttons are hit-tested by the game (it owns the HUD layout); the
     // input layer only needs the movement half of the screen.
+    //
+    // Anywhere on the movement half starts the stick, and the finger's own
+    // landing point is the origin. That is deliberate (it is what makes the
+    // whole lower-left corner a valid thumb target, so a thumb that lands a
+    // little outside the drawn ring still works), and it means the ring's
+    // on-screen position is presentation rather than a hit area.
     if (x < this.w * 0.55) {
       if (this.touch.id === null) {
         this.touch.active = true;
