@@ -91,6 +91,44 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05060d;colo
 <body>
 <canvas id="game" width="960" height="540" aria-label="CAT LEGENDS"></canvas>
 <div id="boot"><div><div class="paw"></div><div class="mark">CAT LEGENDS</div></div></div>
+<script>
+/* Failure net. Registered BEFORE the game bundle so it also catches a bundle
+   that fails to parse — a try/catch inside the bundle cannot see that. Without
+   this, any failure leaves the splash spinning forever with no explanation. */
+(function () {
+  var shown = false;
+  function fail(detail) {
+    if (shown) return;
+    shown = true;
+    var boot = document.getElementById('boot');
+    if (!boot) { boot = document.createElement('div'); boot.id = 'boot'; document.body.appendChild(boot); }
+    boot.className = '';
+    boot.style.opacity = '1';
+    boot.style.pointerEvents = 'auto';
+    boot.innerHTML =
+      '<div style="text-align:center;padding:24px;max-width:560px">' +
+        '<div style="font-family:Lora,serif;font-size:26px;color:#ffe8a8;letter-spacing:.2em">CAT LEGENDS</div>' +
+        '<div style="margin-top:14px;font-size:13px;line-height:1.7;color:#9aa8c8">' +
+          'The game could not start in this browser.<br>' +
+          'Try a recent Chrome, Safari, Firefox or Edge — and make sure JavaScript is enabled.' +
+        '</div>' +
+        (detail ? '<div style="margin-top:12px;font-size:11px;color:#5c6785;word-break:break-word">' + detail + '</div>' : '') +
+        '<div style="margin-top:16px"><button onclick="location.reload()" style="font:inherit;font-size:13px;padding:9px 18px;border-radius:10px;border:1px solid rgba(255,201,102,.4);background:rgba(255,201,102,.12);color:#ffe8a8;cursor:pointer">Try again</button></div>' +
+      '</div>';
+  }
+  window.addEventListener('error', function (e) {
+    // Ignore errors that are not about the game failing to come up.
+    if (document.getElementById('boot')) fail(e && e.message ? String(e.message) : '');
+  });
+  window.addEventListener('unhandledrejection', function () {
+    if (document.getElementById('boot')) fail('');
+  });
+  // If the splash is still up after 15s, something stalled silently.
+  setTimeout(function () {
+    if (document.getElementById('boot')) fail('Timed out while loading.');
+  }, 15000);
+})();
+</script>
 <script>${js}</script>
 </body>
 </html>

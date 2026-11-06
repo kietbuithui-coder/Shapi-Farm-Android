@@ -31,10 +31,18 @@ function registerFonts() {
 
 /** Extract the single inline <script> body that carries the game bundle. */
 function extractBundle(source) {
-  const scripts = [...source.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
-  const body = scripts.map((m) => m[1]).filter((js) => js.length > 1000);
-  assert.equal(body.length, 1, 'exactly one large inline script');
-  return body[0];
+  const scripts = [...source.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  // The page carries exactly two inline scripts by design: a ~2 KB failure net
+  // (registered first, so it can catch the bundle failing to parse) and the game
+  // bundle. The bundle is identified by being an order of magnitude larger, not
+  // by being the only script — an exact count here broke the moment the failure
+  // net was added, which is a test that documented an implementation detail
+  // rather than the requirement.
+  assert.equal(scripts.length, 2, `expected the failure net plus the bundle, found ${scripts.length} inline scripts`);
+  const bundle = scripts.reduce((a, b) => (a.length >= b.length ? a : b));
+  assert.ok(bundle.length > 100_000, 'the game bundle is missing or truncated');
+  assert.ok(bundle.length > scripts.find((x) => x !== bundle).length * 20, 'the failure net and bundle are too similar in size to tell apart');
+  return bundle;
 }
 
 function makeEnv() {

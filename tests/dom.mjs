@@ -25,7 +25,7 @@ let fontsReady = false;
 const FAMILIES = new Map();     // "Display"/"UI" -> per-weight subset names
 const WEIGHTS = new Set([400, 500, 600, 700]);
 
-function registerFonts() {
+export function registerFonts() {
   if (fontsReady) return;
   fontsReady = true;
   const reg = (path, name) => { try { GlobalFonts.registerFromPath(path, name); return true; } catch { return false; } };
@@ -160,3 +160,6 @@ export async function bootGame({ width = 1280, height = 720, localStorageSeed = 
 
   return { canvas, game, step, draw, click, rects, flushFade, localStorage: globalThis.localStorage };
 }
+
+/** Alias used by tests/dom-built.mjs when booting the built bundle. */
+export const registerFontsForTest = registerFonts;
