@@ -34,9 +34,16 @@ export class Hud {
     const pad = safe.top + 16;
     const left = safe.left + 20;
     const right = w - safe.right - 20;
-    this.hpRect = { x: left + 74, y: pad + 16, w: Math.min(300, w * 0.28), h: 15 };
-    this.xpRect = { x: left, y: pad + 62, w: Math.min(340, w * 0.3), h: 6 };
+    // On narrow screens the bars must stop before the portrait circle and the
+    // corner buttons; w*0.28 ran the HP bar under them.
+    const narrow = w < 560;
+    const barW = narrow ? Math.max(120, w - 74 - 20 - 96) : Math.min(300, w * 0.28);
+    this.hpRect = { x: left + 74, y: pad + 16, w: barW, h: 15 };
+    this.xpRect = { x: left, y: pad + 62, w: narrow ? Math.min(barW + 40, w - 40) : Math.min(340, w * 0.3), h: 6 };
     this.pauseRect = { x: right - 22, y: pad + 22, r: 19 };
+    // Fullscreen sits beside pause on every platform: the brief asks for a
+    // visible control, not a keyboard shortcut hidden in documentation.
+    this.fsRect = { x: right - 22 - 52, y: pad + 22, r: 19 };
     this.skillRects = [];
     const size = mobile ? 62 : SKILL_SIZE;
     const gap = mobile ? 12 : 16;
@@ -155,7 +162,10 @@ export class Hud {
     ctx.restore();
 
     // ── expedition clock / night
-    if (opts.showNight !== false) {
+    // Hidden on narrow/portrait screens: the HP bar spans the full width there
+    // and the night label printed straight through it.
+    const narrowHud = w < 560;
+    if (opts.showNight !== false && !narrowHud) {
       const cx = w * 0.5;
       const cy = safe.top + 26;
       ctx.save();
@@ -235,9 +245,17 @@ export class Hud {
       ctx.restore();
     }
 
-    // ── pause
-    iconButton(ctx, { x: this.pauseRect.x, y: this.pauseRect.y, r: this.pauseRect.r, icon: 'pause', hover: this.hover === 'pause' });
-    this.hitRects.push({ id: 'pause', x: this.pauseRect.x - this.pauseRect.r, y: this.pauseRect.y - this.pauseRect.r, w: this.pauseRect.r * 2, h: this.pauseRect.r * 2 });
+    // ── pause + fullscreen.
+    // On portrait phones the touch layer owns these (the HUD's corner icons would
+    // land on the full-width bars), so the HUD skips drawing them there. Both
+    // layers used to draw a pair, which put two pause buttons on screen.
+    if (!opts.hideCornerButtons) {
+      iconButton(ctx, { x: this.pauseRect.x, y: this.pauseRect.y, r: this.pauseRect.r, icon: 'pause', hover: this.hover === 'pause' });
+      this.hitRects.push({ id: 'pause', x: this.pauseRect.x - this.pauseRect.r, y: this.pauseRect.y - this.pauseRect.r, w: this.pauseRect.r * 2, h: this.pauseRect.r * 2 });
+
+      iconButton(ctx, { x: this.fsRect.x, y: this.fsRect.y, r: this.fsRect.r, icon: opts.fullscreen ? 'compress' : 'expand', hover: this.hover === 'fullscreen' });
+      this.hitRects.push({ id: 'fullscreen', x: this.fsRect.x - this.fsRect.r, y: this.fsRect.y - this.fsRect.r, w: this.fsRect.r * 2, h: this.fsRect.r * 2 });
+    }
 
     // ── skill slots
     run.slots.forEach((slot, i) => {

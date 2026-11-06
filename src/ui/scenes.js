@@ -831,17 +831,72 @@ export function drawCollection(ctx, { w, h, safe, t, lang, profile, hover }) {
 /* ───────────────────────────── settings ───────────────────────────── */
 export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirmReset }) {
   drawBackdrop(ctx, w, h, t, PALETTE.slate, 0.8);
-  sceneTitle(ctx, tr(lang, 'settings'), '', safe.left + 30, safe.top + 96);
+  // The title block is scaled to the viewport: a 96px offset is fine on a 720px
+  // desktop window and eats 27% of a 360px-tall landscape phone, which pushed
+  // the last settings row off the bottom.
+  // On short screens the title drops its subtitle and shrinks, and sits BELOW the
+  // back button instead of through it.
+  const shortScreen = h < 480;
+  const titleY = shortScreen ? safe.top + 78 : safe.top + clamp(h * 0.13, 60, 96);
+  sceneTitle(ctx, tr(lang, 'settings'), '', safe.left + 30, titleY, { size: shortScreen ? 26 : 40 });
   const rects = [];
   const sx = safe.left + 34;
-  let sy = safe.top + 150;
-  const colW = Math.min(520, w - safe.left - safe.right - 90);
 
-  const slider = (id, label, value, icons) => {
+  // ── layout, derived from the space that actually exists.
+  //
+  // This screen holds 15 rows plus the reset button. The original fixed 40px
+  // pitch ran to y=646 on a 412px-tall landscape phone: every control below
+  // "aim assist" hung off the bottom of the screen — invisible AND unhittable,
+  // which a desktop-sized screenshot could never reveal. Instead of hiding
+  // settings or shrinking them into unreadable slivers, the column count and the
+  // row pitch are both derived from the available box.
+  //
+  //   · one column while a legible 30px pitch fits;
+  //   · otherwise two columns, halving the rows each must carry;
+  //   · controls are sized to the column so a button can never push past the
+  //     right edge (the HUD mode trio overflowed a 270px column before).
+  const railWidth = Math.min(320, w * 0.27);
+  const hasRail = w >= 900 && railWidth > 240;
+  const contentRight = hasRail ? w - safe.right - railWidth - 52 : w - safe.right - 30;
+  const contentW = Math.max(220, contentRight - sx);
+  const top0 = titleY + (shortScreen ? 26 : clamp(h * 0.075, 34, 54));
+  const bottomLimit = h - Math.max(14, safe.bottom + 12);
+
+  const TOTAL_ROWS = 16; // 15 settings + reset
+  const singlePitch = (bottomLimit - top0) / TOTAL_ROWS;
+  const cols = singlePitch >= 30 ? 1 : (contentW >= 470 ? 2 : 1);
+  const rowsPerCol = Math.ceil(TOTAL_ROWS / cols);
+  const colGap = cols > 1 ? 22 : 0;
+  const colW = (contentW - colGap * (cols - 1)) / cols;
+  const rowH = clamp((bottomLimit - top0) / rowsPerCol, 28, 40);
+  const compact = rowH < 34;
+  // Hit areas are at most one row tall: overlapping targets made neighbouring
+  // toggles steal each other's taps on short landscape phones.
+  const hitH = Math.min(28, rowH);
+
+  const labelSize = compact ? 11 : 12.5;
+  const labelW = compact ? 104 : 130;
+  const ctlW = Math.max(90, colW - labelW - 16);
+
+  let col = 0;
+  let row = 0;
+  let sy = top0 + rowH * 0.5;
+  const colX = () => sx + col * (colW + colGap);
+
+  /** Move to the next cell, wrapping into the next column. */
+  const advance = () => {
+    row++;
+    if (row >= rowsPerCol && col < cols - 1) { col++; row = 0; }
+    sy = top0 + rowH * (row + 0.5);
+  };
+  const rowLabel = (label) => text(ctx, label, colX(), sy + 4, { size: labelSize, weight: 600, color: 'rgba(230,224,208,0.9)' });
+  const rowCtlX = (off = 0) => colX() + labelW + off;
+
+  const slider = (id, label, value) => {
     const isHover = hover === id;
-    text(ctx, label, sx, sy + 4, { size: 12.5, weight: 600, color: 'rgba(230,224,208,0.9)' });
-    const bx = sx + 150;
-    const bw = colW - 190;
+    const bx = rowCtlX();
+    const bw = ctlW;
+    rowLabel(label);
     roundRect(ctx, bx, sy - 4, bw, 8, 4);
     ctx.fillStyle = 'rgba(255,255,255,0.07)';
     ctx.fill();
@@ -852,9 +907,10 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
     ctx.arc(bx + bw * value, sy, 7, 0, TAU);
     ctx.fillStyle = '#f4ecd8';
     ctx.fill();
-    rects.push({ id, x: bx, y: sy - 12, w: bw, h: 24, slider: true });
-    void icons;
-    sy += 40;
+    // The whole row is the hit area: a 7px slider handle is not a thumb target.
+    // Height derives from the row pitch so adjacent rows can never overlap.
+    rects.push({ id, x: colX(), y: sy - hitH / 2, w: labelW + bw, h: hitH, slider: true });
+    advance();
   };
 
   slider('music', tr(lang, 'music'), profile.settings.music);
@@ -863,9 +919,11 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
   slider('shake', tr(lang, 'shake'), profile.settings.shake);
 
   const toggle = (id, label, on) => {
-    const bx = sx + 150;
+    const bx = rowCtlX();
     const isHover = hover === id;
-    roundRect(ctx, bx, sy - 12, 46, 24, 12);
+    const th = compact ? 22 : 24;
+    rowLabel(label);
+    roundRect(ctx, bx, sy - th / 2, 46, th, th / 2);
     ctx.fillStyle = on ? 'rgba(124,224,176,0.28)' : 'rgba(255,255,255,0.07)';
     ctx.fill();
     ctx.strokeStyle = on ? 'rgba(124,224,176,0.8)' : 'rgba(255,201,102,0.2)';
@@ -875,32 +933,109 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
     ctx.arc(bx + (on ? 34 : 12), sy, 8, 0, TAU);
     ctx.fillStyle = isHover ? '#ffe8a8' : '#f4ecd8';
     ctx.fill();
-    text(ctx, label, sx, sy + 4, { size: 12.5, weight: 600, color: 'rgba(230,224,208,0.9)' });
-    rects.push({ id, x: bx - 140, y: sy - 14, w: 200, h: 28 });
-    sy += 40;
+    rects.push({ id, x: colX(), y: sy - hitH / 2, w: labelW + 60, h: hitH });
+    advance();
   };
   toggle('damageNumbers', tr(lang, 'damageNumbers'), profile.settings.damageNumbers);
   toggle('reduceMotion', tr(lang, 'reduceMotion'), profile.settings.reduceMotion);
   toggle('aimAssist', tr(lang, 'aimAssist'), profile.settings.aimAssist);
   toggle('qualityLow', t2(lang, 'Hiệu năng cao', 'High performance'), profile.settings.quality === 'low');
 
-  // language
-  text(ctx, tr(lang, 'language'), sx, sy + 4, { size: 12.5, weight: 600, color: 'rgba(230,224,208,0.9)' });
+  // ── touch HUD: mode trio, sized to the column
+  const hudModes = [['compact', 'hudCompact'], ['standard', 'hudStandard'], ['large', 'hudLarge']];
+  rowLabel(tr(lang, 'hud'));
+  {
+    const pw = Math.min(66, (ctlW - 12) / 3);
+    hudModes.forEach(([mode, key], i) => {
+      const bx = rowCtlX(i * (pw + 5));
+      const on = (profile.settings.hudMode || 'standard') === mode;
+      roundRect(ctx, bx, sy - 13, pw, 26, 13);
+      ctx.fillStyle = on ? 'rgba(255,201,102,0.18)' : 'rgba(255,255,255,0.05)';
+      ctx.fill();
+      ctx.strokeStyle = on ? 'rgba(255,201,102,0.7)' : 'rgba(255,201,102,0.16)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      text(ctx, tr(lang, key), bx + pw / 2, sy + 5, { size: pw < 54 ? 9 : 10.5, weight: 700, align: 'center', color: on ? '#ffe8a8' : 'rgba(200,210,232,0.7)' });
+      rects.push({ id: 'hud:' + mode, x: bx, y: sy - 13, w: pw, h: 26 });
+    });
+  }
+  advance();
+
+  // ── button size: a -/+ stepper works with a thumb and a mouse
+  rowLabel(tr(lang, 'hudScale'));
+  {
+    const scaleVal = typeof profile.settings.hudScale === 'number' ? profile.settings.hudScale : 1;
+    const minusR = { x: rowCtlX(), y: sy - 13, w: 28, h: 26 };
+    const plusR = { x: rowCtlX(Math.min(134, ctlW - 28)), y: sy - 13, w: 28, h: 26 };
+    const stepBtn = (r, label, id, disabled) => {
+      roundRect(ctx, r.x, r.y, r.w, r.h, 8);
+      ctx.fillStyle = disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.07)';
+      ctx.fill();
+      ctx.strokeStyle = disabled ? 'rgba(255,201,102,0.08)' : 'rgba(255,201,102,0.3)';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+      text(ctx, label, r.x + r.w / 2, r.y + r.h / 2 + 5, { size: 15, weight: 700, align: 'center', color: disabled ? 'rgba(200,210,232,0.28)' : '#ffe8a8' });
+      if (!disabled) rects.push({ id, x: r.x, y: r.y, w: r.w, h: r.h });
+    };
+    stepBtn(minusR, '-', 'hudScaleDown', scaleVal <= 0.71);
+    stepBtn(plusR, '+', 'hudScaleUp', scaleVal >= 1.39);
+    const trackX = minusR.x + 34;
+    const trackW = plusR.x - trackX - 8;
+    if (trackW > 14) {
+      roundRect(ctx, trackX, sy - 4, trackW, 8, 4);
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      ctx.fill();
+      const frac = (scaleVal - 0.7) / 0.7;
+      roundRect(ctx, trackX, sy - 4, Math.max(8, trackW * clamp(frac, 0, 1)), 8, 4);
+      ctx.fillStyle = 'rgba(255,201,102,0.8)';
+      ctx.fill();
+      if (!compact) text(ctx, `${Math.round(scaleVal * 100)}%`, trackX + trackW / 2, sy - 11, { size: 9.5, weight: 600, align: 'center', color: 'rgba(200,210,232,0.6)' });
+    }
+  }
+  advance();
+
+  // ── handedness
+  rowLabel(tr(lang, 'leftHanded'));
+  {
+    const bx = rowCtlX();
+    const on = !!profile.settings.leftHanded;
+    roundRect(ctx, bx, sy - 13, 58, 26, 13);
+    ctx.fillStyle = on ? 'rgba(120,220,180,0.2)' : 'rgba(255,255,255,0.05)';
+    ctx.fill();
+    ctx.strokeStyle = on ? 'rgba(140,230,200,0.7)' : 'rgba(255,201,102,0.16)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(bx + (on ? 44 : 14), sy, 7, 0, TAU);
+    ctx.fillStyle = '#f4ecd8';
+    ctx.fill();
+    rects.push({ id: 'leftHanded', x: bx, y: sy - 13, w: 58, h: 26 });
+  }
+  advance();
+
+  // ── language
+  rowLabel(tr(lang, 'language'));
   ['vi', 'en'].forEach((code, i) => {
-    const bx = sx + 150 + i * 62;
+    const bw = compact ? 42 : 52;
+    const bx = rowCtlX(i * (bw + 6));
     const on = profile.settings.lang === code;
-    roundRect(ctx, bx, sy - 14, 54, 28, 14);
+    roundRect(ctx, bx, sy - 13, bw, 26, 13);
     ctx.fillStyle = on ? 'rgba(255,201,102,0.18)' : 'rgba(255,255,255,0.05)';
     ctx.fill();
     ctx.strokeStyle = on ? 'rgba(255,201,102,0.7)' : 'rgba(255,201,102,0.16)';
     ctx.lineWidth = 1.2;
     ctx.stroke();
-    text(ctx, code.toUpperCase(), bx + 27, sy + 5, { size: 12, weight: 700, align: 'center', color: on ? '#ffe8a8' : 'rgba(200,210,232,0.7)' });
-    rects.push({ id: 'lang:' + code, x: bx, y: sy - 14, w: 54, h: 28 });
+    text(ctx, code.toUpperCase(), bx + bw / 2, sy + 5, { size: 11.5, weight: 700, align: 'center', color: on ? '#ffe8a8' : 'rgba(200,210,232,0.7)' });
+    rects.push({ id: 'lang:' + code, x: bx, y: sy - 13, w: bw, h: 26 });
   });
-  sy += 52;
+  advance();
 
-  const danger = button(ctx, { x: sx, y: sy, w: 190, h: 40, label: tr(lang, 'resetSave'), danger: true, hover: hover === 'reset', font: '12.5px' });
+  // ── danger zone: the last cell of the grid, never floating off screen
+  const danger = button(ctx, {
+    x: colX(), y: clamp(sy - rowH * 0.5 + 6, top0, bottomLimit - 40),
+    w: Math.min(190, colW), h: 34,
+    label: tr(lang, 'resetSave'), danger: true, hover: hover === 'reset', font: '12px',
+  });
   rects.push({ id: 'reset', ...danger });
 
   // Right rail: what the settings screen was leaving as dead space. It carries

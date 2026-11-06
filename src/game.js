@@ -13,6 +13,7 @@ import { Run, RUN_STATE, ARENA } from './systems/run.js';
 import { BotBrain } from './systems/bot.js';
 import { Presentation } from './systems/presentation.js';
 import { Renderer } from './art/renderer.js';
+import { FullscreenController, FS_STATE } from './systems/fullscreen.js';
 import { setIconRenderer, roundRect } from './ui/theme.js';
 import { drawIcon } from './art/icons.js';
 import { Hud } from './ui/hud.js';
@@ -82,6 +83,11 @@ export class Game {
     this.hitRects = [];
     this.safe = { top: 0, right: 0, bottom: 0, left: 0 };
     this.mobile = false;
+    this.hudMode = 'standard';       // compact | standard | large
+    this.hudScale = 1;               // 0.7 – 1.4, multiplies the mode
+    this.leftHanded = false;
+    this.fsState = FS_STATE.UNSUPPORTED;
+    this.fs = null;                  // FullscreenController, created in attachFullscreen()
     this.dpr = 1;
     this.fpsMeter = { frames: 0, t: 0, value: 60 };
     this.settingsReturn = null;
@@ -90,6 +96,7 @@ export class Game {
     this.initLoadout();
     this.bind();
     this.resize();
+    this.attachFullscreen();
     this.last = performance.now();
     requestAnimationFrame((t) => this.frame(t));
   }
@@ -141,9 +148,13 @@ export class Game {
             this.touch.press(hit.index);
             this.castSkill(hit.index);
           } else if (hit.kind === 'pause') this.togglePause(true);
+          else if (hit.kind === 'fullscreen') this.toggleFullscreen();
           return;
         }
-        if (x < this.w * 0.55) return; // movement taken by the Input layer
+        // Movement is owned by the Input layer, but WHICH side is the stick
+        // depends on handedness — hardcoding "left half" silently broke
+        // left-handed players (their stick taps opened menus instead).
+        if (this.touch.inStickZone(x, y)) return;
       }
       this.hover = this.hitTest(x, y);
       this.click(this.hover, x, y);
@@ -175,6 +186,56 @@ export class Game {
   }
 
   /* ── scene plumbing ───────────────────────────────────────────────────── */
+  /* ── fullscreen ───────────────────────────────────────────────────────── */
+
+  /** Wire the Fullscreen API and re-layout on every change. Never restarts a run. */
+  attachFullscreen() {
+    if (this.fs) return this.fs;
+    const host = this.canvas.parentElement || this.canvas;
+    this.fs = new FullscreenController(host, {
+      onChange: () => {
+        // Re-measure, re-layout, keep the run. This is the whole point: the
+        // viewport changed, the game state must not.
+        this.resize();
+        this.syncHudConfig();
+        this.fsState = this.fs ? this.fs.state : this.fsState;
+      },
+    }).attach();
+    this.fsState = this.fs.state;
+    return this.fs;
+  }
+
+  /** @returns {Promise<{ok:boolean, state:string, reason?:string}>} */
+  async toggleFullscreen() {
+    const fs = this.attachFullscreen();
+    const res = await fs.toggle();
+    this.fsState = fs.state;
+    if (!res.ok) {
+      // Honest feedback: say it failed rather than silently doing nothing.
+      this.toast = { name: { vi: 'Trình duyệt không cho toàn màn hình', en: 'Fullscreen unavailable here' }, t: 2.6 };
+    } else {
+      audio.ui?.('tap');
+    }
+    return res;
+  }
+
+  get isFullscreen() {
+    return this.fs ? this.fs.isFullscreen : false;
+  }
+
+  /** Push saved HUD preferences into the touch layer. */
+  syncHudConfig() {
+    const st = this.profile.settings;
+    this.hudMode = st.hudMode || 'standard';
+    this.hudScale = typeof st.hudScale === 'number' ? st.hudScale : 1;
+    this.leftHanded = !!st.leftHanded;
+    this.touch.configure({ mode: this.hudMode, scale: this.hudScale, leftHanded: this.leftHanded });
+    // Re-layout immediately: size and mirroring are computed in layout(), so
+    // without this the new preference only took effect on the next frame that
+    // happened to lay the HUD out again.
+    if (this.w && this.h) this.touch.layout(this.w, this.h, this.safe, this.run);
+  }
+
   go(next, payload) {
     if (this.scene === next) return;
     this.pending = { next, payload };
@@ -435,6 +496,33 @@ export class Game {
         break;
       case 'settings':
         if (id === 'back') return this.go(this.settingsReturn || 'home');
+        if (id.startsWith('hud:')) {
+          P.settings.hudMode = id.slice(4);
+          this.syncHudConfig();
+          this.store.saveNow();
+          audio.ui?.('tap');
+          return;
+        }
+        if (id === 'hudScaleUp' || id === 'hudScaleDown') {
+          const step = 0.1;
+          const cur = typeof P.settings.hudScale === 'number' ? P.settings.hudScale : 1;
+          const next = Math.min(1.4, Math.max(0.7, Math.round((cur + (id === 'hudScaleUp' ? step : -step)) * 10) / 10));
+          if (next !== cur) {
+            P.settings.hudScale = next;
+            this.syncHudConfig();
+            this.store.saveNow();
+            audio.ui?.('tap');
+          }
+          return;
+        }
+        if (id === 'leftHanded') {
+          P.settings.leftHanded = !P.settings.leftHanded;
+          this.syncHudConfig();
+          this.store.saveNow();
+          audio.ui?.('tap');
+          return;
+        }
+        if (id === 'fullscreen') { this.toggleFullscreen(); return; }
         if (id === 'reset') {
           this.resetTimer = 2.5;
           this.resetArmed = true;
@@ -459,6 +547,7 @@ export class Game {
         }
         break;
       case 'run':
+        if (id === 'fullscreen') { this.toggleFullscreen(); return; }
         if (this.paused) {
           if (id === 'resume') this.togglePause(false);
           else if (id === 'botToggle') { this.botMode = !this.botMode; this.bot = this.botMode ? new BotBrain(this.run) : null; }
@@ -691,14 +780,19 @@ export class Game {
     const lang = this.profile.settings.lang;
     // HUD
     this.hud.hover = this.hover;
-    this.hud.draw(ctx, run, lang, { t: this.sceneT, showNight: true, showBot: true, botOn: this.botMode });
+    // The touch layer draws the corner buttons itself on portrait phones.
+    const touchOwnsCorners = this.mobile && this.touch.ownsCornerButtons && !this.overlay && !this.paused;
+    this.hud.draw(ctx, run, lang, {
+      t: this.sceneT, showNight: true, showBot: true, botOn: this.botMode,
+      fullscreen: this.isFullscreen, hideCornerButtons: touchOwnsCorners,
+    });
     this.hitRects = [...this.hud.hitRects];
 
     // touch controls only on touch devices, and never under a modal
     if (this.mobile && !this.overlay && !this.paused) {
       const buttons = this.touch.layout(w, h, this.safe, run);
-      this.input.setTouchButtons?.(buttons.concat([this.touch.pauseRect]));
-      this.touch.draw(ctx, run, this.input, this.sceneT);
+      this.input.setTouchButtons?.(buttons.concat([this.touch.pauseRect, this.touch.fullscreenRect]));
+      this.touch.draw(ctx, run, this.input, this.sceneT, { fullscreen: this.isFullscreen });
       this.hitRects = this.hitRects.filter((r) => !r.id?.startsWith('skill'));
     }
 

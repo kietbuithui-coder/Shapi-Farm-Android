@@ -18,6 +18,11 @@ export const DEFAULT_SETTINGS = {
   quality: 'auto',
   reduceMotion: false,
   aimAssist: true,
+  // Mobile HUD preferences. Defaults are chosen so an existing save that has
+  // none of these keys behaves exactly as before — no migration step needed.
+  hudMode: 'standard',      // 'compact' | 'standard' | 'large'
+  hudScale: 1,              // 0.7 – 1.4, multiplies the mode
+  leftHanded: false,
 };
 
 export function defaultProfile() {
@@ -138,6 +143,10 @@ export function sanitizeSettings(raw) {
   s.aimAssist = raw.aimAssist !== false;
   s.reduceMotion = !!raw.reduceMotion;
   if (raw.quality === 'auto' || raw.quality === 'high' || raw.quality === 'low') s.quality = raw.quality;
+  // HUD prefs: unknown modes fall back rather than producing a broken layout.
+  if (raw.hudMode === 'compact' || raw.hudMode === 'standard' || raw.hudMode === 'large') s.hudMode = raw.hudMode;
+  s.hudScale = num(raw.hudScale, s.hudScale, 0.7, 1.4);
+  s.leftHanded = raw.leftHanded === true;
   return s;
 }
 

@@ -1082,6 +1082,65 @@ const G = {
     ctx.lineWidth = 1.3;
     ctx.stroke();
   },
+  // Four corner brackets, arms pointing outward: "enter fullscreen".
+  expand(ctx) {
+    const arm = (sx, sy) => {
+      ctx.beginPath();
+      ctx.moveTo(sx * 2, sy * 8);
+      ctx.lineTo(sx * 2, sy * 2);
+      ctx.lineTo(sx * 8, sy * 2);
+      ctx.stroke();
+    };
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    arm(-1, -1); arm(1, -1); arm(-1, 1); arm(1, 1);
+    ctx.strokeStyle = 'rgba(255,255,255,0.36)';
+    ctx.lineWidth = 1.7;
+    arm(-1, -1); arm(1, -1); arm(-1, 1); arm(1, 1);
+  },
+  // Same brackets pointing inward: "exit fullscreen".
+  compress(ctx) {
+    const arm = (sx, sy) => {
+      ctx.beginPath();
+      ctx.moveTo(sx * 8, sy * 2);
+      ctx.lineTo(sx * 2, sy * 2);
+      ctx.lineTo(sx * 2, sy * 8);
+      ctx.stroke();
+    };
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    arm(-1, -1); arm(1, -1); arm(-1, 1); arm(1, 1);
+    ctx.strokeStyle = 'rgba(255,255,255,0.36)';
+    ctx.lineWidth = 1.7;
+    arm(-1, -1); arm(1, -1); arm(-1, 1); arm(1, 1);
+  },
+  search(ctx) {
+    ctx.beginPath();
+    ctx.arc(-2, -2, 6.4, 0, TAU);
+    ctx.strokeStyle = INK; ctx.lineWidth = 3.6; ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(3.2, 3.2); ctx.lineTo(8.4, 8.4);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.36)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(-2, -2, 6.4, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(3.2, 3.2); ctx.lineTo(8.4, 8.4); ctx.stroke();
+  },
+  book(ctx) {
+    // open book: two page shapes with a spine
+    ctx.beginPath();
+    ctx.moveTo(-9, -6.5); ctx.quadraticCurveTo(-5, -8.4, -0.8, -6.2);
+    ctx.lineTo(-0.8, 7); ctx.quadraticCurveTo(-5, 5, -9, 6.6);
+    ctx.closePath(); fill(ctx); stroke(ctx);
+    ctx.beginPath();
+    ctx.moveTo(9, -6.5); ctx.quadraticCurveTo(5, -8.4, 0.8, -6.2);
+    ctx.lineTo(0.8, 7); ctx.quadraticCurveTo(5, 5, 9, 6.6);
+    ctx.closePath(); fill(ctx); stroke(ctx);
+  },
 };
 
 const GLYPH_ALIASES = { claw3: 'claw3', paw: 'paw' };

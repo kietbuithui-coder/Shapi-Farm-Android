@@ -44,15 +44,42 @@ export class Renderer {
     const byWidth = this.width / ARENA.w;
     const byHeight = this.height / ARENA.h;
     const k = Math.max(byWidth, byHeight);
-    this.scale = k * (camera?.zoom || 1);
-    this.offsetX = (this.width - ARENA.w * k) / 2;
-    this.offsetY = (this.height - ARENA.h * k) / 2;
-    // On tall phones the playfield is wider than the screen: bias the crop down
+    // PORTRAIT CORRECTION.
+    //
+    // Cover-fitting a 1180x660 arena into a 412x915 portrait viewport scales by
+    // height (1.39) and then crops the sides, which left the player looking at
+    // 183px of a 1180px arena — a slot canyon, and enemies entered from off
+    // screen with no warning. In portrait we instead fit by WIDTH so the whole
+    // arena width is legible, and let the extra height show sky/floor context.
+    const tall = this.height > this.width * 1.15;
+    // Portrait framing.
+    //
+    // Cover-fit (the old behaviour) scales by height and crops the sides: the
+    // player saw 183px of a 1180px arena and enemies arrived from off screen.
+    // Width-fit shows the arena but shrinks characters to specks and shows 190%
+    // of the arena height (mostly sky).
+    //
+    // The compromise: fit by width with a mild zoom, then cap the visible
+    // height at ~85% of the arena so the camera crops vertically instead of
+    // zooming out. Characters stay readable and ~48% of the width is visible.
+    let fit = tall ? byWidth * 1.28 : k;
+    if (tall) {
+      // Cap: the on-screen height of 0.85 * ARENA.h must fit the viewport.
+      const heightCap = (this.height * 0.85) / (ARENA.h * 1.62);
+      fit = Math.max(fit, heightCap);
+    }
+    // Never shrink so far that characters become specks.
+    fit = Math.max(fit, byHeight * 0.30);
+    this.scale = fit * (camera?.zoom || 1);
+    this.offsetX = (this.width - ARENA.w * fit) / 2;
+    this.offsetY = (this.height - ARENA.h * fit) / 2;
+    // On tall phones the playfield is taller than the screen: bias the crop down
     // so the ground band (where the action happens) stays in view.
-    const extraX = (ARENA.w * k - this.width) / 2;
-    const extraY = (ARENA.h * k - this.height) / 2;
+    const extraX = (ARENA.w * fit - this.width) / 2;
+    const extraY = (ARENA.h * fit - this.height) / 2;
     if (extraY > 0) this.offsetY = -extraY * 0.72;
     if (extraX > 0) this.offsetX = -extraX * 0.5;
+    this.tall = tall;
   }
 
   begin() {
@@ -86,7 +113,23 @@ export class Renderer {
     ctx.save();
     ctx.translate(sx, sy);
     ctx.scale(this.scale * VIEW, this.scale * VIEW);
+    // Tall viewports see past the bottom edge of the 660px arena, which showed
+    // as a black band under the terrace where the touch controls sit. Extend the
+    // stone downward so the frame stays filled instead of cut off.
+    if (visH > ARENA.h * 0.9) {
+      ctx.fillStyle = '#0b0d16';
+      ctx.fillRect(-ARENA.w, ARENA.h - 1, ARENA.w * 3, visH * 2);
+    }
     ctx.drawImage(env, 0, 0, ARENA.w, ARENA.h);
+    if (visH > ARENA.h * 0.9) {
+      // seam + receding floor so the extension reads as stone, not a pasted block
+      const g = ctx.createLinearGradient(0, ARENA.h, 0, ARENA.h + visH);
+      g.addColorStop(0, 'rgba(28,26,40,0.92)');
+      g.addColorStop(0.35, 'rgba(16,15,26,0.96)');
+      g.addColorStop(1, 'rgba(5,6,13,1)');
+      ctx.fillStyle = g;
+      ctx.fillRect(-ARENA.w, ARENA.h, ARENA.w * 3, visH * 2);
+    }
     drawAtmosphere(ctx, run.act, ARENA.w, ARENA.h, t, this.quality === 'low' ? 0.6 : 1);
     drawFloorShade(ctx, ARENA.w, ARENA.h, 512);
     drawArenaTrim(ctx, { x: 40, y: 150, w: ARENA.w - 80, h: 420 }, t, run.act.accent);
