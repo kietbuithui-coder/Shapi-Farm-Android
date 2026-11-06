@@ -183,8 +183,11 @@ export class Run {
     const def = BOSS_BY_ID[bossId];
     const scale = difficultyScale(this.night, this.wave);
     const boss = this.makeEnemy(def, {}, { boss: true, scale });
+    // Spawn INSIDE the playfield. GROUND_Y (512) is the floor line and sits below
+    // PLAY.bottom (506); the first tick used to clamp it, which showed up as a
+    // boss that was 1px out of bounds on spawn.
     boss.x = ARENA.w * 0.66;
-    boss.y = GROUND_Y;
+    boss.y = (PLAY.top + PLAY.bottom) / 2;
     boss.hp = boss.hpMax = def.hp * (this.difficulty === 'hard' ? 1.25 : 1);
     this.enemies.push(boss);
     this.boss = boss;
@@ -234,6 +237,7 @@ export class Run {
       stun: 0, mark: 0, markTime: 0, root: 0,
       elite: !!opts.elite, eliteMod, boss: !!opts.boss, mini: !!opts.mini,
       phase: 0, attackIndex: 0, attackTimer: 1.4, telegraph: null,
+      orbitDir: 1, orbitBias: 0,
       shield: def.shields ? Math.round(hp * 0.35) : 0,
       spawnT: 0, leapT: 0, leash: 0,
     };
@@ -1317,6 +1321,12 @@ export class Run {
       b.stun = Math.min(b.stun, 0.2);
       b.attackTimer = 1.2;
     }
+    // Stun and root apply to bosses too. updateEnemies() handles these for
+    // regular enemies, but the boss never went through that path, so a "stun"
+    // from a skill only drew an aura while the boss kept attacking.
+    if (b.stun > 0) { b.stun -= dt; b.attackTimer = Math.max(b.attackTimer, 0.15); return; }
+    if (b.root > 0) { b.root -= dt; }
+
     const phase = def.phases[Math.min(b.phase, def.phases.length - 1)];
     b.speed = def.speed * (phase.speed || 1);
     b.dmg = def.damage * (phase.dmgMult || 1) * (this.difficulty === 'hard' ? 1.2 : 1);
@@ -1325,11 +1335,105 @@ export class Run {
     const d = dist(b.x, b.y, p.x, p.y);
     const dirA = angle(b.x, b.y, p.x, p.y);
     b.facing = p.x >= b.x ? 1 : -1;
-    if (d > 240) { b.x += Math.cos(dirA) * b.speed * dt; b.y += Math.sin(dirA) * b.speed * dt * 0.5; }
-    else if (d < 150) { b.x -= Math.cos(dirA) * b.speed * dt * 0.7; b.y -= Math.sin(dirA) * b.speed * dt * 0.35; }
-    else { b.x += Math.cos(this.time * 0.5) * b.speed * dt * 0.6; b.y += Math.sin(this.time * 0.8) * b.speed * dt * 0.4; }
-    b.x = clamp(b.x, PLAY.left, PLAY.right);
-    b.y = clamp(b.y, PLAY.top, PLAY.bottom);
+
+    // ── Boilerplate: where does the boss want to be?
+    //
+    // The old version *added* a velocity and then clamped it, so when the
+    // retreat vector pointed into a wall the clamp silently ate the whole
+    // movement. With the player cornered, d converged to 0: the boss stood
+    // exactly on top of the player, unable to retreat (wall) and unable to
+    // approach (already touching), and the fight stalled until an attack
+    // happened to relocate it. Same story at d === 0, where both branches
+    // multiply by a zero direction vector.
+    //
+    // Now the intent is expressed as a target point, the step is clamped to the
+    // playfield per-axis, and any distance lost to the clamp is made up by
+    // sliding along the wall.
+    const step = b.speed * dt;
+    let tx = b.x;
+    let ty = b.y;
+    if (d > 240) {
+      // close the gap
+      tx = b.x + Math.cos(dirA) * step;
+      ty = b.y + Math.sin(dirA) * step * 0.5;
+    } else if (d < 150 && d > 1) {
+      // back off, but never out of the arena
+      tx = b.x - Math.cos(dirA) * step * 0.7;
+      ty = b.y - Math.sin(dirA) * step * 0.35;
+    } else if (d <= 1) {
+      // Degenerate: the boss is on top of the player. Pick a deterministic side
+      // so it always peels away instead of dividing a zero vector.
+      const away = b.facing >= 0 ? 1 : -1;
+      tx = b.x - away * step;
+      ty = b.y;
+    } else {
+      // Strafe AROUND the player, not back and forth along a line.
+      //
+      // The old version moved along cos(time) / sin(time), which oscillates:
+      // the boss reversed direction every few seconds and was momentarily
+      // motionless at each turn, so a perfectly healthy boss read as "stuck".
+      // Moving perpendicular to the player keeps it circling at a constant
+      // speed and always presents a changing silhouette.
+      const side = (b.orbitDir ?? 1) * (b.orbitBias ? Math.sign(b.orbitBias) : 1);
+      const perp = dirA + (Math.PI / 2) * side;
+      // gentle radial correction so it does not spiral in or out
+      const radial = (d - 195) * 0.004;
+      tx = b.x + (Math.cos(perp) + Math.cos(dirA) * radial) * step;
+      ty = b.y + (Math.sin(perp) + Math.sin(dirA) * radial) * step * 0.55;
+    }
+
+    const nx = clamp(tx, PLAY.left, PLAY.right);
+    const ny = clamp(ty, PLAY.top, PLAY.bottom);
+    const lostX = Math.abs(tx - nx);
+    const lostY = Math.abs(ty - ny);
+    b.x = nx;
+    b.y = ny;
+    // Slide the leftover movement along the free axis so a wall never costs the
+    // boss its whole step (that loss is what made cornered bosses creep).
+    const lost = lostX + lostY;
+    if (lost > 0.01) {
+      const freeX = nx <= PLAY.left + 0.5 || nx >= PLAY.right - 0.5 ? 0 : 1;
+      const freeY = ny <= PLAY.top + 0.5 || ny >= PLAY.bottom - 0.5 ? 0 : 1;
+      if (freeY) b.y = clamp(ny + (Math.sin(dirA) >= 0 ? -lost : lost) * 0.6, PLAY.top, PLAY.bottom);
+      else if (freeX) b.x = clamp(nx + (Math.cos(dirA) >= 0 ? -lost : lost) * 0.6, PLAY.left, PLAY.right);
+    }
+    // Hard separation: a boss may touch the player, never occupy the same pixel.
+    const sep = (b.radius || 40) * 0.55 + (p.radius || 17) * 0.3;
+    if (d < sep) {
+      const a2 = d > 0.01 ? Math.atan2(b.y - p.y, b.x - p.x) : (b.facing >= 0 ? 0 : Math.PI);
+      b.x = clamp(p.x + Math.cos(a2) * sep, PLAY.left, PLAY.right);
+      b.y = clamp(p.y + Math.sin(a2) * sep * 0.6, PLAY.top, PLAY.bottom);
+    }
+
+    // ── Anti-stuck watchdog ────────────────────────────────────────────────
+    // If the boss needs to move but cannot, give it a fresh orbit bias and, as
+    // a last resort after repeated failures, nudge it to open ground away from
+    // the player — never in front of them, never on top of them.
+    const moved = Math.hypot(b.x - (b._lastX ?? b.x), b.y - (b._lastY ?? b.y));
+    b._lastX = b.x;
+    b._lastY = b.y;
+    b.stuckT = (b.stuckT || 0) + dt;
+    if (moved < 0.4 * step * dt * 60 * 0.25) b.stuckCount = (b.stuckCount || 0) + 1;
+    else b.stuckCount = 0;
+    if (b.stuckCount > 45) {                       // ~0.75s without moving
+      b.stuckCount = 0;
+      b.stuckT = 0;
+      b.orbitBias = (b.orbitBias || 0) + Math.PI * 0.6;
+      b.stuckAttempts = (b.stuckAttempts || 0) + 1;
+      if (b.stuckAttempts >= 2) {
+        // Pick the open side: the direction that puts the most arena between the
+        // boss and the nearest wall, biased away from the player.
+        b.stuckAttempts = 0;
+        const away = b.facing >= 0 ? -1 : 1;
+        const targetX = clamp(b.x + away * 170, PLAY.left, PLAY.right);
+        const targetY = clamp(b.y + (b.y < (PLAY.top + PLAY.bottom) / 2 ? 90 : -90), PLAY.top, PLAY.bottom);
+        this.emit('fx:blink', { x: b.x, y: b.y, x2: targetX, y2: targetY, color: '#a48bff' });
+        b.x = targetX;
+        b.y = targetY;
+        b._lastX = b.x;
+        b._lastY = b.y;
+      }
+    }
 
     b.attackTimer -= dt;
     if (b.attackTimer <= 0) {
