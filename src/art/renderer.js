@@ -128,13 +128,13 @@ export class Renderer {
 
   drawWorld(run, pres, camera, t, opts = {}) {
     const ctx = this.ctx;
-    // The camera looks at a 2x-magnified slice of the arena: characters are
-    // ~140px tall on screen (the reference size for this genre) and the world
-    // pans with the player instead of showing an empty 1180px room.
-    const VIEW = 1.62;
+    // View distance is relative to the original 1.62x magnification. A 1.5
+    // multiplier reveals 50% more world on each axis without changing gameplay.
+    const VIEW = 1.62 / clamp(camera.viewDistance ?? 1.5, 1, 2);
     const env = getEnvironment(run.act, ARENA.w, ARENA.h, this.quality);
     const visW = this.width / Math.max(0.0001, this.scale) / VIEW;
     const visH = this.height / Math.max(0.0001, this.scale) / VIEW;
+    this.visibleWorld = { width: visW, height: visH };
     // The terrace ends at ~80% of the arena; clamping the view to it keeps the
     // frame filled with stone instead of empty darkness under the floor.
     const floorBottom = ARENA.h * 0.80;

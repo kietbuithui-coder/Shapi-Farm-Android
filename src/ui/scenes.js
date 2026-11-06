@@ -888,7 +888,7 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
 
   // ── layout, derived from the space that actually exists.
   //
-  // This screen holds 15 rows plus the reset button. The original fixed 40px
+  // This screen holds 16 rows plus the reset button. The original fixed 40px
   // pitch ran to y=646 on a 412px-tall landscape phone: every control below
   // "aim assist" hung off the bottom of the screen — invisible AND unhittable,
   // which a desktop-sized screenshot could never reveal. Instead of hiding
@@ -906,7 +906,7 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
   const top0 = titleY + (shortScreen ? 26 : clamp(h * 0.075, 34, 54));
   const bottomLimit = h - Math.max(14, safe.bottom + 12);
 
-  const TOTAL_ROWS = 16; // 15 settings + reset
+  const TOTAL_ROWS = 17; // 16 settings + reset
   const singlePitch = (bottomLimit - top0) / TOTAL_ROWS;
   const cols = singlePitch >= 30 ? 1 : (contentW >= 470 ? 2 : 1);
   const rowsPerCol = Math.ceil(TOTAL_ROWS / cols);
@@ -961,6 +961,8 @@ export function drawSettings(ctx, { w, h, safe, t, lang, profile, hover, confirm
   slider('sfx', tr(lang, 'sfx'), profile.settings.sfx);
   slider('voice', tr(lang, 'voice'), profile.settings.voice);
   slider('shake', tr(lang, 'shake'), profile.settings.shake);
+  const viewDistance = profile.settings.viewDistance ?? 1.5;
+  slider('viewDistance', `${tr(lang, 'viewDistance')} ${Math.round(viewDistance * 100)}%`, viewDistance - 1);
 
   const toggle = (id, label, on) => {
     const bx = rowCtlX();

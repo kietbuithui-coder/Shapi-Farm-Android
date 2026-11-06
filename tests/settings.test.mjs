@@ -145,3 +145,39 @@ test('every cat is nerfed by the same amount', async () => {
   assert.equal(tst.move, BASE.move * tabby.base.move);
   assert.equal(tst.atkSpeed, tabby.base.atkSpeed);
 });
+
+test('view distance defaults to 150%, is adjustable, saved, and changes the rendered world', async () => {
+  const { SAVE_KEY, sanitizeSettings } = await import('../src/core/save.js');
+  assert.equal(sanitizeSettings({}).viewDistance, 1.5, 'old saves should get the new default');
+  assert.equal(sanitizeSettings({ viewDistance: 99 }).viewDistance, 2);
+  assert.equal(sanitizeSettings({ viewDistance: -1 }).viewDistance, 1);
+  const { game, step, rects } = await openSettings();
+  const row = rects().find((r) => r.id === 'viewDistance');
+  assert.ok(row?.slider, 'view distance slider is missing');
+  assert.equal(game.profile.settings.viewDistance, 1.5);
+  game.click('viewDistance', row.x, row.y + row.h / 2);
+  assert.equal(game.camera.viewDistance, 1);
+  assert.equal(JSON.parse(localStorage.getItem(SAVE_KEY)).settings.viewDistance, 1);
+  game.click('back', 0, 0);
+  step(40);
+  const play = rects().find((r) => r.id === 'play');
+  game.click('play', play.x + play.w / 2, play.y + play.h / 2);
+  step(80);
+  const before = { ...game.renderer.visibleWorld };
+  game.profile.settings.viewDistance = 1.5;
+  game.applySettings();
+  game.draw(); // compare at the same camera zoom, without advancing simulation
+  assert.ok(Math.abs(game.renderer.visibleWorld.width / before.width - 1.5) < 1e-9);
+  assert.ok(Math.abs(game.renderer.visibleWorld.height / before.height - 1.5) < 1e-9);
+});
+
+test('view distance slider fits on common phone screens', async () => {
+  for (const [width, height] of [[840, 380], [412, 915]]) {
+    const { game, step, rects } = await bootGame({ width, height });
+    step(4);
+    game.click('settings', 0, 0);
+    step(40);
+    const row = rects().find((r) => r.id === 'viewDistance');
+    assert.ok(row && row.x >= 0 && row.y >= 0 && row.x + row.w <= width && row.y + row.h <= height, `${width}x${height}`);
+  }
+});

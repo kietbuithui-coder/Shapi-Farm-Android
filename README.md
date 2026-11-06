@@ -265,6 +265,13 @@ space, not a zoom-out: the camera, the spawn bands, the wall derivation and the
 HUD safe areas all follow the new bounds, and the mobile tests assert the
 invariants rather than a fixed width.
 
+### View distance
+
+Settings → **Tầm nhìn / View** controls the visible world from 100% (the
+original view) to 200%. The default is 150%, showing 50% more world in each
+direction; the choice is saved locally and also applies to existing profiles.
+Zooming out makes characters smaller and does not change the arena or combat.
+
 ### On a phone
 
 The HUD is computed from the viewport and the safe-area insets, never from one

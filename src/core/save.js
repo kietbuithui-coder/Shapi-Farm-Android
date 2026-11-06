@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   sfx: 0.75,
   voice: 0.8,
   shake: 1,
+  viewDistance: 1.5, // visible width and height relative to the original view
   damageNumbers: true,
   quality: 'auto',
   reduceMotion: false,
@@ -147,6 +148,7 @@ export function sanitizeSettings(raw) {
   s.sfx = num(raw.sfx, s.sfx, 0, 1);
   s.voice = num(raw.voice, s.voice, 0, 1);
   s.shake = num(raw.shake, s.shake, 0, 1);
+  s.viewDistance = num(raw.viewDistance, s.viewDistance, 1, 2);
   s.damageNumbers = raw.damageNumbers !== false;
   s.aimAssist = raw.aimAssist !== false;
   s.reduceMotion = !!raw.reduceMotion;

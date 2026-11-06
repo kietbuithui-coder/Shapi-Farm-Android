@@ -22,7 +22,7 @@ import { Input } from './input/input.js';
 import * as Scenes from './ui/scenes.js';
 
 /** Settings drawn as 0..1 sliders (see drawSettings) rather than on/off rows. */
-const SLIDER_SETTINGS = ['music', 'sfx', 'voice', 'shake'];
+const SLIDER_SETTINGS = ['music', 'sfx', 'voice', 'shake', 'viewDistance'];
 import { buildWiki } from './data/wiki.js';
 import { CATS, CAT_BY_ID } from './data/cats.js';
 import { PALETTE } from './data/palette.js';
@@ -53,6 +53,7 @@ export class Game {
 
     this.renderer = new Renderer(canvas);
     this.camera = new Camera();
+    this.camera.viewDistance = this.profile.settings.viewDistance;
     this.hud = new Hud();
     this.touch = new TouchControls();
     this.input = new Input(canvas, {
@@ -197,7 +198,8 @@ export class Game {
     const P = this.profile;
     // Shake reads better as "off / weak / strong" than as a fraction, so it
     // snaps to quarters; the audio buses keep 5% steps.
-    P.settings[id] = id === 'shake' ? Math.round(t * 4) / 4 : Math.round(t * 20) / 20;
+    P.settings[id] = id === 'viewDistance' ? 1 + Math.round(t * 20) / 20
+      : id === 'shake' ? Math.round(t * 4) / 4 : Math.round(t * 20) / 20;
     this.applySettings();
     this.store.saveNow();
     return true;
@@ -436,6 +438,7 @@ export class Game {
     audio.setVolumes({ music: st.music, sfx: st.sfx, voice: st.voice });
     // Presentation reads shake per-event, so it only needs the new profile.
     if (this.pres) this.pres.settings = st;
+    this.camera.viewDistance = st.viewDistance ?? 1.5;
     if (this.run && this.run.applySettings) this.run.applySettings(st);
   }
 
@@ -676,7 +679,8 @@ export class Game {
           if (!moved) {
             // No geometry (keyboard/automation): step through useful values.
             const cur = typeof P.settings[id] === 'number' ? P.settings[id] : 0;
-            P.settings[id] = id === 'shake' ? (Math.round(cur * 4 + 1) % 5) / 4 : (Math.round(cur * 20 + 5) % 21) / 20;
+            P.settings[id] = id === 'viewDistance' ? 1 + (Math.round((cur - 1) * 20 + 5) % 21) / 20
+              : id === 'shake' ? (Math.round(cur * 4 + 1) % 5) / 4 : (Math.round(cur * 20 + 5) % 21) / 20;
             this.applySettings();
           }
           this.store.saveNow();
