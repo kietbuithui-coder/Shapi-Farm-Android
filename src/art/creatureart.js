@@ -953,11 +953,257 @@ function thornBeast(ctx, c, p, s) {
   }
 }
 
+
+/* ── bosses: the Void Predator and the Crystal Queen ─────────────────────
+   Boss silhouettes have to be legible at a glance and unmistakably bigger than
+   the mob around them, so both are built around one strong shape: the Predator
+   is a low, forward-hunched hunter with a torn void mantle; the Queen is a tall
+   upright figure with a crystal crown and a skirt of shards. */
+
+// Void Predator: hunched quadruped with a drifting void mantle and four eyes.
+function voidPredator(ctx, c, p, s) {
+  const base = hex(c.color);
+  const dark = hex(c.color2);
+  const phase = p.phase || 0;
+  const breathe = Math.sin(p.t * 1.8) * 2 * s;
+  // void mantle: a ragged shadow behind the body, drifting
+  ctx.save();
+  ctx.globalAlpha = 0.5 + phase * 0.16;
+  ctx.beginPath();
+  ctx.moveTo(-10 * s, -34 * s + breathe);
+  ctx.quadraticCurveTo(-46 * s, -30 * s + Math.sin(p.t * 0.9) * 6 * s, -56 * s, 2 * s);
+  ctx.quadraticCurveTo(-30 * s, -6 * s, -14 * s, -4 * s);
+  ctx.closePath();
+  ctx.fillStyle = rgbCss(shade(dark, 0.05), 0.9);
+  ctx.fill();
+  ctx.restore();
+  // haunches
+  body(ctx, -12 * s, -18 * s, 17 * s, 13 * s, shade(base, -0.12), -0.1);
+  // chest, forward-leaning
+  body(ctx, 8 * s, -22 * s, 14 * s, 15 * s, base, 0.14);
+  // four legs, digitigrade and long
+  ctx.strokeStyle = rgbCss(shade(dark, 0.18));
+  ctx.lineWidth = 4 * s;
+  ctx.lineCap = 'round';
+  for (const [lx, ly, ph] of [[-20, -10, 0], [-8, -8, 1.9], [10, -8, 3.4], [20, -10, 5.1]]) {
+    const sw = Math.sin(p.t * 3.4 + ph) * 3 * s;
+    ctx.beginPath();
+    ctx.moveTo(lx * s, ly * s);
+    ctx.lineTo((lx + sw * 0.5) * s, 0);
+    ctx.stroke();
+  }
+  // arms: long, wickedly clawed
+  for (const side of [0, 1]) {
+    const ax = (14 + side * 5) * s;
+    const sw = Math.sin(p.t * 2.2 + side * 2) * 3 * s;
+    ctx.strokeStyle = rgbCss(shade(dark, 0.24));
+    ctx.lineWidth = 4.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(ax, -26 * s);
+    ctx.quadraticCurveTo(ax + 12 * s, (-14 + side * 2) * s + sw, ax + 8 * s, -2 * s);
+    ctx.stroke();
+    // three claws
+    for (let k = -1; k <= 1; k++) {
+      ctx.beginPath();
+      ctx.moveTo((ax / s + 8) * s, -3 * s);
+      ctx.lineTo((ax / s + 10 + k * 3) * s, 2 * s);
+      ctx.strokeStyle = 'rgba(236,226,255,0.85)';
+      ctx.lineWidth = 1.8 * s;
+      ctx.stroke();
+    }
+  }
+  // head: wedge with a lower jaw and four eyes (two pairs, the tell)
+  ctx.beginPath();
+  ctx.moveTo(10 * s, -38 * s);
+  ctx.quadraticCurveTo(34 * s, -34 * s, 40 * s, -25 * s);
+  ctx.quadraticCurveTo(32 * s, -16 * s, 12 * s, -18 * s);
+  ctx.closePath();
+  ctx.fillStyle = rgbCss(shade(base, 0.06));
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.4 * s;
+  ctx.stroke();
+  // jaw
+  ctx.beginPath();
+  ctx.moveTo(18 * s, -20 * s);
+  ctx.lineTo(34 * s, -17 * s);
+  ctx.strokeStyle = 'rgba(240,232,255,0.7)';
+  ctx.lineWidth = 2 * s;
+  ctx.stroke();
+  // horns: swept back
+  for (const k of [0, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(14 * s + k * 7 * s, -37 * s);
+    ctx.quadraticCurveTo(2 * s + k * 6 * s, -50 * s, -14 * s + k * 5 * s, -46 * s);
+    ctx.strokeStyle = rgbCss(shade(dark, 0.3));
+    ctx.lineWidth = 3 * s;
+    ctx.stroke();
+  }
+  // four eyes, brightening with phase
+  const eyeGlow = 0.55 + phase * 0.45;
+  ctx.save();
+  ctx.globalAlpha = eyeGlow;
+  eye(ctx, 24 * s, -30 * s, 2.6 * s, c.eye, 'slit', 0.6);
+  eye(ctx, 31 * s, -27 * s, 2.1 * s, c.eye, 'slit', 0.6);
+  eye(ctx, 20 * s, -26 * s, 1.8 * s, c.eye, 'slit', 0.4);
+  eye(ctx, 27 * s, -23.5 * s, 1.5 * s, c.eye, 'slit', 0.4);
+  ctx.restore();
+}
+
+// Crystal Queen: tall upright figure, crystal crown, skirt of shards.
+function crystalQueen(ctx, c, p, s) {
+  const base = hex(c.color);
+  const dark = hex(c.color2);
+  const phase = p.phase || 0;
+  const float = Math.sin(p.t * 1.1) * 3 * s;
+  const pulse = 0.5 + 0.5 * Math.sin(p.t * (1.6 + phase));
+
+  // Phase 2 has to READ as a change, not just behave like one. A boss that
+  // suddenly shatters its own walls while looking identical to a second ago
+  // reads as a bug. From phase 1 on she gains a cold aura and keeps a ring of
+  // loose shards orbiting her, so "something changed" is visible before the
+  // first shatter lands.
+  if (phase >= 1) {
+    const aura = ctx.createRadialGradient(0, -46 * s + float, 6 * s, 0, -46 * s + float, 62 * s);
+    aura.addColorStop(0, `rgba(127,232,224,${0.20 + pulse * 0.10})`);
+    aura.addColorStop(1, 'rgba(127,232,224,0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(0, -46 * s + float, 62 * s, 0, Math.PI * 2);
+    ctx.fill();
+    for (let i = 0; i < 6; i++) {
+      const a = p.t * 0.9 + (i / 6) * Math.PI * 2;
+      const rx = Math.cos(a) * (34 + pulse * 3) * s;
+      const ry = -46 * s + float + Math.sin(a) * 16 * s;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry - 4 * s);
+      ctx.lineTo(rx + 2.2 * s, ry);
+      ctx.lineTo(rx, ry + 4 * s);
+      ctx.lineTo(rx - 2.2 * s, ry);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(200,255,255,${0.30 + pulse * 0.35})`;
+      ctx.fill();
+    }
+  }
+
+  // Skirt of shards. It must END at the floor (y = 0 is the creature's feet):
+  // the first version hung from -20 with a 25px drop, so the longest shards
+  // rendered below the ground line and read as a separate object floating in
+  // the floor.
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  for (let i = -3; i <= 3; i++) {
+    // narrow, near-vertical shards hugging the robe: a skirt, not a canopy
+    const sx = i * 3.6 * s;
+    const top = -34 * s + float + Math.abs(i) * 1.2 * s;
+    const len = (26 + (3 - Math.abs(i)) * 4) * s;
+    const tip = Math.min(-1 * s, top + len);
+    ctx.beginPath();
+    ctx.moveTo(sx - 2.4 * s, top);
+    ctx.lineTo(sx + Math.sin(p.t * 0.8 + i) * 1.6 * s, tip);
+    ctx.lineTo(sx + 2.4 * s, top);
+    ctx.closePath();
+    ctx.fillStyle = rgbCss(shade(base, -0.18 - Math.abs(i) * 0.03), 0.62);
+    ctx.fill();
+    ctx.strokeStyle = rgbCss(shade(dark, 0.22), 0.6);
+    ctx.lineWidth = 1.1 * s;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // robe / body: tall, narrow, tapering
+  ctx.beginPath();
+  ctx.moveTo(-13 * s, -22 * s + float);
+  ctx.quadraticCurveTo(-16 * s, -58 * s + float, 0, -64 * s + float);
+  ctx.quadraticCurveTo(16 * s, -58 * s + float, 13 * s, -22 * s + float);
+  ctx.closePath();
+  ctx.fillStyle = rgbCss(base, 0.9);
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.4 * s;
+  ctx.stroke();
+  // inner sheen
+  ctx.beginPath();
+  ctx.moveTo(-6 * s, -26 * s + float);
+  ctx.quadraticCurveTo(-8 * s, -50 * s + float, 0, -58 * s + float);
+  ctx.strokeStyle = `rgba(220,255,255,${0.25 + pulse * 0.3})`;
+  ctx.lineWidth = 2.4 * s;
+  ctx.stroke();
+
+  // arms: thin, out to the sides, fingers splayed
+  for (const side of [-1, 1]) {
+    ctx.strokeStyle = rgbCss(shade(base, -0.1));
+    ctx.lineWidth = 3 * s;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(side * 11 * s, -52 * s + float);
+    ctx.quadraticCurveTo(side * 24 * s, (-44 + pulse * 2) * s + float, side * 28 * s, -32 * s + float);
+    ctx.stroke();
+    for (let k = -1; k <= 1; k++) {
+      ctx.beginPath();
+      ctx.moveTo(side * 28 * s, -32 * s + float);
+      ctx.lineTo(side * (32 + k) * s, (-27 + k * 3) * s + float);
+      ctx.strokeStyle = `rgba(200,255,255,${0.55 + pulse * 0.35})`;
+      ctx.lineWidth = 1.4 * s;
+      ctx.stroke();
+    }
+  }
+
+  // head: smooth crystal mask, no face but two carved eyes
+  ell(ctx, 0, -70 * s + float, 8.4 * s, 9.2 * s);
+  ctx.fillStyle = rgbCss(shade(base, 0.14));
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.2 * s;
+  ctx.stroke();
+  // crown: five shards, tallest in the middle
+  for (let i = -2; i <= 2; i++) {
+    const h = (16 - Math.abs(i) * 4) * s;
+    const bx = i * 5.4 * s;
+    const tipY = -78 * s + float - h;
+    ctx.beginPath();
+    ctx.moveTo(bx - 2.6 * s, -76 * s + float);
+    ctx.lineTo(bx, tipY);
+    ctx.lineTo(bx + 2.6 * s, -76 * s + float);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(215,255,255,${0.65 + pulse * 0.3})`;
+    ctx.fill();
+    ctx.strokeStyle = rgbCss(shade(dark, 0.35));
+    ctx.lineWidth = 1.2 * s;
+    ctx.stroke();
+  }
+  // eyes: carved, glowing
+  ctx.save();
+  ctx.globalAlpha = 0.7 + phase * 0.3;
+  ell(ctx, -3 * s, -71 * s + float, 1.9 * s, 2.4 * s);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ell(ctx, 3 * s, -71 * s + float, 1.9 * s, 2.4 * s);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.restore();
+  // floating shards orbiting her
+  for (let i = 0; i < 4; i++) {
+    const a = p.t * 1.4 + (i / 4) * TAU;
+    const ox = Math.cos(a) * 30 * s;
+    const oy = Math.sin(a) * 12 * s - 46 * s + float;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy - 4 * s);
+    ctx.lineTo(ox + 3 * s, oy);
+    ctx.lineTo(ox, oy + 4 * s);
+    ctx.lineTo(ox - 3 * s, oy);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(190,255,255,${0.4 + pulse * 0.4})`;
+    ctx.fill();
+  }
+}
+
 const SHAPES = {
   grub, rat, golem, spitter, wisp, frog, mushroom, turtle, banshee, cat_shade: catShade,
   devourer, lanternking: lanternKing, hollow, broodmother, wardenbig, siren,
   shadowstalker: shadowStalker, crystalcrawler: crystalCrawler, arcanebat: arcaneBat,
   slime, thornbeast: thornBeast,
+  voidpredator: voidPredator, crystalqueen: crystalQueen,
 };
 
 /**

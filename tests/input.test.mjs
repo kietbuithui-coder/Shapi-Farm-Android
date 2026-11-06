@@ -80,7 +80,24 @@ test('every skill slot can be cast from the pad', async () => {
   const bindings = [[2, 'slot 1'], [1, 'slot 2'], [3, 'slot 3'], [5, 'slot 4']];
   for (const [btn, label] of bindings) {
     p.releaseAll();
-    await idle(step, 200);                       // let cooldowns clear
+    // Wait for the slot to be genuinely castable instead of guessing.
+    //
+    // This used to idle a fixed 200 frames "to let cooldowns clear". Cooldowns
+    // are per skill, and one of the loadout's skills is on a 22s cooldown, so
+    // whether the wait was long enough depended on which skill happened to go
+    // on cooldown when the intro fight resolved — a genuine flake (reproduced
+    // at roughly 1 run in 5, on the pre-existing code as well as this branch).
+    // Polling the real condition makes the test both correct and faster.
+    // Slots are indexed by position (0..3) and have no `button` field; the pad
+    // button → slot mapping lives in Input, so mirror it here.
+    const SLOT_OF_BUTTON = { 2: 0, 1: 1, 3: 2, 5: 3 };
+    const slotFor = (b) => (run.slots || [])[SLOT_OF_BUTTON[b]] || null;
+    const castable = () => {
+      const slot = slotFor(btn);
+      return slot ? run.canCast(slot) : true;
+    };
+    for (let i = 0; i < 60 * 26 && !castable(); i++) step(1);
+    assert.ok(castable(), `${label} never became castable within 26s`);
     const before = run.statsTotals.casts;
     p.press(btn);
     step(1);

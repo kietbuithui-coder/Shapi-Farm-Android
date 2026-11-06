@@ -90,6 +90,27 @@ export function actForNight(night) {
   return ACTS[2];
 }
 
+/**
+ * Boss for a given night.
+ *
+ * Nights 1-9 keep their authored bosses (nothing about the existing progression
+ * changed). From night 10 the game continues and the five bosses rotate — that
+ * is where the Void Predator and the Crystal Queen enter the campaign, so they
+ * are reachable content rather than data nobody meets.
+ */
+const ROTATION = ['moon_devourer', 'lantern_king', 'hollow_ninth', 'void_predator', 'crystal_queen'];
+
+export function bossForNight(night, act) {
+  if (night <= 9) return act.boss;
+  return ROTATION[(night - 10) % ROTATION.length];
+}
+
+/** The act's boss table entry for a night, honouring the rotation. */
+export function bossTableForNight(night, act) {
+  const id = bossForNight(night, act);
+  return act.boss === id ? act : { ...act, boss: id };
+}
+
 /** Wave composition for a given night and wave index. */
 export function wavePlan(night, wave) {
   const act = actForNight(night);

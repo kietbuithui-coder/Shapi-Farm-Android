@@ -10,7 +10,7 @@ import { CAT_BY_ID } from '../data/cats.js';
 import { SKILL_BY_ID, skillValues } from '../data/skills.js';
 import { ENEMY_BY_ID, ELITE_MODS, MINIBOSS_BY_ID, BOSS_BY_ID } from '../data/enemies.js';
 import { UPGRADES, UPGRADE_BY_ID } from '../data/upgrades.js';
-import { wavePlan, actForNight } from '../data/acts.js';
+import { wavePlan, actForNight, bossForNight } from '../data/acts.js';
 import { buildStats, emptyMods, computeDamage, computeIncoming, xpForLevel, difficultyScale } from './stats.js';
 import { PERK_TIERS } from '../data/perks.js';
 
@@ -157,6 +157,9 @@ export class Run {
     }
     const plan = wavePlan(this.night, wave);
     this.act = plan.act;
+    // From night 10 the campaign keeps going and the boss roster rotates; below
+    // that this is exactly the authored act boss.
+    this.actBoss = bossForNight(this.night, plan.act);
     this.waveBudget = plan.budget;
     this.waveEnemiesLeft = 0;
     this.waveSpawned = 0;
@@ -165,7 +168,7 @@ export class Run {
     this.emit('wave:begin', { night: this.night, wave, plan });
 
     if (plan.isBoss) {
-      this.spawnBoss(this.act.boss);
+      this.spawnBoss(this.actBoss || this.act.boss);
       return;
     }
     if (plan.isMini) {
@@ -365,6 +368,7 @@ export class Run {
     }
 
     this.updatePlayer(dt, input);
+    this.resolveWallCollisions();
     this.updateDash(dt);
     this.updateSkillCooldowns(dt);
     this.updateEnemies(dt);
@@ -402,6 +406,43 @@ export class Run {
   }
 
   /* ── player ────────────────────────────────────────────────────────────── */
+  /** Keep the player (and enemies) out of solid crystal walls. */
+  resolveWallCollisions() {
+    const walls = this.zones.filter((z) => z.kind === 'wall');
+    if (!walls.length) return;
+    const p = this.player;
+    for (const w of walls) {
+      const dx = p.x - w.x;
+      const dy = p.y - w.y;
+      const d = Math.hypot(dx, dy);
+      const minD = w.radius + p.radius * 0.55;
+      if (d >= minD) continue;
+      // Exact-centre case: the direction vector is undefined, so dividing by a
+      // floored epsilon pushed the player 0.001 * minD pixels (i.e. nowhere) and
+      // they stayed inside the wall. Pick a deterministic outward direction.
+      if (d < 0.001) {
+        p.x = clamp(w.x + minD, PLAY.left, PLAY.right);
+        p.y = w.y;
+        continue;
+      }
+      p.x = clamp(w.x + (dx / d) * minD, PLAY.left, PLAY.right);
+      p.y = clamp(w.y + (dy / d) * minD, PLAY.top, PLAY.bottom);
+    }
+    for (const e of this.enemies) {
+      if (e.dead || e.boss || e.mini) continue;
+      for (const w of walls) {
+        const dx = e.x - w.x;
+        const dy = e.y - w.y;
+        const d = Math.hypot(dx, dy);
+        const minD = w.radius + e.radius * 0.5;
+        if (d >= minD) continue;
+        if (d < 0.001) { e.x = w.x + minD; continue; }
+        e.x = w.x + (dx / d) * minD;
+        e.y = w.y + (dy / d) * minD;
+      }
+    }
+  }
+
   updatePlayer(dt, input) {
     const p = this.player;
     if (!p.alive) return;
@@ -1644,6 +1685,9 @@ export class Run {
     const ny = clamp(ty, PLAY.top, PLAY.bottom);
     const lostX = Math.abs(tx - nx);
     const lostY = Math.abs(ty - ny);
+    // Did the boss actually try to go anywhere this frame? A zoning boss that
+    // deliberately holds its ground is not stuck and must never be relocated.
+    b._wantedMove = (b._wantedMove || 0) + Math.hypot(tx - b.x, ty - b.y);
     b.x = nx;
     b.y = ny;
     // Slide the leftover movement along the free axis so a wall never costs the
@@ -1656,6 +1700,10 @@ export class Run {
       else if (freeX) b.x = clamp(nx + (Math.cos(dirA) >= 0 ? -lost : lost) * 0.6, PLAY.left, PLAY.right);
     }
     // Hard separation: a boss may touch the player, never occupy the same pixel.
+    // Record where the boss got to under its OWN locomotion before the shove
+    // below — the anti-stuck watchdog must not count that correction as progress.
+    b._locoX = b.x;
+    b._locoY = b.y;
     const sep = (b.radius || 40) * 0.55 + (p.radius || 17) * 0.3;
     if (d < sep) {
       const a2 = d > 0.01 ? Math.atan2(b.y - p.y, b.x - p.x) : (b.facing >= 0 ? 0 : Math.PI);
@@ -1667,13 +1715,39 @@ export class Run {
     // If the boss needs to move but cannot, give it a fresh orbit bias and, as
     // a last resort after repeated failures, nudge it to open ground away from
     // the player — never in front of them, never on top of them.
-    const moved = Math.hypot(b.x - (b._lastX ?? b.x), b.y - (b._lastY ?? b.y));
-    b._lastX = b.x;
-    b._lastY = b.y;
-    b.stuckT = (b.stuckT || 0) + dt;
-    if (moved < 0.4 * step * dt * 60 * 0.25) b.stuckCount = (b.stuckCount || 0) + 1;
-    else b.stuckCount = 0;
-    if (b.stuckCount > 45) {                       // ~0.75s without moving
+    // Measure progress under the boss's own power. A boss pinned against the
+    // player is pushed out a few pixels by the separation rule every frame; if
+    // that counts as movement the watchdog can never fire, and a boss that
+    // genuinely cannot move sits there for the whole fight (reproduced with
+    // speed 0: 240 frames, zero rescuers). The shove is not locomotion.
+    // Judge displacement over a window, not per frame.
+    //
+    // Per-frame thresholds failed in both directions. The original one disabled
+    // itself at speed 0 (`moved < 0` is never true), and a per-frame speed floor
+    // flagged healthy bosses whenever an orbit correction slowed them, so it
+    // relocated bosses mid-fight. Instead: remember where the boss was ~0.75s
+    // ago (pre-separation, so the push-off shove cannot fake progress) and ask
+    // whether it has actually gone anywhere since.
+    const WINDOW = 45;
+    b._stuckSample = b._stuckSample || { x: b._locoX ?? b.x, y: b._locoY ?? b.y, n: 0 };
+    b._stuckSample.n++;
+    const travelled = Math.hypot((b._locoX ?? b.x) - b._stuckSample.x, (b._locoY ?? b.y) - b._stuckSample.y);
+    const needTravel = Math.max(step * 0.25, 4);
+    if (b._stuckSample.n >= WINDOW) {
+      // Stuck means: it wanted to travel and got nowhere. A boss that chose to
+      // hold its ground asked for nothing and must not be teleported for it.
+      // The exception is a boss with no movement capability at all (speed < 1,
+      // e.g. fully crippled): it wants nothing because it *can* do nothing, and
+      // standing on the player is the only outcome — that still needs rescuing.
+      const wanted = b._wantedMove || 0;
+      const immobile = b.speed < 1;
+      const asked = wanted > step * 0.5 || immobile;
+      if (asked && travelled < needTravel) b.stuckCount = (b.stuckCount || 0) + 1;
+      else b.stuckCount = 0;
+      b._stuckSample = { x: b._locoX ?? b.x, y: b._locoY ?? b.y, n: 0 };
+      b._wantedMove = 0;
+    }
+    if (b.stuckCount > 0) {                        // one 0.75s window without progress
       b.stuckCount = 0;
       b.stuckT = 0;
       b.orbitBias = (b.orbitBias || 0) + Math.PI * 0.6;
@@ -1695,12 +1769,96 @@ export class Run {
 
     b.attackTimer -= dt;
     if (b.attackTimer <= 0) {
-      const list = phase.attacks;
-      b.attackIndex = (b.attackIndex + 1) % list.length;
-      const attack = list[b.attackIndex];
+      const attack = this.chooseBossAttack(b, phase);
       this.runBossAttack(b, attack);
       b.attackTimer = attack === 'enrage' ? 5.2 : 2.1 + this.rng.float() * 1.0;
     }
+  }
+
+  /**
+   * Pick the next attack from the current phase, using distance and phase —
+   * not a fixed cycle.
+   *
+   * The brief asks for attacks chosen by distance / player position / phase /
+   * cooldown rather than pure randomness, and for no attack spam. Cycling meant
+   * a boss standing next to you could "choose" a long-range rain attack, and a
+   * boss across the arena could try to claw you. Entries may be plain strings
+   * (the three original bosses) or { id, tag } objects (the two new ones); both
+   * go through the same rules so nothing changed for the existing fights.
+   */
+  chooseBossAttack(b, phase) {
+    const list = phase.attacks;
+    if (!list || !list.length) return null;
+    const norm = list.map((a) => (typeof a === 'string' ? { id: a, tag: null } : a));
+    const p = this.player;
+    const d = dist(b.x, b.y, p.x, p.y);
+
+    // Preferred band per tag. null = always acceptable.
+    const band = {
+      melee: [0, 150],
+      ambush: [0, 999],
+      dash: [90, 520],
+      ring: [0, 260],
+      nova: [0, 320],
+      beam: [140, 999],
+      rain: [0, 999],
+      // A zoning boss puts her wall between herself and the player, which is
+      // meaningful at ANY range — at 0 she is fencing the player away from her,
+      // at 500 she is cutting the arena in half. The old 120 minimum quietly
+      // excluded the attack for most of the fight (measured: 0 walls built in
+      // 44s even though the selector would have picked it).
+      spikes: [0, 999],
+      wall: [0, 999],
+      shatter: [0, 999],
+      summon: [0, 999],
+      leap: [100, 520],
+    };
+
+    const fits = (a) => {
+      const r = a.tag ? band[a.tag] : null;
+      if (!r) return true;
+      return d >= r[0] && d <= r[1];
+    };
+
+    // Never repeat the same attack twice in a row — that is what "spam" looks
+    // like from the player's side, even when the RNG picked it fairly.
+    const notLast = (a) => a.id !== b.lastAttack;
+    // Avoid any attack used in the previous two slots where there is a choice.
+    const fresh = (a) => !(b.recentAttacks || []).includes(a.id);
+
+    let pool = norm.filter((a) => fits(a) && notLast(a));
+    if (!pool.length) pool = norm.filter((a) => fits(a));
+    if (!pool.length) pool = norm.filter(notLast);
+    if (!pool.length) pool = norm;
+
+    const preferred = pool.filter(fresh);
+    let usePool = preferred.length ? preferred : pool;
+
+    // Shuffle bag rather than a fresh random pick every time.
+    //
+    // Plain random selection turned out to cost real balance: the bot sweep
+    // dropped from 25.7 to 24.1 average depth because a 1-in-4 roll lets the
+    // single most damaging attack of a phase land far more often than the old
+    // fixed cycle did. A bag holds every eligible attack once, dealt in random
+    // order and refilled when empty, so the mix stays surprising while each
+    // attack still appears exactly once per cycle — the fairness of the cycle
+    // without its predictability.
+    b.attackBag = (b.attackBag || []).filter((id) => usePool.some((a) => a.id === id));
+    if (!b.attackBag.length) {
+      b.attackBag = usePool.map((a) => a.id);
+      // Fisher-Yates so the order is not the declaration order.
+      for (let i = b.attackBag.length - 1; i > 0; i--) {
+        const j = Math.floor(this.rng.float() * (i + 1));
+        [b.attackBag[i], b.attackBag[j]] = [b.attackBag[j], b.attackBag[i]];
+      }
+    }
+    const wantId = b.attackBag.shift();
+    const pick = usePool.find((a) => a.id === wantId) || usePool[0];
+
+    b.lastAttack = pick.id;
+    b.recentAttacks = [pick.id, ...(b.recentAttacks || [])].slice(0, 2);
+    b.attackIndex = (b.attackIndex + 1) % norm.length;
+    return pick.id;
   }
 
   runBossAttack(boss, attack) {
@@ -1814,6 +1972,144 @@ export class Run {
           this.enemies.push(e);
         }
         break;
+      /* ── The Void Predator ──────────────────────────────────────────────
+         Mobility and ambush. Every attack resolves to a place the player can
+         physically leave; the dash in particular commits to a line. */
+
+      case 'shadowDash': {
+        // Telegraphs the corridor, then crosses it. Sidestep, do not backpedal.
+        this.emit('enemy:tell', { enemy: boss, kind: 'dash', color: '#b06bff' });
+        const dist2 = Math.min(520, Math.max(200, dist(boss.x, boss.y, p.x, p.y) + 90));
+        pushHazard({ kind: 'line', x: boss.x, y: boss.y, x2: boss.x + Math.cos(dirA) * dist2, y2: boss.y + Math.sin(dirA) * dist2, width: 40, delay: 0.6, damage: boss.dmg * 1.5, color: '#b06bff' });
+        this.emit('fx:blink', { x: boss.x, y: boss.y, x2: boss.x + Math.cos(dirA) * dist2, y2: boss.y + Math.sin(dirA) * dist2, color: '#b06bff' });
+        boss.x = clamp(boss.x + Math.cos(dirA) * dist2 * 0.55, PLAY.left, PLAY.right);
+        boss.y = clamp(boss.y + Math.sin(dirA) * dist2 * 0.55, PLAY.top, PLAY.bottom);
+        break;
+      }
+      case 'tripleClaw': {
+        // Three crescents in sequence, each aimed at where the player IS at the
+        // moment of its own telegraph — so standing still stacks all three.
+        this.emit('enemy:tell', { enemy: boss, kind: 'melee', color: '#b06bff' });
+        for (let i = 0; i < 3; i++) {
+          const a2 = dirA + (i - 1) * 0.5;
+          const hz = { kind: 'lance', x: boss.x, y: boss.y, angle: a2, length: 150, width: 30, delay: 0.42 + i * 0.22, damage: boss.dmg * 0.62, color: '#d79bff' };
+          pushHazard(hz);
+        }
+        break;
+      }
+      case 'shadowRing': {
+        // Expanding rings with gaps. Three waves, each dodgeable.
+        this.emit('enemy:tell', { enemy: boss, kind: 'ring', color: '#b06bff' });
+        for (let i = 0; i < 3; i++) {
+          pushHazard({ kind: 'ring', x: boss.x, y: boss.y, radius: 120 + i * 90, delay: 0.7 + i * 0.42, damage: boss.dmg * 0.65, color: '#b06bff' });
+        }
+        break;
+      }
+      case 'vanishStrike': {
+        // Vanishes, then reappears behind the player with a committed nova.
+        this.emit('enemy:tell', { enemy: boss, kind: 'blink', color: '#d24aff' });
+        this.emit('fx:blink', { x: boss.x, y: boss.y, x2: p.x + 90, y2: p.y, color: '#d24aff' });
+        boss.x = clamp(p.x + (this.rng.chance(0.5) ? 96 : -96), PLAY.left, PLAY.right);
+        boss.y = clamp(p.y + this.rng.range(-26, 26), PLAY.top, PLAY.bottom);
+        pushHazard({ kind: 'nova', x: boss.x, y: boss.y, radius: 104, delay: 0.55, damage: boss.dmg * 1.15, color: '#d24aff' });
+        break;
+      }
+      case 'eclipse2': {
+        this.emit('enemy:tell', { enemy: boss, kind: 'nova', color: '#b06bff' });
+        pushHazard({ kind: 'nova', x: boss.x, y: boss.y, radius: 235, delay: 1.05, damage: boss.dmg * 1.2, color: '#b06bff' });
+        break;
+      }
+
+      /* ── The Crystal Queen ──────────────────────────────────────────────
+         Zoning. She wants the arena covered in hazards and the player pinned
+         between walls; the counters are to move early and keep a lane open. */
+
+      case 'crystalRain': {
+        this.emit('enemy:tell', { enemy: boss, kind: 'rain', color: '#7fd4d8' });
+        // Rain falls in a ring around the player, never directly on them: it
+        // shapes where they can stand instead of being an unavoidable hit.
+        for (let i = 0; i < 8; i++) {
+          const a2 = (i / 8) * TAU + this.rng.range(-0.2, 0.2);
+          const rr = this.rng.range(70, 190);
+          const tx = clamp(p.x + Math.cos(a2) * rr, PLAY.left, PLAY.right);
+          const ty = clamp(p.y + Math.sin(a2) * rr * 0.7, PLAY.top, PLAY.bottom);
+          pushHazard({ kind: 'meteor', x: tx, y: ty, radius: 44, delay: 0.85 + i * 0.09, damage: boss.dmg * 0.7, color: '#7fd4d8' });
+        }
+        break;
+      }
+      case 'groundSpikes': {
+        // A row of spikes that walks toward the player. Dodge along the row axis.
+        this.emit('enemy:tell', { enemy: boss, kind: 'spikes', color: '#7fe8e0' });
+        const perp = dirA + Math.PI / 2;
+        for (let i = -3; i <= 3; i++) {
+          const sx = p.x + Math.cos(perp) * i * 56;
+          const sy = p.y + Math.sin(perp) * i * 34;
+          if (sx < PLAY.left || sx > PLAY.right) continue;
+          pushHazard({ kind: 'thorns', x: sx, y: sy, radius: 40, delay: 0.75, damage: boss.dmg * 0.8, color: '#7fe8e0', root: 0.5 });
+        }
+        break;
+      }
+      case 'crystalWall': {
+        // A physical wall of crystal: real cover that blocks the corridor for a
+        // while. It is destructible so it can never soft-lock the arena.
+        this.emit('enemy:tell', { enemy: boss, kind: 'wall', color: '#7fd4d8' });
+        const perp = dirA + Math.PI / 2;
+        const midX = (boss.x + p.x) / 2;
+        const midY = (boss.y + p.y) / 2;
+        const blocks = [];
+        for (let i = -2; i <= 2; i++) {
+          const wx = clamp(midX + Math.cos(perp) * i * 54, PLAY.left, PLAY.right);
+          const wy = clamp(midY + Math.sin(perp) * i * 34, PLAY.top, PLAY.bottom);
+          const wall = { kind: 'wall', x: wx, y: wy, radius: 34, time: 7.5, t: 0, hp: Math.max(1, boss.dmg * 1.6), tint: '#7fd4d8', boss };
+          this.zones.push(wall);
+          blocks.push(wall);
+        }
+        this.crystalWalls = blocks;
+        break;
+      }
+      case 'shatterWall': {
+        // Phase-2 behaviour change: her own walls burst into spikes. The arena
+        // gets more hostile rather than her numbers getting bigger.
+        this.emit('enemy:tell', { enemy: boss, kind: 'shatter', color: '#ffffff' });
+        const walls = (this.zones || []).filter((z) => z.kind === 'wall');
+        for (const w of walls) {
+          this.hazards.push({ kind: 'blast', x: w.x, y: w.y, radius: 66, delay: 0.5, t: 0, damage: boss.dmg * 0.85, source: 'enemy', tint: '#e8ffff' });
+          this.emit('fx:impact', { x: w.x, y: w.y, radius: 66, color: '#e8ffff' });
+        }
+        this.zones = this.zones.filter((z) => z.kind !== 'wall');
+        this.crystalWalls = [];
+        break;
+      }
+      case 'energyBeam': {
+        // A slow sweeping beam: readable, and it sweeps, so standing still fails
+        // while moving with the sweep succeeds.
+        this.emit('enemy:tell', { enemy: boss, kind: 'beam', color: '#ffffff' });
+        const sweep = boss.beamDir || 1;
+        boss.beamDir = -sweep;
+        for (let i = 0; i < 4; i++) {
+          this.hazards.push({
+            kind: 'beam', x: boss.x, y: boss.y - 40, angle: dirA + sweep * i * 0.16,
+            length: 760, width: 30, delay: 0.7 + i * 0.16, t: 0, damage: boss.dmg * 0.7,
+            source: 'enemy', tint: '#bfefff',
+          });
+        }
+        break;
+      }
+      case 'summonMinions': {
+        this.emit('fx:summonRing', { x: boss.x, y: boss.y, color: '#7fd4d8' });
+        const kinds = ['crystal_crawler', 'arcane_bat', 'explosive_slime'];
+        for (let i = 0; i < 3; i++) {
+          const def = ENEMY_BY_ID[kinds[(i + this.wave) % kinds.length]];
+          if (!def) continue;
+          const e = this.makeEnemy(def, {}, { scale: difficultyScale(this.night, this.wave) });
+          e.x = clamp(boss.x + this.rng.range(-100, 100), PLAY.left, PLAY.right);
+          e.y = clamp(boss.y + this.rng.range(-40, 40), PLAY.top, PLAY.bottom);
+          e.spawnT = 0;
+          this.enemies.push(e);
+        }
+        break;
+      }
+
       case 'enrage':
         this.emit('boss:enrage', { enemy: boss });
         this.emit('enemy:tell', { enemy: boss, kind: 'enrage', color: '#ff4f5e' });
@@ -2006,6 +2302,11 @@ export class Run {
           }
         }
         if (z.slow) for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, z.x, z.y) < z.radius * 2.2) { e.slow = Math.max(e.slow, z.slow); e.slowTime = Math.max(e.slowTime, 1.4); }
+      } else if (z.kind === 'wall') {
+        // Solid cover. Handled here (not in the damage paths below) because a
+        // wall must not hurt anything — it only blocks movement, and it expires
+        // on its own so it can never trap the player permanently.
+        if (z.t > z.time) { this.zones.splice(i, 1); continue; }
       } else if (z.source === 'enemy') {
         // Enemy hazard patches (crystal shards, caustic slime) damage the PLAYER.
         // Without this branch they fell into the enemy-damage path below, where

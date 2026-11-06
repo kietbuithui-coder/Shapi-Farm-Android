@@ -243,13 +243,26 @@ test('a boss that genuinely cannot move is rescued, not left frozen', () => {
   // so this test removes speed entirely and parks the boss on the player.
   const run = bossRun({ bx: 1070, by: 440, px: 1084, py: 440 });
   const boss = run.boss;
-  boss.speed = 0;
+  // `boss.speed = 0` does NOT pin the boss: updateBosses re-derives speed from
+  // the def every frame, so that line was cosmetic and this test only passed
+  // while the old fixed attack cycle happened to open with a leap that kept the
+  // boss rooted. Set the source of truth instead, and restore it afterwards.
+  const realSpeed = boss.def.speed;
+  boss.def.speed = 0;
   let relocations = 0;
-  run.on('fx:blink', () => { relocations++; });
-  for (let i = 0; i < 240; i++) {
-    run.player.x = 1084;
-    run.player.y = 440;
-    run.step(DT, {});
+  run.on('fx:blink', (e) => { if (e && e.color === '#a48bff') relocations++; });
+  try {
+    // Two full detection rounds are needed before the rescue: 45 frames to
+    // notice, a fresh orbit bias to try, then 45 more before the relocation.
+    // That is ~2.4s of grace by design, so give the test 4.5s rather than
+    // asserting on a window that ended one round early.
+    for (let i = 0; i < 270; i++) {
+      run.player.x = 1084;
+      run.player.y = 440;
+      run.step(DT, {});
+    }
+  } finally {
+    boss.def.speed = realSpeed;
   }
   assert.ok(relocations > 0, 'the anti-stuck system relocated a frozen boss');
   const d = Math.hypot(boss.x - run.player.x, boss.y - run.player.y);

@@ -24,6 +24,21 @@ const WANTS = {
   utility: { near: 130, far: 200 },
 };
 
+/**
+ * Tiny deterministic PRNG for bot behaviour. Kept local so the bot never
+ * perturbs the run's own Rng stream (which drives spawns, crits and loot).
+ */
+function makeBotRng(seed) {
+  let a = (seed ^ 0x9e3779b9) >>> 0;
+  return function next() {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export class BotBrain {
   constructor(run, { skill = 0.85 } = {}) {
     this.run = run;
@@ -58,7 +73,15 @@ export class BotBrain {
     this.dodgeCd = Math.max(0, this.dodgeCd - dt);
     this.reactTimer = Math.max(0, this.reactTimer - dt);
     this.strafeTimer -= dt;
-    if (this.strafeTimer <= 0) { this.strafeTimer = 1.2 + Math.random() * 1.4; this.strafeDir *= -1; }
+    // Seeded, not Math.random: the balance sweep must be reproducible, otherwise
+    // every A/B comparison of a combat change is measuring the bot's dice rather
+    // than the change. Strafe timing drew from the global RNG and made two runs
+    // of the same build differ by three whole nights.
+    if (this.strafeTimer <= 0) {
+      this.botRng = this.botRng || makeBotRng(this.run.seed ?? 1);
+      this.strafeTimer = 1.2 + this.botRng() * 1.4;
+      this.strafeDir *= -1;
+    }
 
     const input = { moveX: 0, moveY: 0, dodge: false };
     if (!p.alive) return input;

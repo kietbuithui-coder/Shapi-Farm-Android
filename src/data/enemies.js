@@ -168,6 +168,99 @@ export const BOSSES = [
       { at: 0.12, attacks: ['nineLash', 'echoRing', 'enrage'], speed: 1.4, dmgMult: 1.4, finale: true },
     ],
   },
+
+  /* ── additional bosses ────────────────────────────────────────────────────
+     Two more act bosses, each with five attacks and two or more phases where
+     the SECOND PHASE CHANGES BEHAVIOUR, not just numbers: the Void Predator
+     stops orbiting and starts hunting, and the Crystal Queen converts her arena
+     into a hazard field. Attack lists carry hints (`tag`) so the selector can
+     choose by distance and phase instead of cycling blindly. */
+
+  {
+    id: 'void_predator',
+    name: { vi: 'Dã Thú Hư Không', en: 'The Void Predator' },
+    title: { vi: 'Kẻ Săn Trong Bóng Tối', en: 'Hunter in the Dark' },
+    shape: 'voidpredator', hp: 1760, speed: 60, damage: 24, radius: 46, xp: 480, gold: 22, act: 2,
+    color: '#2a2340', color2: '#0a0812', eye: '#d24aff', glow: '#b06bff',
+    // Phase 1: a ranged skirmisher that keeps its distance and punishes chasing.
+    // Phase 2: it stops retreating entirely and hunts with dashes. That is a
+    // different fight, not a faster one — the answer changes from "close in"
+    // to "keep moving and use the gap after each dash".
+    phases: [
+      {
+        at: 1.0, style: 'skirmish',
+        attacks: [
+          { id: 'shadowDash', tag: 'dash' },
+          { id: 'tripleClaw', tag: 'melee' },
+          { id: 'shadowRing', tag: 'ring' },
+          { id: 'vanishStrike', tag: 'ambush' },
+        ],
+      },
+      {
+        at: 0.55, style: 'hunt', speed: 1.22,
+        attacks: [
+          { id: 'vanishStrike', tag: 'ambush' },
+          { id: 'shadowDash', tag: 'dash' },
+          { id: 'tripleClaw', tag: 'melee' },
+          { id: 'shadowRing', tag: 'ring' },
+        ],
+      },
+      {
+        at: 0.25, style: 'hunt', speed: 1.35, dmgMult: 1.15, enraged: true,
+        attacks: [
+          { id: 'shadowDash', tag: 'dash' },
+          { id: 'tripleClaw', tag: 'melee' },
+          { id: 'vanishStrike', tag: 'ambush' },
+          { id: 'eclipse2', tag: 'nova' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'crystal_queen',
+    name: { vi: 'Nữ Hoàng Pha Lê', en: 'The Crystal Queen' },
+    title: { vi: 'Điêu Khắc Sân Thượng', en: 'Sculptor of the Terrace' },
+    shape: 'crystalqueen', hp: 2400, speed: 32, damage: 27, radius: 50, xp: 560, gold: 26, act: 3,
+    color: '#7fe8e0', color2: '#123a44', eye: '#ffffff', glow: '#7fd4d8',
+    // Phase 1 is a zoning fight: she builds walls and rains crystals, so cover
+    // matters. Phase 2 she shatters her own walls into spikes and adds an aimed
+    // beam that forces movement — the arena gets MORE hostile, not just louder.
+    phases: [
+      {
+        at: 1.0, style: 'zone',
+        attacks: [
+          { id: 'crystalRain', tag: 'rain' },
+          { id: 'crystalWall', tag: 'wall' },
+          { id: 'groundSpikes', tag: 'spikes' },
+          { id: 'summonMinions', tag: 'summon' },
+        ],
+      },
+      {
+        at: 0.6, style: 'shatter', speed: 1.1,
+        attacks: [
+          { id: 'shatterWall', tag: 'shatter' },
+          { id: 'energyBeam', tag: 'beam' },
+          // She keeps building in phase 1 on purpose: shatterWall is only a
+          // real mechanic if there are walls to shatter, and the 0.6 phase is
+          // long enough that a build-less list left her with a dead attack.
+          { id: 'crystalWall', tag: 'wall' },
+          { id: 'crystalRain', tag: 'rain' },
+          { id: 'groundSpikes', tag: 'spikes' },
+          { id: 'summonMinions', tag: 'summon' },
+        ],
+      },
+      {
+        at: 0.28, style: 'shatter', speed: 1.2, dmgMult: 1.18, enraged: true,
+        attacks: [
+          { id: 'energyBeam', tag: 'beam' },
+          { id: 'shatterWall', tag: 'shatter' },
+          { id: 'crystalWall', tag: 'wall' },
+          { id: 'groundSpikes', tag: 'spikes' },
+          { id: 'crystalRain', tag: 'rain' },
+        ],
+      },
+    ],
+  },
 ];
 
 export const BOSS_BY_ID = Object.fromEntries(BOSSES.map((b) => [b.id, b]));
