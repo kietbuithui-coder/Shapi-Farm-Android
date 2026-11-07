@@ -394,6 +394,12 @@ export class Renderer {
         ctx.save(); ctx.translate(pr.x, pr.y); ctx.rotate(pr.angle + Math.sin(t * 12) * 0.25);
         drawIcon(ctx, 'fish', 0, 0, 24, tint); ctx.restore();
       }
+      if (pr.shape === 'shard') {
+        ctx.save(); ctx.translate(pr.x, pr.y); ctx.rotate(pr.angle);
+        ctx.fillStyle = '#dcf7ff'; ctx.strokeStyle = tint; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-3, -4); ctx.lineTo(-7, 0);
+        ctx.lineTo(-3, 4); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+      }
       if (pr.shape === 'needle') {
         ctx.save();
         ctx.translate(pr.x, pr.y);

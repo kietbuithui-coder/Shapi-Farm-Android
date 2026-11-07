@@ -911,7 +911,7 @@ export class Run {
         const count = rv.count || def.params.count || 1;
         const base = target ? angle(p.x, p.y - 22, target.x, target.y) : p.aim;
         for (let i = 0; i < count; i++) {
-          const spread = this.dataSpread(def, count, i);
+          const spread = this.dataSpread(def, count, i, rv);
           this.spawnProjectile({
             x: p.x, y: p.y - 22, angle: base + spread,
             speed: def.params.speed, damage: this.skillDamage(def, power),
@@ -922,6 +922,7 @@ export class Run {
             burnDps: def.id === 'fireball' ? this.skillDamage(def, power) * 0.12 : 0,
             burn: !!rv.burnZone, tint: def.icon.tint, shape: def.icon.glyph,
             source: 'skill', owner: 'player', life: 2.6, knock: def.params.knock || (def.pattern === 'fish' ? 220 : 0),
+            bounces: rv.bounce ? 1 : 0, onHitBlast: rv.explode ? 50 * area : 0, onHitBlastScale: rv.explode || 0,
           });
         }
         break;
@@ -936,6 +937,14 @@ export class Run {
             this.arcDamage(p.x, p.y, R, R, p.facing, TAU, def, power, rv, true);
             this.emit('fx:nova', { x: p.x, y: p.y, radius: R, color: def.icon.tint, delay: i });
             if (def.params.knock) this.knockbackArea(p.x, p.y, R, def.params.knock * (1 + this.mods.knock));
+            if (rv.shards) {
+              for (let shard = 0; shard < rv.shards; shard++) {
+                const a = shard * TAU / rv.shards;
+                this.spawnProjectile({ x: p.x + Math.cos(a) * 22, y: p.y - 22 + Math.sin(a) * 16,
+                  angle: a, speed: 340, damage: this.skillDamage(def, power * 0.18), radius: 4,
+                  tint: def.icon.tint, shape: 'shard', source: 'skill', owner: 'player', life: 0.65 });
+              }
+            }
           } });
         }
         break;
@@ -1089,6 +1098,7 @@ export class Run {
             kind: 'orb', x: p.x, y: p.y, angle: (i / count) * TAU, radius: def.params.radius * area * (rv.radius || 1),
             damage: this.skillDamage(def, power), time: rv.time || def.params.time, t: 0,
             hitCd: new Map(), tint: def.icon.tint, slow: 0, def,
+            shoot: !!rv.shoot, bleed: !!rv.bleed, burnTrail: !!rv.burnTrail, trailCd: 0,
           });
         }
         this.statsTotals.minions += count;
@@ -1245,9 +1255,9 @@ export class Run {
     }
   }
 
-  dataSpread(def, count, i) {
+  dataSpread(def, count, i, rv = {}) {
     if (count <= 1) return 0;
-    const span = def.params.spreadWide ? 0.7 : def.params.spread || 0.18;
+    const span = rv.spreadWide || def.params.spreadWide ? 0.7 : def.params.spread || 0.18;
     return (i - (count - 1) / 2) * span;
   }
 
@@ -2450,6 +2460,7 @@ export class Run {
       boomerang: !!opt.boomerang, travel: opt.travel || 0, phase: 0,
       root: opt.root || 0, lifesteal: opt.lifesteal || 0, wide: !!opt.wide,
       knock: opt.knock || 0, burn: !!opt.burn, burnDps: opt.burnDps || 0, alive: true,
+      bounces: opt.bounces || 0, onHitBlast: opt.onHitBlast || 0, onHitBlastScale: opt.onHitBlastScale || 0,
     };
     this.projectiles.push(p);
     return p;
@@ -2489,7 +2500,14 @@ export class Run {
       }
       pr.x += Math.cos(pr.angle) * pr.speed * dt;
       pr.y += Math.sin(pr.angle) * pr.speed * dt * 0.72;
-      if (pr.x < 0 || pr.x > ARENA.w || pr.y < 0 || pr.y > ARENA.h || pr.life <= 0) {
+      const outX = pr.x < 0 || pr.x > ARENA.w;
+      const outY = pr.y < 0 || pr.y > ARENA.h;
+      if ((outX || outY) && pr.bounces > 0 && pr.life > 0) {
+        pr.x = clamp(pr.x, 0, ARENA.w); pr.y = clamp(pr.y, 0, ARENA.h);
+        if (outX) pr.angle = Math.PI - pr.angle;
+        if (outY) pr.angle = -pr.angle;
+        pr.bounces--; pr.hits.clear();
+      } else if (outX || outY || pr.life <= 0) {
         if (pr.explode && pr.owner === 'player') this.blast(pr);
         this.projectiles.splice(i, 1);
         continue;
@@ -2499,7 +2517,7 @@ export class Run {
           if (e.dead || pr.hits.has(e.uid)) continue;
           if (dist2(pr.x, pr.y, e.x, e.y - 12) < (pr.radius + e.radius) ** 2) {
             pr.hits.add(e.uid);
-            const res = pr.source === 'minion'
+            const res = pr.source === 'minion' || pr.source === 'orbit'
               ? { damage: pr.damage, isCrit: false }
               : computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
             this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
@@ -2507,6 +2525,7 @@ export class Run {
             if (pr.root) this.applyStatus(e, 'root', pr.root);
             if (pr.lifesteal) this.heal(res.damage * pr.lifesteal, { silent: true });
             if (pr.knock) this.knockback(e, pr.knock);
+            if (pr.onHitBlast) this.blast({ ...pr, explode: pr.onHitBlast, burn: false }, e.uid, pr.onHitBlastScale);
             if (pr.explode) { this.blast(pr); this.projectiles.splice(i, 1); break; }
             if (pr.hits.size > pr.pierce) { this.projectiles.splice(i, 1); break; }
           }
@@ -2530,12 +2549,12 @@ export class Run {
     }
   }
 
-  blast(pr) {
+  blast(pr, excludeUid = null, damageScale = 0.7) {
     this.emit('fx:blast', { x: pr.x, y: pr.y, radius: pr.explode, color: pr.tint });
     for (const e of this.enemies) {
-      if (e.dead) continue;
+      if (e.dead || e.uid === excludeUid) continue;
       if (dist2(pr.x, pr.y, e.x, e.y - 12) < (pr.explode + e.radius) ** 2) {
-        this.hitEnemy(e, pr.damage * 0.7, { source: 'blast' });
+        this.hitEnemy(e, pr.damage * damageScale, { source: 'blast' });
         if (pr.burnDps > 0) this.applyStatus(e, 'burn', pr.burnDps, 3);
       }
     }
@@ -2671,7 +2690,7 @@ export class Run {
               e.x += Math.cos(a) * z.pull * dt;
               e.y += Math.sin(a) * z.pull * dt * 0.6;
             }
-            if (z.dps) this.hitEnemy(e, z.dps * dt, { tick: true, silent: true });
+            if (z.dps) this.hitEnemy(e, z.dps * dt, { source: z.source, tick: true, silent: true });
             if (z.slow) this.applyStatus(e, 'slow', z.slow, 0.4);
           }
         }
@@ -2712,6 +2731,14 @@ export class Run {
         m.x = p.x + Math.cos(m.angle) * m.radius;
         m.y = p.y - 24 + Math.sin(m.angle) * m.radius * 0.55;
         m.time -= dt;
+        if (m.burnTrail && m.time > 0) {
+          m.trailCd -= dt;
+          if (m.trailCd <= 0) {
+            m.trailCd += 0.6;
+            this.zones.push({ kind: 'fire', x: m.x, y: m.y + 12, radius: 20, time: 0.8,
+              t: 0, dps: m.damage * 0.2, tint: m.tint, source: 'orbit' });
+          }
+        }
         for (const e of this.enemies) {
           if (e.dead) continue;
           const last = m.hitCd.get(e.uid) || -9;
@@ -2719,6 +2746,12 @@ export class Run {
           if (dist2(m.x, m.y, e.x, e.y - 12) < (e.radius + 16) ** 2) {
             m.hitCd.set(e.uid, this.time);
             this.hitEnemy(e, m.damage, { source: 'orbit' });
+            if (m.bleed) this.applyStatus(e, 'bleed', m.damage * 0.18 * (e.boss || e.mini ? 0.7 : 1), 2);
+            if (m.shoot && !e.dead) {
+              const a = Math.atan2((e.y - 12 - m.y) / 0.72, e.x - m.x);
+              this.spawnProjectile({ x: m.x, y: m.y, angle: a, speed: 360, damage: m.damage * 0.25,
+                radius: 4, life: 0.6, source: 'orbit', owner: 'player', tint: m.tint, shape: 'orb' });
+            }
           }
         }
         if (m.time <= 0) this.minions.splice(i, 1);

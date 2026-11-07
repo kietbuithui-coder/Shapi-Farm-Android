@@ -83,6 +83,24 @@ export const SKILL_ACTIONS = {
       [0.47, {}],
     ],
   },
+  blaze_orbit: {
+    startup: 0.25, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.12, frontX: -4, frontY: 3, backX: -6, backY: 3 }],
+      [0.24, { crouch: 0.62, lean: -0.30, bodyRoll: -0.18, frontX: -22, frontY: 5, backX: 4, backY: -18, headTilt: -0.16 }],
+      [0.30, { crouch: 0.04, lean: 0.22, bodyRoll: 0.24, frontX: 26, frontY: -34, backX: -32, backY: 10, headTilt: 0.18 }],
+      [0.47, {}],
+    ],
+  },
+  blood_moon: {
+    startup: 0.25, active: 0.10, recovery: 0.13,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.10, frontX: -2, frontY: 2, backX: 0, backY: 1 }],
+      [0.24, { crouch: 0.50, lean: -0.34, bodyRoll: 0.14, frontX: -20, frontY: -16, backX: -25, backY: -12, headTilt: -0.20 }],
+      [0.31, { crouch: 0.65, lean: 0.35, bodyRoll: -0.24, frontX: 32, frontY: 15, backX: -30, backY: -19, headTilt: 0.24 }],
+      [0.48, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [
