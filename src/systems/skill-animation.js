@@ -236,6 +236,26 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  phantom_step: {
+    // The destination marker appears immediately; the body pose plays while it waits.
+    startup: 0.08, active: 0.08, recovery: 0.10, windup: 0,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.08, frontX: -4, frontY: 2, backX: 0, backY: 1 }],
+      [0.07, { crouch: 0.36, lean: -0.36, bodyRoll: -0.18, frontX: -15, frontY: -24, backX: -32, backY: 8, headTilt: -0.22 }],
+      [0.14, { crouch: 0.24, lean: 0.28, bodyRoll: 0.30, frontX: 30, frontY: 15, backX: -20, backY: -30, headTilt: 0.22 }],
+      [0.26, {}],
+    ],
+  },
+  blink_paw: {
+    // The blink remains immediate for defensive use; the pose follows it.
+    startup: 0.08, active: 0.08, recovery: 0.10, windup: 0,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.08, frontX: -3, frontY: 2, backX: 1, backY: 1 }],
+      [0.07, { crouch: 0.40, lean: -0.32, bodyRoll: 0.25, frontX: -14, frontY: 9, backX: -29, backY: -21, headTilt: -0.18 }],
+      [0.14, { crouch: 0.30, lean: 0.42, bodyRoll: -0.20, frontX: 35, frontY: -16, backX: 8, backY: -28, headTilt: 0.22 }],
+      [0.26, {}],
+    ],
+  },
   wind_sprint: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [

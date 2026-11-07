@@ -361,7 +361,7 @@ export const SKILLS = [
   {
     id: 'blink_paw', category: 'mobility', rarity: 'rare', pattern: 'blink',
     name: { vi: 'Vuốt Dịch Chuyển', en: 'Blink Paw' },
-    desc: { vi: 'Búng tay, đổi chỗ với ảo ảnh ban nãy.', en: 'Snap your paws; trade places with an echo.' },
+    desc: { vi: 'Dịch chuyển tức thời theo hướng vừa chọn.', en: 'Blink instantly in the chosen direction.' },
     cost: 16, cd: 6, range: 230, ranks: [R(1, 'Dịch chuyển 200px'), R(1, 'Xa hơn', { range: 260 }), R(1, 'Nổ nhỏ khi xuất hiện', { damage: 0.8 }), R(1, 'Hai lần dùng', { charges: 2 }), R(1, 'Miễn thương khi lướt', { invuln: 0.6 })],
     params: { damage: 0, invuln: 0.2 }, icon: { glyph: 'blink', tint: '#a48bff' },
   },

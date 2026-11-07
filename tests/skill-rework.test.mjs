@@ -98,7 +98,8 @@ test('multiple charges can be used and recover one at a time', () => {
   slot.rank = 4; run.offers = [{ type: 'skillup', skillId: slot.id, slot: 0, rank: 5 }]; run.chooseOffer(0);
   assert.equal(slot.charges, 2); assert.ok(run.castSlot(0).ok);
   assert.equal(slot.charges, 1); assert.equal(slot.cd, 0);
-  assert.ok(run.castSlot(0).ok); assert.equal(slot.charges, 0); assert.equal(run.canCast(slot), false);
+  assert.deepEqual(run.castSlot(0), { ok: true, queued: true }); assert.equal(slot.charges, 0); assert.equal(run.canCast(slot), false);
+  advance(run, 0.5); assert.equal(slot.reserved, 0); assert.equal(slot.charges, 0);
   const cd = slot.rechargeDuration;
   run.updateSkillCooldowns(cd + 0.01); assert.equal(slot.charges, 1); assert.equal(run.canCast(slot), true);
   run.updateSkillCooldowns(cd + 0.01); assert.equal(slot.charges, 2); assert.equal(slot.recharge, 0);

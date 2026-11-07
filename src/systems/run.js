@@ -163,7 +163,11 @@ export class Run {
 
   setState(next) {
     if (this.state === next) return;
-    if ([RUN_STATE.INTRO, RUN_STATE.REWARD, RUN_STATE.DEAD, RUN_STATE.VICTORY].includes(next)) this.cancelSkillQueue();
+    if ([RUN_STATE.INTRO, RUN_STATE.REWARD, RUN_STATE.DEAD, RUN_STATE.VICTORY].includes(next)) {
+      this.cancelSkillQueue();
+      if (this.dashQueue) this.dashQueue.length = 0;
+      this.player.dashTime = 0;
+    }
     this.state = next;
     this.emit('state', { state: next, previous: this.state });
   }
@@ -598,26 +602,36 @@ export class Run {
   }
 
   dashTo(p, dx, dy, targetX, targetY, impact = null) {
-    // Move the player along a straight line over a few fixed sub-steps so a dash
-    // can never tunnel through an enemy or the arena bounds.
+    // Keep simultaneous dash effects in order. The next starts from the actual
+    // end of the previous one rather than overriding its path from an old origin.
     this.dashQueue = this.dashQueue || [];
+    if (!impact && this.dashQueue.length) return; // do not accumulate bot manoeuvres
     this.dashQueue.push({
-      fromX: p.x, fromY: p.y,
-      toX: clamp(targetX, PLAY.left, PLAY.right),
-      toY: clamp(targetY, PLAY.top, PLAY.bottom),
+      offsetX: targetX - p.x, offsetY: targetY - p.y, started: false,
       t: 0, duration: impact?.duration || 0.14, impact, hitIds: new Set(), trailTimer: 0,
     });
-    p.dashTime = Math.max(p.dashTime, impact?.duration || 0.14);
-    p.facing = dx >= 0 ? 1 : -1;
+    if (this.dashQueue.length === 1) {
+      p.dashTime = Math.max(p.dashTime, impact?.duration || 0.14);
+      if (dx) p.facing = dx > 0 ? 1 : -1;
+    }
   }
 
   updateDash(dt) {
     if (!this.dashQueue || !this.dashQueue.length) return;
     const p = this.player;
-    for (let i = this.dashQueue.length - 1; i >= 0; i--) {
-      const d = this.dashQueue[i];
+    let remaining = dt;
+    while (remaining > 1e-9 && this.dashQueue.length) {
+      const d = this.dashQueue[0];
+      if (!d.started) {
+        d.started = true; d.fromX = p.x; d.fromY = p.y;
+        d.toX = clamp(p.x + d.offsetX, PLAY.left, PLAY.right);
+        d.toY = clamp(p.y + d.offsetY, PLAY.top, PLAY.bottom);
+        if (d.offsetX) p.facing = d.offsetX > 0 ? 1 : -1;
+        if (d.impact?.invuln) p.invuln = Math.max(p.invuln, d.impact.invuln);
+      }
+      const slice = Math.min(remaining, d.duration - d.t);
       const oldX = p.x, oldY = p.y;
-      d.t += dt;
+      d.t += slice; remaining -= slice;
       const k = Math.min(1, d.t / d.duration);
       const ease = 1 - Math.pow(1 - k, 3);
       p.x = d.fromX + (d.toX - d.fromX) * ease;
@@ -637,7 +651,7 @@ export class Run {
           }
           this.emit('fx:impact', { x: e.x, y: e.y, radius: 28, color: d.impact.def.icon.tint });
         }
-        d.trailTimer -= dt;
+        d.trailTimer -= slice;
         if (d.trailTimer <= 0) {
           d.trailTimer = 0.045;
           this.emit('fx:dashTrail', { x: p.x, y: p.y, color: d.impact.def.icon.tint });
@@ -646,8 +660,10 @@ export class Run {
             source: 'dashTrail', tint: '#ff8f4d' });
         }
       }
-      if (k >= 1) this.dashQueue.splice(i, 1);
+      if (k >= 1) this.dashQueue.shift();
     }
+    const active = this.dashQueue[0];
+    p.dashTime = active ? Math.max(0, active.duration - active.t) : 0;
   }
 
   updatePhantomStep(dt) {
@@ -775,7 +791,7 @@ export class Run {
       if (action.elapsed < action.duration) return;
       this.player.skillAction = null;
     }
-    if (this.skillQueue.length && !this.player.skillAction && this.state === RUN_STATE.FIGHT) {
+    if (this.skillQueue.length && !this.player.skillAction && !this.dashQueue?.length && this.state === RUN_STATE.FIGHT) {
       const queued = this.skillQueue.shift();
       this.castSlot(queued.index, { reserved: true });
     }
@@ -790,7 +806,7 @@ export class Run {
       return { ok: false, reason };
     }
     const def = slot.def;
-    if (!options.reserved && this.player.skillAction) {
+    if (!options.reserved && (this.player.skillAction || this.dashQueue?.length)) {
       if (this.skillQueue.length >= 4) {
         this.emit('skill:denied', { slot: index, reason: 'queue' });
         return { ok: false, reason: 'queue' };
@@ -892,7 +908,7 @@ export class Run {
         const dx = target ? Math.cos(dir) : p.facing;
         const dy = target ? Math.sin(dir) * 0.4 : 0;
         p.invuln = Math.max(p.invuln, def.params.invuln ? 0.35 : 0.1);
-        const impact = { def, power, rv, radius: (def.id === 'pounce' ? 30 : 78) * area, duration: def.params.duration };
+        const impact = { def, power, rv, radius: (def.id === 'pounce' ? 30 : 78) * area, duration: def.params.duration, invuln: def.params.invuln ? 0.35 : 0.1 };
         this.dashTo(p, dx, dy, p.x + dx * values.range * area * potency, p.y + dy * values.range * area * potency, impact);
         this.emit('fx:dashTrail', { x: p.x, y: p.y, color: def.icon.tint });
         break;
@@ -902,6 +918,7 @@ export class Run {
         let dx = p.held.x, dy = p.held.y;
         if (!dx && !dy) dx = p.facing;
         const len = Math.hypot(dx, dy) || 1;
+        if (dx) p.facing = dx > 0 ? 1 : -1;
         const nx = clamp(p.x + (dx / len) * values.range * area * potency, PLAY.left, PLAY.right);
         const ny = clamp(p.y + (dy / len) * values.range * area * potency * 0.6, PLAY.top, PLAY.bottom);
         if (def.id === 'phantom_step') {
@@ -912,7 +929,11 @@ export class Run {
         this.emit('fx:blink', { x: p.x, y: p.y, x2: nx, y2: ny, color: def.icon.tint });
         p.x = nx; p.y = ny;
         p.invuln = Math.max(p.invuln, rv.invuln || def.params.invuln || 0.2);
-        if (rv.damage || rv.decoyBoom) this.arcDamage(p.x, p.y, 86 * area, 86 * area, p.facing, TAU, def, power, rv, true);
+        if (rv.damage || rv.decoyBoom) {
+          const radius = 86 * area;
+          this.arcDamage(p.x, p.y, radius, radius, p.facing, TAU, def, power, rv, true);
+          this.emit('fx:nova', { x: p.x, y: p.y, radius, color: def.icon.tint });
+        }
         break;
       }
       case 'fish':
