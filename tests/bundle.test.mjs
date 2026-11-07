@@ -12,6 +12,9 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
+import { build } from 'esbuild';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const HTML_PATH = new URL('../index.html', import.meta.url);
 const html = existsSync(HTML_PATH) ? readFileSync(HTML_PATH, 'utf8') : null;
@@ -113,6 +116,16 @@ test('index.html exists and looks like a single-file game', () => {
   assert.ok(html, 'index.html is built (run `npm run build:web`)');
   assert.ok(html.length > 100_000, `bundle is substantial (${(html.length / 1024).toFixed(0)} KB)`);
   assert.match(html, /<canvas[^>]+id=["']game["']/i, 'has the game canvas');
+});
+
+test('the inline game bundle matches the current source tree', async () => {
+  const entry = fileURLToPath(new URL('../src/main.js', import.meta.url));
+  const result = await build({ entryPoints: [entry], bundle: true, format: 'iife',
+    platform: 'browser', target: ['es2020'], minify: true, legalComments: 'none',
+    write: false, logLevel: 'silent' });
+  const sha256 = (text) => createHash('sha256').update(text).digest('hex');
+  assert.equal(sha256(extractBundle(html)), sha256(result.outputFiles[0].text),
+    'index.html is stale: run npm run build:web and commit the result');
 });
 
 test('the built page loads nothing from the network', () => {
