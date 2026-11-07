@@ -5467,8 +5467,8 @@
         "root": 1.2
       },
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.06s, active 0.09s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -5534,7 +5534,7 @@
       "parameters": {
         "speed": 420,
         "damage": 1.5,
-        "spread": 0.2
+        "spread": 0.1
       },
       "ranks": [
         {
@@ -5570,15 +5570,15 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 14.29,
           "burst1s": 14.29,
           "maxHit": 14.29,
-          "firstHit": 0.13,
+          "firstHit": 0.25,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 4.76
         },
@@ -5587,7 +5587,7 @@
           "damage": 13.06,
           "burst1s": 13.06,
           "maxHit": 13.06,
-          "firstHit": 0.15,
+          "firstHit": 0.27,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 4.35
         },
@@ -5596,7 +5596,7 @@
           "damage": 13,
           "burst1s": 13,
           "maxHit": 13,
-          "firstHit": 0.13,
+          "firstHit": 0.25,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 4.33
         },
@@ -5605,7 +5605,7 @@
           "damage": 14.29,
           "burst1s": 14.29,
           "maxHit": 14.29,
-          "firstHit": 0.13,
+          "firstHit": 0.25,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 4.76
         },
@@ -5614,7 +5614,7 @@
           "damage": 14.29,
           "burst1s": 14.29,
           "maxHit": 14.29,
-          "firstHit": 0.13,
+          "firstHit": 0.3,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 4.76
         }

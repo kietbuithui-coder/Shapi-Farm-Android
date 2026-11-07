@@ -413,7 +413,7 @@ export const SKILLS = [
     name: { vi: 'Cá Bay Tới Công Chuyện', en: 'Flying Fish' },
     desc: { vi: 'Ném cá vào mặt địch, gây sát thương và đẩy lùi.', en: 'Throw a fish at a foe, dealing damage and knocking it back.' },
     cost: 14, cd: 3, range: 360, ranks: [R(1, 'Cá bay'), R(1, 'Cá đau hơn', { mult: 1.25 }), R(1, 'Hai con cá', { count: 2 }), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Ba con cá', { count: 3 })],
-    params: { speed: 420, damage: 1.5, spread: 0.2 }, icon: { glyph: 'fish', tint: '#77d9ff' }, starter: true,
+    params: { speed: 420, damage: 1.5, spread: 0.1 }, icon: { glyph: 'fish', tint: '#77d9ff' }, starter: true,
   },
 ];
 

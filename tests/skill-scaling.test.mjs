@@ -56,7 +56,8 @@ test('strong instant skills wait briefly and the tell fires before impact', () =
 test('funny skills have real distinct effects and ranks accumulate', () => {
   const run = make(['banana_peel', 'flying_fish']);
   run.castSlot(0); assert.ok(run.traps.some((t) => t.banana && t.damage > 0));
-  run.castSlot(1); assert.ok(run.projectiles.some((p) => p.shape === 'fish' && p.knock > 0));
+  assert.deepEqual(run.castSlot(1), { ok: true, queued: true }); advance(run, 0.4);
+  assert.ok(run.projectiles.some((p) => p.shape === 'fish' && p.knock > 0));
   assert.equal(skillValues(SKILL_BY_ID.banana_peel, 5).rankValues.root, 1.8);
   assert.equal(skillValues(SKILL_BY_ID.banana_peel, 5).rankValues.count, 3);
 });

@@ -943,7 +943,12 @@ export class Run {
       case 'projectile': {
         emitCast();
         const count = rv.count || def.params.count || 1;
-        const base = target ? angle(p.x, p.y - 22, target.x, target.y) : p.aim;
+        // Fish aim at the collision centre, accounting for compressed vertical
+        // projectile motion; aiming at feet makes diagonal throws miss.
+        const base = target ? (def.pattern === 'fish'
+          ? Math.atan2((target.y - 12 - (p.y - 22)) / 0.72, target.x - p.x)
+          : angle(p.x, p.y - 22, target.x, target.y)) : p.aim;
+        if (def.pattern === 'fish' && Math.abs(Math.cos(base)) > 0.01) p.facing = Math.cos(base) > 0 ? 1 : -1;
         for (let i = 0; i < count; i++) {
           const spread = this.dataSpread(def, count, i, rv);
           this.spawnProjectile({
@@ -1121,9 +1126,20 @@ export class Run {
       case 'banana': {
         emitCast();
         const count = rv.count || 1;
+        const radius = def.params.radius * area;
+        // Face a nearby target while idle; held movement still controls the throw.
+        if (!p.moving && target && target.x !== p.x) p.facing = target.x > p.x ? 1 : -1;
+        const room = p.facing > 0 ? PLAY.right - p.x : p.x - PLAY.left;
+        const spacing = Math.max(48, 2 * radius + 8);
+        const sideways = count > 1 && room < 65 + (count - 1) * spacing;
+        // Near an edge, fan along the playable vertical axis instead of clamping
+        // several peels to one point and triggering all of them simultaneously.
+        const yStep = sideways ? Math.min(spacing, (PLAY.bottom - PLAY.top) / (count - 1)) : 0;
+        const yStart = sideways ? clamp(p.y - (count - 1) * yStep / 2, PLAY.top, PLAY.bottom - (count - 1) * yStep) : p.y;
         for (let i = 0; i < count; i++) {
-          this.traps.push({ x: clamp(p.x + p.facing * (65 + i * 48), PLAY.left, PLAY.right), y: p.y,
-            radius: def.params.radius * area, root: (rv.root || def.params.root) * potency,
+          const x = clamp(p.x + p.facing * (65 + (sideways ? 0 : i * spacing)), PLAY.left, PLAY.right);
+          this.traps.push({ x, y: sideways ? yStart + i * yStep : p.y,
+            radius, root: (rv.root || def.params.root) * potency,
             time: def.params.time, t: 0, damage: this.skillDamage(def, power), tint: def.icon.tint, banana: true });
         }
         break;

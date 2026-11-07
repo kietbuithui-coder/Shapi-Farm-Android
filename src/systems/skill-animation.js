@@ -259,6 +259,25 @@ export const SKILL_ACTIONS = {
       [0.26, {}],
     ],
   },
+  banana_peel: {
+    // A quick toss: the peel is placed immediately, with visible follow-through.
+    startup: 0.06, active: 0.09, recovery: 0.10, windup: 0,
+    frames: [
+      [0,    { crouch: 0.15, lean: -0.18, frontX: -7, frontY: -8, backX: -6, backY: 1 }],
+      [0.06, { crouch: 0.40, lean: -0.36, bodyRoll: -0.25, frontX: -16, frontY: -26, backX: -26, backY: 10, headTilt: -0.24 }],
+      [0.13, { crouch: 0.75, lean: 0.44, bodyRoll: 0.28, frontX: 34, frontY: 26, backX: -28, backY: -24, headTilt: 0.22 }],
+      [0.25, {}],
+    ],
+  },
+  flying_fish: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.12, frontX: -5, frontY: 2, backX: -1, backY: 1 }],
+      [0.09, { crouch: 0.38, lean: -0.44, bodyRoll: -0.28, frontX: -21, frontY: -31, backX: -29, backY: -13, headTilt: -0.25 }],
+      [0.15, { crouch: 0.28, lean: 0.50, bodyRoll: 0.30, frontX: 35, frontY: -22, backX: -32, backY: 15, headTilt: 0.20 }],
+      [0.28, {}],
+    ],
+  },
   iron_fur: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [
