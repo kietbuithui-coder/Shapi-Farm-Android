@@ -10,6 +10,7 @@ function setup(id, rank = 1) {
   return r;
 }
 function step(run, seconds) { for (let i=0; i<Math.ceil(seconds*60); i++) run.step(1/60, {}); }
+function release(r) { r.time += 0.12; r.updatePassiveEffects(0); }
 function enemy(r, dx = 70, dy = 0) {
   const e = addTrainingDummy(r, dx); e.y += dy; e.hp = e.hpMax = 100000; e.speed = 0; e.attackCd = 999; return e;
 }
@@ -25,7 +26,7 @@ test('yarn rank five bursts once on return and retains outbound and return hits'
 
 test('both boomerangs turn at arena edge instead of disappearing', () => {
   for (const id of ['magic_yarn', 'paw_boomerang']) {
-    const r = setup(id, 5); r.player.x = ARENA.w - 90; r.player.aim = 0; r.castSlot(0);
+    const r = setup(id, 5); r.player.x = ARENA.w - 90; r.player.aim = 0; r.castSlot(0); release(r);
     const pr = r.projectiles[0]; pr.x = ARENA.w - 1; pr.angle = 0;
     let blasts = 0; r.on('fx:blast', () => blasts++); r.updateProjectiles(1/60);
     assert.ok(pr.returning && r.projectiles.includes(pr), id);
@@ -68,7 +69,7 @@ test('reflective claws only splashes at rank five without doubling the attacker 
 
 test('yarn turnaround burst damages only nearby targets once without consuming on-hit', () => {
   const r = setup('magic_yarn', 5); const close = enemy(r, 200); const far = enemy(r, 350);
-  r.castSlot(0); const pr = r.projectiles[0]; r.projectiles = [pr];
+  r.castSlot(0); release(r); const pr = r.projectiles[0]; r.projectiles = [pr];
   pr.x = close.x - 40; pr.y = close.y - 12; pr.phase = pr.travel / pr.speed; pr.angle = 0;
   const hp = close.hp; r.updateProjectiles(1/60);
   assert.ok(Math.abs((hp - close.hp) - pr.damage * 0.55) < 1e-6);

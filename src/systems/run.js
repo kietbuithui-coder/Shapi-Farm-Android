@@ -1011,7 +1011,7 @@ export class Run {
         for (let i = 0; i < count; i++) {
           this.spawnProjectile({
             x: p.x, y: p.y - 20, angle: (target ? angle(p.x, p.y, target.x, target.y) : p.aim) + i * 0.16,
-            speed: def.params.speed, damage: this.skillDamage(def, power), radius: def.params.width * 0.4 * area,
+            speed: def.params.speed, damage: this.skillDamage(def, power), radius: def.params.width * 0.4 * area * (rv.width || 1),
             pierce: rv.pierce ? 99 : 1, shape: 'wave', tint: def.icon.tint, source: 'skill', owner: 'player',
             life: 0.7, wide: true, knock: 90,
           });
@@ -2580,14 +2580,19 @@ export class Run {
             const res = pr.source === 'minion' || pr.source === 'orbit' || pr.source === 'reflect'
               ? { damage: pr.damage, isCrit: false }
               : computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
-            this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
+            const hpBefore = e.hp;
+            const dealt = this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
             if (pr.burnDps > 0) this.applyStatus(e, 'burn', pr.burnDps, 3);
             if (pr.root) this.applyStatus(e, 'root', pr.root);
-            if (pr.lifesteal) this.heal(res.damage * pr.lifesteal, { silent: true });
+            if (pr.lifesteal) this.heal(Math.min(hpBefore, dealt) * pr.lifesteal, { silent: true });
             if (pr.knock) this.knockback(e, pr.knock);
             if (pr.onHitBlast) this.blast({ ...pr, explode: pr.onHitBlast, burn: false }, e.uid, pr.onHitBlastScale);
             if (pr.explode && pr.hits.size > pr.pierce) { this.blast(pr); this.projectiles.splice(i, 1); break; }
-            if (pr.hits.size > pr.pierce) { this.projectiles.splice(i, 1); break; }
+            if (pr.hits.size > pr.pierce) {
+              if (pr.boomerang && !pr.returning) this.turnBoomerang(pr, p);
+              else this.projectiles.splice(i, 1);
+              break;
+            }
           }
         }
       } else {

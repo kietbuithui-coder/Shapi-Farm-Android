@@ -209,6 +209,33 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  magic_yarn: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.08, frontX: -3, frontY: 2, backX: 0, backY: 1 }],
+      [0.09, { crouch: 0.50, lean: -0.32, bodyRoll: 0.20, frontX: -20, frontY: 5, backX: -26, backY: -12, headTilt: -0.20 }],
+      [0.15, { crouch: 0.20, lean: 0.40, bodyRoll: -0.26, frontX: 34, frontY: -6, backX: -26, backY: -26, headTilt: 0.18 }],
+      [0.28, {}],
+    ],
+  },
+  paw_boomerang: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.10, frontX: -4, frontY: 1, backX: 0, backY: 2 }],
+      [0.09, { crouch: 0.42, lean: -0.36, bodyRoll: -0.24, frontX: -23, frontY: -22, backX: -14, backY: 11, headTilt: -0.15 }],
+      [0.15, { crouch: 0.34, lean: 0.44, bodyRoll: 0.24, frontX: 30, frontY: 14, backX: -30, backY: 8, headTilt: 0.22 }],
+      [0.28, {}],
+    ],
+  },
+  needle_barrage: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.12, frontX: -3, frontY: 1, backX: 1, backY: 2 }],
+      [0.09, { crouch: 0.42, lean: -0.34, bodyRoll: 0.20, frontX: -12, frontY: -17, backX: -24, backY: -16, headTilt: -0.18 }],
+      [0.15, { crouch: 0.42, lean: 0.36, bodyRoll: -0.22, frontX: 34, frontY: -24, backX: 30, backY: 10, headTilt: 0.18 }],
+      [0.28, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [
