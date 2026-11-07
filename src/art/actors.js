@@ -6,6 +6,7 @@ import { clamp, lerp, smooth, TAU, hash01 } from '../core/math.js';
 import { drawCat, drawCatFace } from './catart.js';
 import { skillActionPose } from '../systems/skill-animation.js';
 import { drawCreature, drawCreatureShadow } from './creatureart.js';
+import { drawIcon } from './icons.js';
 
 /** Build a pose for the player cat from simulation state. */
 export function playerPose(run, t) {
@@ -310,6 +311,7 @@ export function drawMinion(ctx, m, t) {
     ctx.fillStyle = '#ffffff';
     ctx.fill();
     ctx.restore();
+    if (m.def?.id === 'ghost_paw') drawIcon(ctx, 'paw', m.x, m.y, 23, m.tint || '#8fb0ff');
     void r;
     return;
   }

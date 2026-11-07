@@ -992,8 +992,8 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.05s, active 0.07s, recovery 0.05s",
+      "recovery": "0.05s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -1006,19 +1006,19 @@
         },
         "group": {
           "cast": true,
-          "damage": 0,
-          "burst1s": 0,
-          "maxHit": 0,
-          "firstHit": null,
-          "targetsHit": 0,
-          "normalizedDamagePerCooldown": 0
+          "damage": 8.7,
+          "burst1s": 8.7,
+          "maxHit": 8.7,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 16.74
         },
         "elite": {
           "cast": true,
           "damage": 8.67,
           "burst1s": 8.67,
           "maxHit": 8.67,
-          "firstHit": 0.12,
+          "firstHit": 0.1,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 16.67
         },
@@ -2869,24 +2869,24 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 26.55,
           "burst1s": 5.31,
           "maxHit": 5.31,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.95
         },
         "group": {
           "cast": true,
           "damage": 53.1,
-          "burst1s": 15.93,
+          "burst1s": 10.62,
           "maxHit": 5.31,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 2,
           "normalizedDamagePerCooldown": 5.9
         },
@@ -2895,7 +2895,7 @@
           "damage": 26.55,
           "burst1s": 5.31,
           "maxHit": 5.31,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.95
         },
@@ -2904,18 +2904,18 @@
           "damage": 18.58,
           "burst1s": 3.72,
           "maxHit": 3.72,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.06
         },
         "moving": {
           "cast": true,
-          "damage": 5.31,
-          "burst1s": 5.31,
-          "maxHit": 5.31,
-          "firstHit": 0.02,
-          "targetsHit": 1,
-          "normalizedDamagePerCooldown": 0.59
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
         }
       }
     },

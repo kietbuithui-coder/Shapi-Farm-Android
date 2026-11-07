@@ -60,7 +60,7 @@ test('rank five spirit orbs fire additional orbit-sourced projectiles', () => {
 });
 
 test('rank five ghost paws apply bleed and rank four blaze orbit leaves damaging trails', () => {
-  const a = setup('ghost_paw', 5); a.r.castSlot(0); arrangeOrb(a.r, a.e); a.r.updateMinions(1/60);
+  const a = setup('ghost_paw', 5); a.r.castSlot(0); a.r.time += 0.11; a.r.updatePassiveEffects(0); arrangeOrb(a.r, a.e); a.r.updateMinions(1/60);
   assert.ok(a.e.bleedTime > 0 && a.e.bleed > 0);
   const b = setup('blaze_orbit', 4); b.r.castSlot(0); step(b.r, 0.3);
   assert.ok(b.r.zones.some(z => z.kind === 'fire' && z.dps > 0 && z.time === 0.8));
@@ -70,7 +70,7 @@ test('rank five ghost paws apply bleed and rank four blaze orbit leaves damaging
 });
 
 test('orbit trail and ghost bleed honour reduced boss summon damage', () => {
-  const a = setup('ghost_paw', 5); a.r.castSlot(0); arrangeOrb(a.r, a.e); a.e.boss = true;
+  const a = setup('ghost_paw', 5); a.r.castSlot(0); a.r.time += 0.11; a.r.updatePassiveEffects(0); arrangeOrb(a.r, a.e); a.e.boss = true;
   const m = a.r.minions[0]; a.r.updateMinions(1/60);
   assert.ok(Math.abs(a.e.bleed - m.damage * 0.18 * 0.7) < 1e-6);
   const b = setup('blaze_orbit', 4); b.r.castSlot(0); step(b.r, 0.3);

@@ -943,12 +943,13 @@ export class Run {
       case 'projectile': {
         emitCast();
         const count = rv.count || def.params.count || 1;
-        // Fish aim at the collision centre, accounting for compressed vertical
-        // projectile motion; aiming at feet makes diagonal throws miss.
-        const base = target ? (def.pattern === 'fish'
+        // Aim at the hitbox centre with the same vertical compression as flight.
+        // The other projectile families retain their existing tuning for now.
+        const accurateAim = def.pattern === 'fish' || def.id === 'arcane_paw';
+        const base = target ? (accurateAim
           ? Math.atan2((target.y - 12 - (p.y - 22)) / 0.72, target.x - p.x)
           : angle(p.x, p.y - 22, target.x, target.y)) : p.aim;
-        if (def.pattern === 'fish' && Math.abs(Math.cos(base)) > 0.01) p.facing = Math.cos(base) > 0 ? 1 : -1;
+        if (accurateAim && Math.abs(Math.cos(base)) > 0.01) p.facing = Math.cos(base) > 0 ? 1 : -1;
         for (let i = 0; i < count; i++) {
           const spread = this.dataSpread(def, count, i, rv);
           this.spawnProjectile({
@@ -2723,10 +2724,19 @@ export class Run {
       pr.t += dt;
       pr.life -= dt;
       if (pr.homing && pr.owner === 'player') {
-        const tgt = pr.homingTarget && !pr.homingTarget.dead ? pr.homingTarget : this.nearestEnemy(pr.x, pr.y, 260);
+        let tgt = pr.homingTarget;
+        if (!tgt || tgt.dead || pr.hits.has(tgt.uid)) {
+          tgt = null;
+          let closest = 260 * 260;
+          for (const e of this.enemies) {
+            if (e.dead || pr.hits.has(e.uid)) continue;
+            const d = dist2(pr.x, pr.y, e.x, e.y - 12);
+            if (d < closest) { closest = d; tgt = e; }
+          }
+        }
         pr.homingTarget = tgt;
         if (tgt) {
-          const want = angle(pr.x, pr.y, tgt.x, tgt.y);
+          const want = Math.atan2((tgt.y - 12 - pr.y) / 0.72, tgt.x - pr.x);
           let dA = want - pr.angle;
           dA = Math.atan2(Math.sin(dA), Math.cos(dA));
           pr.angle += clamp(dA, -pr.homing * 60 * dt, pr.homing * 60 * dt);
@@ -2998,7 +3008,8 @@ export class Run {
       const m = this.minions[i];
       m.t += dt;
       if (m.kind === 'orb') {
-        m.angle += dt * 2.4;
+        const activeDt = Math.max(0, Math.min(dt, m.time));
+        m.angle += activeDt * 2.4;
         m.x = p.x + Math.cos(m.angle) * m.radius;
         m.y = p.y - 24 + Math.sin(m.angle) * m.radius * 0.55;
         m.time -= dt;
@@ -3011,8 +3022,8 @@ export class Run {
           }
         }
         for (const e of this.enemies) {
-          if (e.dead) continue;
-          const last = m.hitCd.get(e.uid) || -9;
+          if (activeDt <= 0 || e.dead) continue;
+          const last = m.hitCd.get(e.uid) ?? -Infinity;
           if (this.time - last < 0.55) continue;
           if (dist2(m.x, m.y, e.x, e.y - 12) < (e.radius + 16) ** 2) {
             m.hitCd.set(e.uid, this.time);

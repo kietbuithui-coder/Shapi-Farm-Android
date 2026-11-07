@@ -259,6 +259,25 @@ export const SKILL_ACTIONS = {
       [0.26, {}],
     ],
   },
+  arcane_paw: {
+    // A quick basic projectile: fire immediately and animate the follow-through.
+    startup: 0.05, active: 0.07, recovery: 0.05, windup: 0,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.14, frontX: -6, frontY: 1, backX: -3, backY: 0 }],
+      [0.05, { crouch: 0.22, lean: -0.35, bodyRoll: -0.22, frontX: -17, frontY: -18, backX: -27, backY: -6, headTilt: -0.20 }],
+      [0.10, { crouch: 0.37, lean: 0.48, bodyRoll: 0.26, frontX: 34, frontY: -27, backX: -25, backY: 14, headTilt: 0.24 }],
+      [0.17, {}],
+    ],
+  },
+  ghost_paw: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.10, frontX: -4, frontY: 1, backX: 0, backY: 1 }],
+      [0.09, { crouch: 0.54, lean: -0.36, bodyRoll: 0.24, frontX: -22, frontY: 12, backX: -29, backY: -24, headTilt: -0.23 }],
+      [0.15, { crouch: 0.20, lean: 0.32, bodyRoll: -0.29, frontX: 35, frontY: -17, backX: -35, backY: -26, headTilt: 0.25 }],
+      [0.28, {}],
+    ],
+  },
   banana_peel: {
     // A quick toss: the peel is placed immediately, with visible follow-through.
     startup: 0.06, active: 0.09, recovery: 0.10, windup: 0,
