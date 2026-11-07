@@ -101,6 +101,33 @@ export const SKILL_ACTIONS = {
       [0.48, {}],
     ],
   },
+  nine_lives: {
+    startup: 0.25, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.10, frontX: -3, frontY: 2, backX: 1, backY: 2 }],
+      [0.24, { crouch: 0.72, lean: -0.25, bodyRoll: 0.18, frontX: -15, frontY: -10, backX: -8, backY: 12, headTilt: -0.16 }],
+      [0.30, { crouch: 0.82, lean: -0.40, bodyRoll: 0.28, frontX: -22, frontY: -24, backX: 12, backY: 19, headTilt: 0.22 }],
+      [0.47, {}],
+    ],
+  },
+  guardian_aura: {
+    startup: 0.25, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.12, frontX: -3, frontY: 2, backX: 0, backY: 2 }],
+      [0.24, { crouch: 0.45, lean: -0.20, frontX: -18, frontY: 7, backX: -20, backY: 10, headTilt: 0.12 }],
+      [0.30, { crouch: 0.03, lean: -0.12, bodyRoll: 0.18, frontX: 20, frontY: -35, backX: -29, backY: -33, headTilt: -0.20 }],
+      [0.47, {}],
+    ],
+  },
+  time_fur: {
+    startup: 0.25, active: 0.10, recovery: 0.13,
+    frames: [
+      [0,    { crouch: 0.12, lean: 0.10, frontX: 4, frontY: 0, backX: -2, backY: 1 }],
+      [0.24, { crouch: 0.25, lean: 0.32, bodyRoll: 0.12, frontX: 20, frontY: -10, backX: -15, backY: 8, headTilt: 0.18 }],
+      [0.31, { crouch: 0.36, lean: -0.42, bodyRoll: -0.27, frontX: 31, frontY: 2, backX: -20, backY: 20, headTilt: -0.24 }],
+      [0.48, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [

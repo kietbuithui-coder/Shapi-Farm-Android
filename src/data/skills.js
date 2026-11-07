@@ -241,7 +241,7 @@ export const SKILLS = [
     id: 'catnip_frenzy', category: 'utility', rarity: 'rare', pattern: 'buff',
     name: { vi: 'Bạc Hà Điên', en: 'Catnip Frenzy' },
     desc: { vi: 'Tăng tốc đánh và tốc chạy, nhưng nhận thêm sát thương.', en: 'Attack and movement surge — at a cost.' },
-    cost: 18, cd: 14, range: 0, ranks: [R(1, '+35% tốc đánh, 6 giây'), R(1, '+45%', { atkSpeed: 0.45 }), R(1, '+30% tốc chạy', { move: 0.3 }), R(1, 'Hồi năng lượng liên tục', { regen: true }), R(1, 'Miễn nhiễm trượt chân', { noDrawback: true })],
+    cost: 18, cd: 14, range: 0, ranks: [R(1, '+35% tốc đánh, 6 giây'), R(1, '+45%', { atkSpeed: 0.45 }), R(1, '+30% tốc chạy', { move: 0.3 }), R(1, 'Hồi năng lượng liên tục', { regen: true }), R(1, 'Không còn nhận thêm sát thương', { noDrawback: true })],
     params: { time: 6, atkSpeed: 0.35, move: 0, drawback: 0.15, regen: 0 }, icon: { glyph: 'leaf', tint: '#9ad14b' },
   },
   {

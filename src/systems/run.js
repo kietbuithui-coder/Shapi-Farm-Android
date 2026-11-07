@@ -569,7 +569,7 @@ export class Run {
     p.dashCd = Math.max(0, (p.dashCd || 0) - dt);
 
     // energy regen
-    this.energy = Math.min(this.stats.energyMax, this.energy + this.stats.energyRegen * dt * this.buffValue('energyRegen', 1));
+    this.energy = Math.min(this.stats.energyMax, this.energy + (this.stats.energyRegen * this.buffValue('energyRegen', 1) + this.buffValue('energyRegenFlat')) * dt);
     // passive regen (never while downed — see heal())
     if (this.stats.regen && this.hp > 0) this.heal(this.stats.regen * dt, { silent: true });
     if (this.cat.passive.id === 'second_wind' && this.hp > 0 && this.hp / this.stats.hpMax < 0.4) {
@@ -1134,7 +1134,9 @@ export class Run {
           armor: (rv.armor ?? def.params.armor ?? 0) * potency,
           reflect: (rv.reflect ?? def.params.reflect ?? 0) * potency,
           crit: (rv.crit ?? def.params.crit ?? 0) * potency,
-          regen: rv.regen ? def.params.regen || 6 : 0,
+          energyRegenFlat: rv.regen ? def.params.regen || 6 : 0,
+          onHitHeal: (rv.onHitHeal || 0) * potency,
+          reflectSplash: !!rv.splash,
           drawback: rv.noDrawback ? 0 : def.params.drawback || 0,
           forceCrit: !!rv.forceCrit,
           trail: !!rv.trail,
@@ -1228,6 +1230,7 @@ export class Run {
             shape: def.icon.glyph, tint: def.icon.tint, source: 'skill', owner: 'player',
             boomerang: true, travel: def.params.dist * area, pierce: rv.pierce ? 3 : 1,
             root: rv.root || 0, life: 3, lifesteal: rv.lifesteal || 0,
+            turnBlast: rv.trailBoom ? 55 * area : 0,
           });
         }
         break;
@@ -2461,6 +2464,7 @@ export class Run {
       root: opt.root || 0, lifesteal: opt.lifesteal || 0, wide: !!opt.wide,
       knock: opt.knock || 0, burn: !!opt.burn, burnDps: opt.burnDps || 0, alive: true,
       bounces: opt.bounces || 0, onHitBlast: opt.onHitBlast || 0, onHitBlastScale: opt.onHitBlastScale || 0,
+      turnBlast: opt.turnBlast || 0,
     };
     this.projectiles.push(p);
     return p;
@@ -2485,12 +2489,8 @@ export class Run {
       if (pr.boomerang) {
         pr.phase += dt;
         const back = pr.phase * pr.speed >= pr.travel;
-        if (back && !pr.returning) {
-          pr.returning = true;
-          pr.hits.clear(); // one hit per target on each leg
-          pr.angle = Math.atan2((p.y - 20 - pr.y) / 0.72, p.x - pr.x);
-        }
-        if (back) {
+        if (back && !pr.returning) this.turnBoomerang(pr, p);
+        if (pr.returning) {
           const want = Math.atan2((p.y - 20 - pr.y) / 0.72, p.x - pr.x);
           let dA = want - pr.angle;
           dA = Math.atan2(Math.sin(dA), Math.cos(dA));
@@ -2502,7 +2502,10 @@ export class Run {
       pr.y += Math.sin(pr.angle) * pr.speed * dt * 0.72;
       const outX = pr.x < 0 || pr.x > ARENA.w;
       const outY = pr.y < 0 || pr.y > ARENA.h;
-      if ((outX || outY) && pr.bounces > 0 && pr.life > 0) {
+      if ((outX || outY) && pr.boomerang && !pr.returning && pr.life > 0) {
+        pr.x = clamp(pr.x, 0, ARENA.w); pr.y = clamp(pr.y, 0, ARENA.h);
+        this.turnBoomerang(pr, p);
+      } else if ((outX || outY) && pr.bounces > 0 && pr.life > 0) {
         pr.x = clamp(pr.x, 0, ARENA.w); pr.y = clamp(pr.y, 0, ARENA.h);
         if (outX) pr.angle = Math.PI - pr.angle;
         if (outY) pr.angle = -pr.angle;
@@ -2547,6 +2550,14 @@ export class Run {
         }
       }
     }
+  }
+
+  turnBoomerang(pr, player) {
+    pr.returning = true;
+    pr.hits.clear(); // one hit per target on each leg
+    pr.angle = Math.atan2((player.y - 20 - pr.y) / 0.72, player.x - pr.x);
+    // Yarn's last upgrade adds one small burst at the turnaround, even at a wall.
+    if (pr.turnBlast) this.blast({ ...pr, explode: pr.turnBlast, burn: false }, null, 0.55);
   }
 
   blast(pr, excludeUid = null, damageScale = 0.7) {
@@ -3065,7 +3076,7 @@ export class Run {
       if (this.mods.dodgeEnergy) this.energy = Math.min(this.stats.energyMax, this.energy + this.mods.dodgeEnergy);
       return;
     }
-    let dmg = res.damage;
+    let dmg = res.damage * (1 + this.buffValue('drawback'));
     // No single hit may take more than this share of a full health bar.
     //
     // Enemy damage scales hard with depth (night 10 multiplies it by ~4.8x)
@@ -3094,7 +3105,14 @@ export class Run {
     // thorns / reflect
     const reflect = this.stats.thorns + this.buffValue('reflect');
     if (reflect > 0 && source && !source.dead) this.hitEnemy(source, dmg * reflect, { source: 'thorns' });
-    if (this.buffValue('reflect') > 0) this.arcDamage(p.x, p.y, 90, 90, 1, TAU, null, dmg * this.buffValue('reflect') * 0.5, {}, true);
+    if (dmg > 0 && this.buffValue('reflectSplash')) {
+      const splash = dmg * this.buffValue('reflect') * 0.5;
+      for (const enemy of this.enemies) {
+        if (enemy !== source && !enemy.dead && dist2(enemy.x, enemy.y, p.x, p.y) < (90 + enemy.radius) ** 2) {
+          this.hitEnemy(enemy, splash, { source: 'thorns' });
+        }
+      }
+    }
     if (this.hp <= 0) {
       if (this.reviveWard) { this.reviveWard = false; this.hp = 1; this.player.invuln = 1.2; this.emit('player:reviveWard', {}); return; }
       if (this.mods.revive > 0 && !this.reviveUsed) {
@@ -3105,6 +3123,8 @@ export class Run {
         return;
       }
       this.playerDeath();
+    } else if (this.buffValue('onHitHeal') > 0) {
+      this.heal(this.buffValue('onHitHeal'));
     }
   }
 
