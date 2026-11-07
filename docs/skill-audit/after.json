@@ -1701,12 +1701,12 @@
         },
         {
           "dmg": 1,
-          "note": "Lan sang mục tiêu gần",
+          "note": "Lan sang mục tiêu trong 110",
           "spread": 110
         },
         {
           "dmg": 1,
-          "note": "Ấn gây sát thương theo thời gian",
+          "note": "Ấn gây sát thương theo thời gian trong 7 giây",
           "tick": true
         },
         {
@@ -1723,8 +1723,8 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.07s, active 0.08s, recovery 0.08s",
+      "recovery": "0.08s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -3884,12 +3884,12 @@
         },
         {
           "dmg": 1,
-          "note": "Hồi thêm theo thời gian",
+          "note": "Hồi thêm cùng lượng trong 5 giây",
           "overTime": true
         },
         {
           "dmg": 1,
-          "note": "Hồi cả đồng minh",
+          "note": "Hồi đồng minh sống ở gần",
           "team": true
         },
         {
@@ -3906,8 +3906,8 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.07s, active 0.09s, recovery 0.08s",
+      "recovery": "0.08s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,

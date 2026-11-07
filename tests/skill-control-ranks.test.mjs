@@ -39,7 +39,7 @@ test('time fur vulnerability remains independent from hex, expires with its boss
     const r = setup(['hex_brand', 'time_fur'], [4, 5]); const e = dummy(r, 60);
     if (kind !== 'normal') e[kind] = true;
     r.castSlot(0); const amp = e.mark, markTime = e.markTime;
-    r.castSlot(1); step(r, 0.27); const factor = { normal: 1, elite: 0.8, mini: 0.75, boss: 0.6 }[kind];
+    r.castSlot(1); step(r, 0.55); const factor = { normal: 1, elite: 0.8, mini: 0.75, boss: 0.6 }[kind];
     assert.equal(e.mark, amp); assert.ok(e.markTime < markTime);
     assert.ok(Math.abs(e.timeAmp - 0.25) < 1e-6);
     assert.ok(e.timeAmpTime <= 4.5 * factor && e.timeAmpTime > 4.5 * factor - 0.1);
@@ -69,7 +69,7 @@ test('void maw rank five heals once per target, capped by remaining enemy health
 test('hex and time fur affect a real boss without suppressing its combat loop', () => {
   const r = setup(['hex_brand', 'time_fur'], [4, 5]); r.spawnBoss('moon_devourer');
   const boss = r.boss; boss.x = r.player.x + 70; boss.y = r.player.y; boss.attackTimer = 0.2;
-  boss.hp = boss.hpMax * 0.9; r.castSlot(0); r.castSlot(1); step(r, 0.3);
+  boss.hp = boss.hpMax * 0.9; r.castSlot(0); r.castSlot(1); step(r, 0.55);
   assert.ok(boss.mark > 0 && boss.markDps > 0 && boss.timeAmp > 0);
   assert.ok(boss.slow > 0 && boss.slow <= 0.35);
   let attacks = 0; r.on('boss:attack', () => attacks++);

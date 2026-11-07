@@ -146,7 +146,7 @@ export const SKILLS = [
     id: 'hex_brand', category: 'utility', rarity: 'rare', pattern: 'mark',
     name: { vi: 'Ấn Nguyền', en: 'Hex Brand' },
     desc: { vi: 'Đóng ấn lên mục tiêu: nó nhận thêm sát thương.', en: 'Brand a target: it takes extra damage.' },
-    cost: 20, cd: 8, range: 360, ranks: [R(1, 'Mục tiêu nhận +18% sát thương'), R(1, '+24%', { amp: 0.24 }), R(1, 'Lan sang mục tiêu gần', { spread: 110 }), R(1, 'Ấn gây sát thương theo thời gian', { tick: true }), R(1, '+36%', { amp: 0.36 })],
+    cost: 20, cd: 8, range: 360, ranks: [R(1, 'Mục tiêu nhận +18% sát thương'), R(1, '+24%', { amp: 0.24 }), R(1, 'Lan sang mục tiêu trong 110', { spread: 110 }), R(1, 'Ấn gây sát thương theo thời gian trong 7 giây', { tick: true }), R(1, '+36%', { amp: 0.36 })],
     params: { amp: 0.18, time: 7 }, icon: { glyph: 'hex', tint: '#b48bff' },
   },
   {
@@ -299,7 +299,7 @@ export const SKILLS = [
     id: 'healing_purr', category: 'heal', rarity: 'common', pattern: 'heal',
     name: { vi: 'Gừ Chữa Lành', en: 'Healing Purr' },
     desc: { vi: 'Hồi máu tức thời; nâng cấp để hồi theo thời gian.', en: 'Heal instantly; upgrade to heal over time.' },
-    cost: 26, cd: 9, range: 0, ranks: [R(1, 'Hồi 22% máu'), R(1, 'Hồi 28%', { heal: 0.28 }), R(1, 'Hồi thêm theo thời gian', { overTime: true }), R(1, 'Hồi cả đồng minh', { team: true }), R(1, 'Loại bỏ làm chậm', { cleanse: true })],
+    cost: 26, cd: 9, range: 0, ranks: [R(1, 'Hồi 22% máu'), R(1, 'Hồi 28%', { heal: 0.28 }), R(1, 'Hồi thêm cùng lượng trong 5 giây', { overTime: true }), R(1, 'Hồi đồng minh sống ở gần', { team: true }), R(1, 'Loại bỏ làm chậm', { cleanse: true })],
     params: { heal: 0.22, time: 0 }, icon: { glyph: 'heart', tint: '#67e8a0' }, starter: true,
   },
   {

@@ -259,6 +259,26 @@ export const SKILL_ACTIONS = {
       [0.26, {}],
     ],
   },
+  hex_brand: {
+    // Utility mark resolves immediately; the pose is a quick casting flourish.
+    startup: 0.07, active: 0.08, recovery: 0.08, windup: 0,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.12, frontX: -6, frontY: 4, backX: -4, backY: 1 }],
+      [0.065,{ crouch: 0.48, lean: -0.32, bodyRoll: 0.18, frontX: -24, frontY: 10, backX: 3, backY: -25, headTilt: -0.18 }],
+      [0.12, { crouch: 0.20, lean: 0.42, bodyRoll: -0.25, frontX: 35, frontY: -35, backX: -24, backY: 15, headTilt: 0.22 }],
+      [0.23, {}],
+    ],
+  },
+  healing_purr: {
+    // Healing stays instant, even if the character is moving.
+    startup: 0.07, active: 0.09, recovery: 0.08, windup: 0,
+    frames: [
+      [0,    { crouch: 0.08, lean: 0.05, frontX: 0, frontY: 2, backX: 1, backY: 2 }],
+      [0.065,{ crouch: 0.58, lean: 0.12, bodyRoll: 0.18, frontX: 19, frontY: 13, backX: -17, backY: 10, headTilt: -0.24 }],
+      [0.13, { crouch: 0.30, lean: -0.28, bodyRoll: 0.20, frontX: 9, frontY: -22, backX: -10, backY: -17, headTilt: -0.28 }],
+      [0.24, {}],
+    ],
+  },
   arcane_paw: {
     // A quick basic projectile: fire immediately and animate the follow-through.
     startup: 0.05, active: 0.07, recovery: 0.05, windup: 0,

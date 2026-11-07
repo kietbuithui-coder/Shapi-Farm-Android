@@ -1096,17 +1096,22 @@ export class Run {
         break;
       }
       case 'mark': {
-        emitCast();
-        const tgt = target;
+        // A mark has no projectile or hitbox to enforce the declared range.
+        // Do not use pickSkillTarget's generous 1.4x aim-assist range here.
+        const tgt = this.nearestEnemy(p.x, p.y, values.range * (1 + this.mods.skillArea));
+        emitCast({ target: tgt });
         if (!tgt) break;
+        if (tgt.x !== p.x) p.facing = tgt.x > p.x ? 1 : -1;
         tgt.mark = (rv.amp || def.params.amp) * potency;
         tgt.markTime = def.params.time;
         tgt.markDps = rv.tick ? this.skillDamage(def, power * 0.25) : 0;
         this.emit('fx:mark', { x: tgt.x, y: tgt.y - 24, color: def.icon.tint });
         if (rv.spread) {
+          const spreadRadius = rv.spread * (1 + this.mods.skillArea);
           for (const e of this.enemies) {
-            if (!e.dead && e !== tgt && dist2(e.x, e.y, tgt.x, tgt.y) < rv.spread * rv.spread) {
+            if (!e.dead && e !== tgt && dist2(e.x, e.y, tgt.x, tgt.y) < spreadRadius * spreadRadius) {
               e.mark = tgt.mark; e.markTime = tgt.markTime; e.markDps = tgt.markDps;
+              this.emit('fx:mark', { x: e.x, y: e.y - 24, color: def.icon.tint });
             }
           }
         }
@@ -1266,7 +1271,14 @@ export class Run {
           }
         }
         this.energy = Math.min(this.stats.energyMax, this.energy + ((rv.energy ?? def.params.energy) || 0) * potency);
-        if (rv.overTime) this.addBuff({ id: def.id + '_hot', time: 5, regen: amount / 5, tint: def.icon.tint });
+        if (rv.overTime) {
+          // Echo repeats the immediate heal, but refreshes one HoT rather than
+          // multiplying a persistent buff. Subsequent casts replace its rate.
+          const id = def.id + '_hot';
+          const hot = p.buffs.find(b => b.id === id);
+          if (hot) { hot.time = 5; hot.max = 5; hot.regen = amount / 5; }
+          else this.addBuff({ id, time: 5, regen: amount / 5, tint: def.icon.tint });
+        }
         if (rv.cdr) this.addBuff({ id: def.id + '_cdr', time: 8, cdr: rv.cdr, tint: def.icon.tint });
         this.emit('fx:heal', { x: p.x, y: p.y, color: def.icon.tint });
         break;
@@ -1503,7 +1515,7 @@ export class Run {
         stoneDamage = Math.max(stoneDamage, b.stoneAura * activeDt);
         b.stoneX = p.x; b.stoneY = p.y;
       }
-      if (b.regen || b.heal) this.heal(((b.regen || 0) + (b.heal || 0)) * dt, { silent: true });
+      if (b.regen || b.heal) this.heal(((b.regen || 0) + (b.heal || 0)) * activeDt, { silent: true });
       if (b.trail) {
         b.trailCooldown = Math.max(0, b.trailCooldown - dt);
         const moved = Math.hypot(p.x - b.trailX, p.y - b.trailY) > 0.01;
