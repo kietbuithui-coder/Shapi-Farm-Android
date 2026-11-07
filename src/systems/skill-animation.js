@@ -200,6 +200,15 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  fireball: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.06, frontX: -2, frontY: 1, backX: -2, backY: 2 }],
+      [0.09, { crouch: 0.46, lean: -0.42, bodyRoll: 0.18, frontX: -18, frontY: -12, backX: -24, backY: 10, headTilt: -0.20 }],
+      [0.15, { crouch: 0.26, lean: 0.46, bodyRoll: -0.20, frontX: 35, frontY: -12, backX: 22, backY: 2, headTilt: 0.16 }],
+      [0.28, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [

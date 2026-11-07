@@ -1215,6 +1215,7 @@ function drawOfferCard(ctx, { x, y, w, h, offer, hover, t, lang }) {
   const rarity = isSkill ? 'rare' : offer.rarity;
   const rar = RARITY[rarity] || RARITY.common;
   const accent = isSkill ? (SKILL_BY_ID[offer.skillId]?.icon.tint || rar.color) : rar.color;
+  const compact = h < 220;
   ctx.save();
   if (hover) {
     ctx.shadowColor = hexA(accent, 0.5);
@@ -1243,9 +1244,11 @@ function drawOfferCard(ctx, { x, y, w, h, offer, hover, t, lang }) {
 
   // icon medallion
   const cx = x + w / 2;
-  const iconY = y + h * 0.28;
+  const iconY = y + h * (compact ? 0.24 : 0.28);
+  const iconRadius = compact ? Math.min(w * 0.19, h * 0.18) : w * 0.19;
+  const iconSize = compact ? Math.min(w * 0.2, h * 0.19) : w * 0.2;
   ctx.beginPath();
-  ctx.arc(cx, iconY, w * 0.19, 0, TAU);
+  ctx.arc(cx, iconY, iconRadius, 0, TAU);
   ctx.fillStyle = 'rgba(8,10,20,0.7)';
   ctx.fill();
   ctx.strokeStyle = hexA(accent, 0.65);
@@ -1253,35 +1256,37 @@ function drawOfferCard(ctx, { x, y, w, h, offer, hover, t, lang }) {
   ctx.stroke();
   if (isSkill) {
     const sk = SKILL_BY_ID[offer.skillId];
-    drawIcon(ctx, sk.icon.glyph, cx, iconY, w * 0.2, accent);
+    drawIcon(ctx, sk.icon.glyph, cx, iconY, iconSize, accent);
   } else {
-    drawIcon(ctx, offer.glyph || 'paw', cx, iconY, w * 0.2, accent);
+    drawIcon(ctx, offer.glyph || 'paw', cx, iconY, iconSize, accent);
   }
-  // name
-  const name = isSkill ? localize(SKILL_BY_ID[offer.skillId].name, lang) : localize(offer.name, lang);
-  text(ctx, name, cx, y + h * 0.52, { size: 15, weight: 700, align: 'center', color: '#f6efdd' });
+  // Name the fork on the actual level-up card, not only in the skill catalog.
+  const branch = isSkill && offer.branch ? SKILL_BY_ID[offer.skillId].branch?.options.find(o => o.id === offer.branch) : null;
+  const skillName = isSkill ? localize(SKILL_BY_ID[offer.skillId].name, lang) : localize(offer.name, lang);
+  const name = branch ? `${skillName} · ${localize(branch.name, lang)}` : skillName;
+  text(ctx, trimTo(ctx, name, w - 20, compact ? 12 : 15, 700), cx, y + h * (compact ? 0.48 : 0.52), { size: compact ? 12 : 15, weight: 700, align: 'center', color: '#f6efdd' });
   // rank pips for skill upgrades
   if (isSkill) {
     const upgradeCount = Math.max(0, (SKILL_BY_ID[offer.skillId].ranks?.length || 1) - 1);
     for (let k = 0; k < upgradeCount; k++) {
       ctx.beginPath();
-      ctx.arc(cx - (upgradeCount - 1) * 5 + k * 10, y + h * 0.56, 2.4, 0, TAU);
+      ctx.arc(cx - (upgradeCount - 1) * 5 + k * 10, y + h * (compact ? 0.54 : 0.56), 2.4, 0, TAU);
       ctx.fillStyle = k < offer.rank - 1 ? accent : 'rgba(255,255,255,0.14)';
       ctx.fill();
     }
   }
   if (isSkill) {
     const max = Math.max(0, (SKILL_BY_ID[offer.skillId].ranks?.length || 1) - 1);
-    text(ctx, `${offer.rank - 2} → ${offer.rank - 1}/${max}`, cx, y + h - 36, { size: 10, weight: 600, align: 'center', color: 'rgba(200,210,232,0.7)' });
+    text(ctx, `${offer.rank - 2} → ${offer.rank - 1}/${max}`, cx, y + h - (compact ? 22 : 36), { size: compact ? 9 : 10, weight: 600, align: 'center', color: 'rgba(200,210,232,0.7)' });
   }
   // effect line: one sentence that matters
-  const desc = isSkill
-    ? L(SKILL_BY_ID[offer.skillId].ranks[offer.rank - 1]?.note, lang)
-    : localize(offer.desc, lang);
-  wrapText(ctx, desc, x + 18, y + h * 0.66, w - 36, 17, { size: 12, color: 'rgba(214,222,240,0.86)', weight: 500 });
+  const rankNote = isSkill ? L(SKILL_BY_ID[offer.skillId].ranks[offer.rank - 1]?.note, lang) : '';
+  const desc = branch ? `${localize(branch.name, lang)}: ${localize(branch.note, lang)} · ${rankNote}`
+    : isSkill ? rankNote : localize(offer.desc, lang);
+  wrapText(ctx, desc, x + 18, y + h * (compact ? 0.62 : 0.66), w - 36, compact ? 13 : 17, { size: compact ? 10 : 12, color: 'rgba(214,222,240,0.86)', weight: 500 });
   // stack indicator for repeatable run upgrades
   if (!isSkill && offer.max) {
-    text(ctx, `${offer.level || 0} → ${(offer.level || 0) + 1}/${offer.max}`, cx, y + h - 36, { size: 10, weight: 600, align: 'center', color: 'rgba(200,210,232,0.5)' });
+    text(ctx, `${offer.level || 0} → ${(offer.level || 0) + 1}/${offer.max}`, cx, y + h - (compact ? 22 : 36), { size: compact ? 9 : 10, weight: 600, align: 'center', color: 'rgba(200,210,232,0.5)' });
   }
   // rarity label
   ctx.save();
@@ -1289,7 +1294,7 @@ function drawOfferCard(ctx, { x, y, w, h, offer, hover, t, lang }) {
   ctx.letterSpacing = '2.4px';
   ctx.fillStyle = hexA(accent, 0.85);
   ctx.textAlign = 'center';
-  ctx.fillText(localize(rar.label, lang).toUpperCase(), cx, y + h - 18);
+  ctx.fillText(localize(rar.label, lang).toUpperCase(), cx, y + h - (compact ? 8 : 18));
   ctx.restore();
   ctx.restore();
 }

@@ -919,9 +919,9 @@ export class Run {
             x: p.x, y: p.y - 22, angle: base + spread,
             speed: def.params.speed, damage: this.skillDamage(def, power),
             radius: def.params.explode ? 9 : 6,
-            pierce: (rv.pierce || def.params.pierce || 0) + this.mods.skillPierce,
+            pierce: Math.max(rv.pierce || def.params.pierce || 0, values.mods.pierce || 0) + this.mods.skillPierce,
             homing: def.params.homing || 0,
-            explode: def.params.explode ? (def.params.blast || def.params.explode) * (rv.blast || 1) * area : 0,
+            explode: def.params.explode ? (def.params.blast || def.params.explode) * (rv.blast || 1) * (values.mods.blast || 1) * area : 0,
             burnDps: def.id === 'fireball' ? this.skillDamage(def, power) * 0.12 : 0,
             burn: !!rv.burnZone, tint: def.icon.tint, shape: def.icon.glyph,
             source: 'skill', owner: 'player', life: 2.6, knock: def.params.knock || (def.pattern === 'fish' ? 220 : 0),
@@ -2586,7 +2586,7 @@ export class Run {
             if (pr.lifesteal) this.heal(res.damage * pr.lifesteal, { silent: true });
             if (pr.knock) this.knockback(e, pr.knock);
             if (pr.onHitBlast) this.blast({ ...pr, explode: pr.onHitBlast, burn: false }, e.uid, pr.onHitBlastScale);
-            if (pr.explode) { this.blast(pr); this.projectiles.splice(i, 1); break; }
+            if (pr.explode && pr.hits.size > pr.pierce) { this.blast(pr); this.projectiles.splice(i, 1); break; }
             if (pr.hits.size > pr.pierce) { this.projectiles.splice(i, 1); break; }
           }
         }
@@ -2962,7 +2962,15 @@ export class Run {
     const rand = this.shuffleRng;
     if (skillUps.length && rand.chance(0.45)) {
       const slot = skillUps[Math.floor(rand.float() * skillUps.length)];
-      picks.push({ type: 'skillup', skillId: slot.id, slot: slot.index, rank: slot.rank + 1, id: 'skillup:' + slot.id });
+      const nextRank = slot.rank + 1;
+      if (!slot.branch && slot.def.branch?.rank === nextRank) {
+        for (const option of slot.def.branch.options.slice(0, 2)) {
+          picks.push({ type: 'skillup', skillId: slot.id, slot: slot.index, rank: nextRank,
+            branch: option.id, id: `skillup:${slot.id}:${option.id}` });
+        }
+      } else {
+        picks.push({ type: 'skillup', skillId: slot.id, slot: slot.index, rank: nextRank, id: 'skillup:' + slot.id });
+      }
     }
     const shuffled = rand.shuffle(pool);
     const used = new Set(picks.map((p) => p.id));
@@ -3004,6 +3012,10 @@ export class Run {
     if (offer.type === 'skillup') {
       const slot = this.slots[offer.slot];
       if (!slot || slot.id !== offer.skillId || offer.rank !== slot.rank + 1 || offer.rank > (slot.def.ranks?.length || 1)) return false;
+      if (!slot.branch && slot.def.branch?.rank === offer.rank) {
+        if (!slot.def.branch.options.some(option => option.id === offer.branch)) return false;
+        slot.branch = offer.branch;
+      } else if (offer.branch) return false;
       slot.rank = offer.rank;
       const maxCharges = Math.max(1, slot.def.params?.charges || 1, skillValues(slot.def, slot.rank).rankValues.charges || 1);
       if (maxCharges > slot.maxCharges) slot.charges += maxCharges - slot.maxCharges;

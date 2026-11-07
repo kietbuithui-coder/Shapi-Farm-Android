@@ -1096,51 +1096,51 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 34.32,
-          "burst1s": 30.14,
+          "burst1s": 29.92,
           "maxHit": 17.15,
-          "firstHit": 0.13,
+          "firstHit": 0.25,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.73
         },
         "group": {
           "cast": true,
           "damage": 67.18,
-          "burst1s": 54.55,
+          "burst1s": 53.87,
           "maxHit": 15.67,
-          "firstHit": 0.15,
+          "firstHit": 0.27,
           "targetsHit": 3,
           "normalizedDamagePerCooldown": 21
         },
         "elite": {
           "cast": true,
           "damage": 32.77,
-          "burst1s": 28.59,
+          "burst1s": 28.37,
           "maxHit": 15.6,
-          "firstHit": 0.13,
+          "firstHit": 0.25,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.24
         },
         "boss": {
           "cast": true,
           "damage": 34.32,
-          "burst1s": 30.14,
+          "burst1s": 29.92,
           "maxHit": 17.15,
-          "firstHit": 0.13,
+          "firstHit": 0.25,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.73
         },
         "moving": {
           "cast": true,
           "damage": 34.32,
-          "burst1s": 30.14,
+          "burst1s": 29.82,
           "maxHit": 17.15,
-          "firstHit": 0.13,
+          "firstHit": 0.3,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.73
         }
