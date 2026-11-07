@@ -1,4 +1,4 @@
-// Authored body poses for the first four committed skills. Times are seconds
+// Authored body poses for committed skills. Times are seconds
 // from the input: startup, active/release, then recovery. Values move the cat's
 // actual limbs/body, not an overlay. Others keep their existing animations.
 export const SKILL_ACTIONS = {
@@ -27,6 +27,60 @@ export const SKILL_ACTIONS = {
       [0.24, { crouch: 0.45, lean: -0.34, bodyRoll: -0.15, frontX: -11, frontY: -25, backX: -7, backY: -21, headTilt: -0.25 }],
       [0.29, { crouch: 0.64, lean: 0.48, bodyRoll: 0.22, frontX: 21, frontY: 12, backX: 10, backY: 8, headTilt: 0.22 }],
       [0.46, {}],
+    ],
+  },
+  rending_wave: {
+    startup: 0.25, active: 0.09, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.25, frontX: -7, frontY: 4, backX: 0, backY: 4 }],
+      [0.24, { crouch: 0.68, lean: -0.38, bodyRoll: -0.12, frontX: -20, frontY: 7, backX: -8, backY: -2 }],
+      [0.30, { crouch: 0.58, lean: 0.54, bodyRoll: 0.15, frontX: 29, frontY: 7, backX: -8, backY: 4 }],
+      [0.46, {}],
+    ],
+  },
+  starfall_volley: {
+    startup: 0.22, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.10, frontX: -5, frontY: 3 }],
+      [0.21, { crouch: 0.40, lean: -0.20, bodyRoll: -0.12, frontX: -15, frontY: 1, backX: -20, backY: -8 }],
+      [0.27, { crouch: 0.05, lean: 0.15, bodyRoll: 0.08, frontX: 29, frontY: -32, backX: -9, backY: 8, headTilt: -0.22 }],
+      [0.44, {}],
+    ],
+  },
+  guardian_lion: {
+    startup: 0.25, active: 0.10, recovery: 0.13,
+    frames: [
+      [0,    { crouch: 0.15, lean: -0.12, frontX: -4, frontY: -2 }],
+      [0.24, { crouch: 0.28, lean: -0.25, frontX: 22, frontY: -28, backX: -22, backY: -25 }],
+      [0.31, { crouch: 0.78, lean: 0.45, bodyRoll: 0.25, frontX: 15, frontY: 22, backX: -24, backY: 19, headTilt: 0.15 }],
+      [0.48, {}],
+    ],
+  },
+  spirit_cat: {
+    startup: 0.25, active: 0.09, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.10, frontX: -2, frontY: 3, backX: 0, backY: 2 }],
+      [0.24, { crouch: 0.38, lean: -0.32, frontX: -8, frontY: -11, backX: -24, backY: 3, headTilt: -0.15 }],
+      [0.30, { crouch: 0.10, lean: 0.30, bodyRoll: -0.05, frontX: 29, frontY: -20, backX: -26, backY: 8, headTilt: 0.12 }],
+      [0.46, {}],
+    ],
+  },
+  spirit_orbs: {
+    startup: 0.25, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.12, frontX: -2, frontY: 2, backX: -3, backY: 2 }],
+      [0.24, { crouch: 0.28, lean: -0.12, frontX: 8, frontY: 13, backX: -25, backY: -26, headTilt: -0.18 }],
+      [0.30, { crouch: 0.12, bodyRoll: -0.13, frontX: 28, frontY: 11, backX: -29, backY: -32, headTilt: 0.19 }],
+      [0.47, {}],
+    ],
+  },
+  gravity_well: {
+    startup: 0.25, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.12, lean: 0.12, frontX: 12, frontY: -6, backX: 5, backY: -4 }],
+      [0.24, { crouch: 0.38, lean: 0.30, frontX: 27, frontY: -8, backX: 13, backY: 8 }],
+      [0.30, { crouch: 0.58, lean: -0.45, bodyRoll: -0.22, frontX: -8, frontY: 12, backX: -28, backY: 9, headTilt: -0.18 }],
+      [0.47, {}],
     ],
   },
   void_maw: {

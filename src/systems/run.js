@@ -928,7 +928,7 @@ export class Run {
       }
       case 'nova': {
         emitCast();
-        const repeats = rv.repeats || 1;
+        const repeats = rv.repeats || def.params.repeats || 1;
         for (let i = 0; i < repeats; i++) {
           const t = this.slotsTimeouts = this.slotsTimeouts || [];
           t.push({ at: this.time + i * 0.22, fn: () => {
@@ -1107,6 +1107,7 @@ export class Run {
             cd: 0.2, damage: this.skillDamage(def, power * (kind === 'kitten' ? 0.33 : 0.5)) * power2, hp: 40 * power2 * potency,
             maxHp: 40 * power2 * potency, attackCd: 0, facing: p.facing,
             power: power2, ranged: !!rv.ranged, taunt: !!rv.taunt, area: !!rv.aura && rv.aura === 'heal',
+            moveMult: rv.speed || 1, healOnHit: rv.heal || 0,
             tint: def.icon.tint, def,
           });
           this.statsTotals.minions++;
@@ -1341,6 +1342,7 @@ export class Run {
     });
     this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
     if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, rv.bleedTime || 3);
+    if (def?.params?.bleed === true) this.applyStatus(e, 'bleed', this.skillDamage(def, power) * 0.12, 3);
     if (rv.stun || rv.freeze || def?.params?.freeze) this.applyStatus(e, 'stun', (rv.stun || rv.freeze || def.params.freeze) * (def ? this.skillPotency(def) : 1));
     if (def?.params?.slow) this.applyStatus(e, 'slow', clamp(def.params.slow * this.skillPotency(def), 0, 0.9), def.params.slowTime || 2);
     if (rv.knock) this.knockback(e, rv.knock, knockAngle);
@@ -1511,8 +1513,19 @@ export class Run {
       // reads as unavoidable damage rather than a summon the player misplayed.
       if (e.spawnGrace > 0) { e.spawnGrace -= dt; continue; }
       const speedMul = 1 - (e.slow || 0);
-      const tx = p.x;
-      const ty = p.y;
+      // Lion taunt diverts ordinary touch attackers only; telegraphed ranged
+      // attacks and boss AI keep targeting the player.
+      let aggroTarget = p;
+      if (e.def.attack === 'touch') {
+        let best = 210 * 210;
+        for (const m of this.minions) {
+          if (m.kind !== 'lion' || !m.taunt || m.life <= 0 || m.hp <= 0) continue;
+          const distance = dist2(e.x, e.y, m.x, m.y);
+          if (distance < best) { best = distance; aggroTarget = m; }
+        }
+      }
+      const tx = aggroTarget.x;
+      const ty = aggroTarget.y;
       const d = dist(e.x, e.y, tx, ty);
       const dirToPlayer = angle(e.x, e.y, tx, ty);
       e.facing = tx >= e.x ? 1 : -1;
@@ -1637,7 +1650,7 @@ export class Run {
           } else {
             wantX = Math.cos(dirToPlayer) * 2.2;
             wantY = Math.sin(dirToPlayer) * 1.2;
-            if (d < 70) { e.attackCd = 2.6; this.enemyTouch(e, 1.2); }
+            if (d < 70) { e.attackCd = 2.6; this.enemyTouch(e, 1.2, aggroTarget); }
           }
           break;
         default:
@@ -1689,7 +1702,7 @@ export class Run {
         e.windupT -= dt;
         if (e.windupT <= 0) {
           if (e.def.attack === 'touch') {
-            if (d < e.radius + p.radius + 26) this.enemyTouch(e, 1);
+            if (d < e.radius + (aggroTarget.radius || 22) + 26) this.enemyTouch(e, 1, aggroTarget);
             else this.emit('fx:whiff', { x: e.x, y: e.y });
           }
           e.attackCd = 1.15;
@@ -1698,7 +1711,7 @@ export class Run {
       }
       e.attackCd -= dt;
       if (e.attackCd <= 0) {
-        if (e.def.attack === 'touch' && d < e.radius + p.radius + 26) {
+        if (e.def.attack === 'touch' && d < e.radius + (aggroTarget.radius || 22) + 26) {
           e.windupT = e.def.attack === 'touch' ? (e.def.windup || 0.28) : 0.2;
           this.emit('enemy:tell', { enemy: e, kind: 'melee' });
         } else if (e.def.attack === 'shoot' && d < 420) {
@@ -1745,7 +1758,13 @@ export class Run {
     }
   }
 
-  enemyTouch(enemy, mult = 1) {
+  enemyTouch(enemy, mult = 1, target = this.player) {
+    if (target !== this.player) {
+      target.hp = Math.max(0, target.hp - enemy.dmg * mult);
+      this.emit('enemy:attack', { enemy, kind: 'touch', target });
+      this.emit('fx:impact', { x: target.x, y: target.y, radius: 20, color: target.tint });
+      return;
+    }
     if (enemy.boss || enemy.mini) {
       // Bosses deal no contact damage: every point of damage has a tell you can read.
       const a = angle(enemy.x, enemy.y, this.player.x, this.player.y);
@@ -2480,7 +2499,9 @@ export class Run {
           if (e.dead || pr.hits.has(e.uid)) continue;
           if (dist2(pr.x, pr.y, e.x, e.y - 12) < (pr.radius + e.radius) ** 2) {
             pr.hits.add(e.uid);
-            const res = computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
+            const res = pr.source === 'minion'
+              ? { damage: pr.damage, isCrit: false }
+              : computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
             this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
             if (pr.burnDps > 0) this.applyStatus(e, 'burn', pr.burnDps, 3);
             if (pr.root) this.applyStatus(e, 'root', pr.root);
@@ -2703,25 +2724,33 @@ export class Run {
         if (m.time <= 0) this.minions.splice(i, 1);
       } else {
         m.life -= dt;
-        if (m.life <= 0) this.minions.splice(i, 1);
+        if (m.life <= 0 || m.hp <= 0) { this.minions.splice(i, 1); continue; }
         const tgt = this.nearestEnemy(m.x, m.y, 480);
         if (tgt) {
           const a = angle(m.x, m.y, tgt.x, tgt.y);
-          const sp = m.kind === 'lion' ? 36 : 150;
+          const sp = m.kind === 'lion' ? 0 : 150 * (m.moveMult || 1);
           const distT = dist(m.x, m.y, tgt.x, tgt.y);
-          if (distT > (m.kind === 'lion' ? 120 : 26)) {
+          if (distT > (m.ranged ? 180 : m.kind === 'lion' ? 120 : 26)) {
             m.x += Math.cos(a) * sp * dt;
             m.y += Math.sin(a) * sp * dt * 0.7;
             m.facing = Math.cos(a) >= 0 ? 1 : -1;
           }
           m.attackCd -= dt;
-          if (m.attackCd <= 0 && distT < (m.kind === 'lion' ? 170 : 46)) {
+          if (m.attackCd <= 0 && distT < (m.ranged ? 280 : m.kind === 'lion' ? 170 : 46)) {
             m.attackCd = m.kind === 'kitten' ? 0.7 : m.kind === 'spirit' ? 1.0 : 1.6;
             if (m.kind === 'lion') {
               this.arcDamage(m.x, m.y, 110, 110, 1, TAU, null, m.damage * 1.4, {}, true, 'minion');
               this.emit('fx:impact', { x: m.x, y: m.y, radius: 110, color: '#ffc966' });
+            } else if (m.ranged) {
+              const aim = Math.atan2((tgt.y - 12 - (m.y - 20)) / 0.72, tgt.x - m.x);
+              this.spawnProjectile({ x: m.x, y: m.y - 20, angle: aim, speed: 380, damage: m.damage,
+                radius: 6, life: 1.5, source: 'minion', owner: 'player', tint: m.tint, shape: 'orb' });
             } else {
               this.hitEnemy(tgt, m.damage, { source: 'minion' });
+              if (m.healOnHit && this.time >= (this.kittenHealReadyAt || 0)) {
+                this.heal(m.healOnHit, { silent: true });
+                this.kittenHealReadyAt = this.time + 2;
+              }
             }
             this.emit('fx:minionHit', { x: tgt.x, y: tgt.y - 16, color: m.tint, kind: m.kind });
           }

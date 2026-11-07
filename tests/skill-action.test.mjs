@@ -17,31 +17,34 @@ function runWith(skills) {
 function tick(run, seconds) {
   for (let i = 0; i < Math.ceil(seconds * 60); i++) run.step(1/60, {});
 }
-function silhouette(run, id, elapsed) {
+function silhouette(run, id, elapsed, facing = 1) {
   run.player.skillAction = id ? { id, elapsed } : null;
   const canvas = createCanvas(180, 160); const ctx = canvas.getContext('2d');
-  drawCat(ctx, run.cat, playerPose(run, 1), { x: 90, y: 135, scale: 1.4, facing: 1 });
+  drawCat(ctx, run.cat, playerPose(run, 1), { x: 90, y: 135, scale: 1.4, facing });
   const d = ctx.getImageData(0, 0, 180, 160).data;
   return Uint8Array.from({ length: d.length / 4 }, (_, i) => d[i * 4 + 3] > 100 ? 1 : 0);
 }
 function diff(a, b) { let n = 0; for (let i=0; i<a.length; i++) if (a[i] !== b[i]) n++; return n; }
 
-test('four committed skills animate real cat silhouettes through startup, active and recovery, without VFX', () => {
-  const run = runWith(['meteor_paw']); const shapes = [];
-  for (const [id, spec] of Object.entries(SKILL_ACTIONS)) {
-    const start = silhouette(run, id, spec.startup * 0.15);
-    const windup = silhouette(run, id, spec.startup * 0.95);
-    const active = silhouette(run, id, spec.startup + spec.active * 0.7);
-    const recovery = silhouette(run, id, spec.startup + spec.active + spec.recovery * 0.75);
-    assert.ok(diff(start, windup) > 35, `${id}: visible startup`);
-    assert.ok(diff(windup, active) > 35, `${id}: visible action`);
-    assert.ok(diff(active, recovery) > 35, `${id}: visible recovery`);
-    shapes.push([id, active]);
-    assert.ok(actionDuration(spec) < 0.5);
-    assert.ok(skillActionPose({ id, elapsed: 0.01 }));
-  }
-  for (let i=0; i<shapes.length; i++) for (let j=i+1; j<shapes.length; j++) {
-    assert.ok(diff(shapes[i][1], shapes[j][1]) > 35, `${shapes[i][0]} vs ${shapes[j][0]}`);
+test('committed skills animate distinct cat silhouettes through all phases in both directions without VFX', () => {
+  const run = runWith(['meteor_paw']);
+  for (const facing of [-1, 1]) {
+    const shapes = [];
+    for (const [id, spec] of Object.entries(SKILL_ACTIONS)) {
+      const start = silhouette(run, id, spec.startup * 0.15, facing);
+      const windup = silhouette(run, id, spec.startup * 0.95, facing);
+      const active = silhouette(run, id, spec.startup + spec.active * 0.7, facing);
+      const recovery = silhouette(run, id, spec.startup + spec.active + spec.recovery * 0.75, facing);
+      assert.ok(diff(start, windup) > 35, `${id}: visible startup ${facing}`);
+      assert.ok(diff(windup, active) > 35, `${id}: visible action ${facing}`);
+      assert.ok(diff(active, recovery) > 35, `${id}: visible recovery ${facing}`);
+      shapes.push([id, active]);
+      assert.ok(actionDuration(spec) < 0.5);
+      assert.ok(skillActionPose({ id, elapsed: 0.01 }));
+    }
+    for (let i=0; i<shapes.length; i++) for (let j=i+1; j<shapes.length; j++) {
+      assert.ok(diff(shapes[i][1], shapes[j][1]) > 35, `${shapes[i][0]} vs ${shapes[j][0]} (${facing})`);
+    }
   }
 });
 
@@ -143,4 +146,12 @@ test('boss-wave charge refresh does not duplicate a buffered charge', () => {
   tick(run, 0.5);
   assert.equal(run.slots[1].reserved, 0); assert.equal(run.slots[1].charges, 0);
   assert.ok(run.slots[1].recharge > 0);
+});
+
+test('a queued committed cast completes before the next buffered action', () => {
+  const run = runWith(['rending_wave', 'starfall_volley', 'claw_slash']);
+  const casts = []; run.on('skill:cast', ({ id }) => casts.push(id));
+  assert.ok(run.castSlot(0).ok); assert.ok(run.castSlot(1).queued); assert.ok(run.castSlot(2).queued);
+  tick(run, 0.6); assert.deepEqual(casts, ['rending_wave', 'starfall_volley']);
+  tick(run, 0.6); assert.deepEqual(casts, ['rending_wave', 'starfall_volley', 'claw_slash']);
 });

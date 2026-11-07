@@ -384,7 +384,7 @@ export const SKILLS = [
     name: { vi: 'Trăng Máu', en: 'Blood Moon' },
     desc: { vi: 'Mặt trăng máu mọc lên: kẻ địch xung quanh mất máu.', en: 'A blood moon rises; foes around you bleed.' },
     cost: 46, cd: 18, range: 200, ranks: [R(1, 'Sóng máu 2 vòng'), R(1, 'Bán kính +15%', { radius: 1.15 }), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Hồi máu theo sát thương', { lifesteal: 0.25 }), R(1, 'Ba vòng', { repeats: 3 })],
-    params: { damage: 1.9, radius: 190, knock: 120, bleed: true }, icon: { glyph: 'bloodmoon', tint: '#ff5f6d' },
+    params: { damage: 1.1, radius: 190, knock: 120, bleed: true, repeats: 2 }, icon: { glyph: 'bloodmoon', tint: '#ff5f6d' },
   },
   {
     id: 'soul_siphon', category: 'summon', rarity: 'rare', pattern: 'soul',
