@@ -306,7 +306,7 @@ export const SKILLS = [
     id: 'life_drain', category: 'heal', rarity: 'rare', pattern: 'drain',
     name: { vi: 'Hút Sinh Lực', en: 'Life Drain' },
     desc: { vi: 'Rút máu mục tiêu chuyển thành của bạn.', en: 'Steal a target\'s vitality for yourself.' },
-    cost: 24, cd: 8, range: 220, ranks: [R(1, 'Hút 60% sát thương'), R(1, 'Hút 75%', { leech: 0.75 }), R(1, 'Sát thương +25%', { mult: 1.25 }), R(1, 'Tầm xa hơn', { range: 280 }), R(1, 'Hút cả đồng minh gần', { area: true })],
+    cost: 24, cd: 8, range: 220, ranks: [R(1, 'Hút 60% sát thương'), R(1, 'Hút 75%', { leech: 0.75 }), R(1, 'Sát thương +25%', { mult: 1.25 }), R(1, 'Tầm xa hơn', { range: 280 }), R(1, 'Hút thêm kẻ địch gần', { area: true })],
     params: { damage: 1.6, leech: 0.6, time: 1.0 }, icon: { glyph: 'drain', tint: '#b48bff' },
   },
   {

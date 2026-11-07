@@ -173,6 +173,33 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  blood_fang: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.10, frontX: -3, frontY: 2, backX: 0, backY: 1 }],
+      [0.09, { crouch: 0.65, lean: -0.48, bodyRoll: -0.12, frontX: -16, frontY: 9, backX: -13, backY: 12, headTilt: -0.28 }],
+      [0.15, { crouch: 0.60, lean: 0.56, bodyRoll: 0.22, frontX: 22, frontY: 15, backX: -20, backY: 18, headTilt: 0.32 }],
+      [0.28, {}],
+    ],
+  },
+  life_drain: {
+    startup: 0.12, active: 0.08, recovery: 0.10, windup: 0.12,
+    frames: [
+      [0,    { crouch: 0.08, lean: 0.10, frontX: 9, frontY: -3, backX: 3, backY: -1 }],
+      [0.11, { crouch: 0.28, lean: 0.42, bodyRoll: 0.12, frontX: 29, frontY: -14, backX: 15, backY: -5, headTilt: 0.14 }],
+      [0.17, { crouch: 0.62, lean: -0.48, bodyRoll: -0.28, frontX: -17, frontY: -3, backX: -26, backY: 13, headTilt: -0.22 }],
+      [0.30, {}],
+    ],
+  },
+  shadow_strike: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.10, frontX: -2, frontY: 1, backX: -3, backY: 1 }],
+      [0.09, { crouch: 0.78, lean: -0.35, bodyRoll: 0.22, frontX: -21, frontY: -10, backX: -16, backY: 12, headTilt: -0.18 }],
+      [0.15, { crouch: 0.20, lean: 0.48, bodyRoll: -0.26, frontX: 36, frontY: -25, backX: -32, backY: 14, headTilt: 0.25 }],
+      [0.28, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [

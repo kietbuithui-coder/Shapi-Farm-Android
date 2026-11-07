@@ -1028,9 +1028,13 @@ export class Run {
         p.y = tgt.y;
         p.facing = tgt.x >= p.x ? 1 : -1;
         p.invuln = Math.max(p.invuln, 0.3);
-        this.hitEnemy(tgt, this.skillDamage(def, power), { source: 'skill', crit: rv.forceCrit || this.rng.chance(this.stats.crit) });
+        const forced = this.consumeForceCrit();
+        const hit = computeDamage({ base: this.skillDamage(def, power), atk: 1, crit: this.stats.crit,
+          critDmg: this.stats.critDmg, roll: this.rng.float(), forceCrit: forced || !!rv.forceCrit,
+          execute: this.mods.execute, targetHpFrac: tgt.hp / tgt.hpMax });
+        this.hitEnemy(tgt, hit.damage, { source: 'skill', crit: hit.isCrit });
         this.emit('fx:slash', { x: tgt.x, y: tgt.y - 18, facing: p.facing, skill: true });
-        if (rv.refundKill) this.pendingRefund = tgt.uid;
+        if (rv.refundKill && tgt.dead) this.energy = Math.min(this.stats.energyMax, this.energy + def.cost);
         break;
       }
       case 'execute': {
@@ -1170,6 +1174,13 @@ export class Run {
         const amount = this.stats.hpMax * (rv.heal ?? def.params.heal ?? 0.2) * this.skillCoefficient(def);
         this.heal(amount);
         if (rv.cleanse) this.playerSlow = null;
+        if (rv.team) {
+          const fraction = (rv.heal ?? def.params.heal ?? 0.2) * this.skillCoefficient(def);
+          for (const m of this.minions) {
+            if (m.kind === 'orb' || !(m.hp > 0) || !(m.life > 0) || !(m.maxHp > 0)) continue;
+            if (dist2(m.x, m.y, p.x, p.y) <= 180 * 180) m.hp = Math.min(m.maxHp, m.hp + m.maxHp * fraction);
+          }
+        }
         this.energy = Math.min(this.stats.energyMax, this.energy + ((rv.energy ?? def.params.energy) || 0) * potency);
         if (rv.overTime) this.addBuff({ id: def.id + '_hot', time: 5, regen: amount / 5, tint: def.icon.tint });
         if (rv.cdr) this.stats.cdr = Math.min(0.6, this.stats.cdr + rv.cdr);
@@ -1180,9 +1191,24 @@ export class Run {
         emitCast();
         const tgt = this.nearestEnemy(p.x, p.y, values.range * area);
         if (!tgt) break;
-        const dmg = this.skillDamage(def, power);
-        const dealt = this.hitEnemy(tgt, dmg, { source: 'skill', crit: this.rng.chance(this.stats.crit) });
-        this.heal(dealt * (rv.leech || def.params.leech || 0.6));
+        const hit = computeDamage({ base: this.skillDamage(def, power), atk: 1, crit: this.stats.crit,
+          critDmg: this.stats.critDmg, roll: this.rng.float(), forceCrit: this.consumeForceCrit(),
+          execute: this.mods.execute, targetHpFrac: tgt.hp / tgt.hpMax });
+        const dmg = hit.damage;
+        const hpBefore = tgt.hp;
+        const dealt = this.hitEnemy(tgt, dmg, { source: 'skill', crit: hit.isCrit });
+        let effectiveDamage = Math.min(hpBefore, dealt);
+        if (rv.area) {
+          const nearby = this.enemies.filter(e => e !== tgt && !e.dead && dist2(e.x, e.y, tgt.x, tgt.y) < 100 * 100)
+            .sort((a, b) => dist2(a.x, a.y, tgt.x, tgt.y) - dist2(b.x, b.y, tgt.x, tgt.y)).slice(0, 2);
+          for (const e of nearby) {
+            const hpBefore = e.hp;
+            const dealt = this.hitEnemy(e, dmg * 0.35, { source: 'drain' });
+            effectiveDamage += Math.min(hpBefore, dealt);
+            this.emit('fx:drain', { x: p.x, y: p.y - 24, x2: e.x, y2: e.y - 20, color: def.icon.tint });
+          }
+        }
+        this.heal(effectiveDamage * (rv.leech || def.params.leech || 0.6));
         this.emit('fx:drain', { x: p.x, y: p.y - 24, x2: tgt.x, y2: tgt.y - 20, color: def.icon.tint });
         break;
       }
@@ -1370,15 +1396,27 @@ export class Run {
       execute: this.mods.execute,
       targetHpFrac: e.hp / e.hpMax,
     });
-    this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
+    const hpBefore = e.hp;
+    const dealt = this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
     if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, rv.bleedTime || 3);
     if (def?.params?.bleed === true) this.applyStatus(e, 'bleed', this.skillDamage(def, power) * 0.12, 3);
+    if (def?.id === 'blood_fang' && !e.dead) {
+      e.bloodFangStacks = Math.min(3, (e.bloodFangStackTime > 0 ? e.bloodFangStacks || 0 : 0) + 1);
+      e.bloodFangStackTime = 6;
+      const bleedDps = this.skillDamage(def, power) * 0.12 * (rv.bleed || 1) * e.bloodFangStacks;
+      this.applyStatus(e, 'bleed', bleedDps, 6);
+      if (rv.spread) for (const other of this.enemies) {
+        if (other !== e && !other.dead && dist2(other.x, other.y, e.x, e.y) < 100 * 100) {
+          this.applyStatus(other, 'bleed', bleedDps * 0.5, 2);
+        }
+      }
+    }
     if (rv.stun || rv.freeze || def?.params?.freeze) this.applyStatus(e, 'stun', (rv.stun || rv.freeze || def.params.freeze) * (def ? this.skillPotency(def) : 1));
     if (def?.params?.slow) this.applyStatus(e, 'slow', clamp(def.params.slow * this.skillPotency(def), 0, 0.9), def.params.slowTime || 2);
     if (rv.knock) this.knockback(e, rv.knock, knockAngle);
     if (def?.params?.knock) this.knockback(e, def.params.knock * (1 + this.mods.knock), knockAngle);
     const leech = rv.lifesteal || def?.params?.lifesteal || 0;
-    if (leech) this.heal(res.damage * leech, { silent: true });
+    if (leech) this.heal((def?.id === 'blood_fang' ? Math.min(hpBefore, dealt) : res.damage) * leech, { silent: true });
     if (rv.execute && (e.hp / e.hpMax) < rv.execute && !e.boss) this.hitEnemy(e, e.hp + 1, { source: 'execute', silent: true });
   }
   knockback(enemy, force, knockAngle = null) {
@@ -1435,7 +1473,7 @@ export class Run {
 
   applyStatus(enemy, type, power, time) {
     if (!enemy || enemy.dead) return;
-    if (type === 'bleed') { enemy.bleed = Math.max(enemy.bleed, power); enemy.bleedTime = Math.max(enemy.bleedTime, time); }
+    if (type === 'bleed') { enemy.bleed = enemy.bleedTime > 0 ? Math.max(enemy.bleed || 0, power) : power; enemy.bleedTime = Math.max(enemy.bleedTime || 0, time); }
     else if (type === 'slow') {
       const cap = enemy.boss ? 0.35 : enemy.mini ? 0.45 : enemy.elite ? 0.6 : 0.9;
       const duration = time * (enemy.boss ? 0.6 : enemy.mini ? 0.75 : enemy.elite ? 0.8 : 1);
@@ -1493,11 +1531,6 @@ export class Run {
       this.waveEnemiesLeft = 0;
       this.pendingSpawns.length = 0;
     }
-    if (this.pendingRefund === enemy.uid) {
-      this.pendingRefund = null;
-      const slot = this.slots.find((s) => s) ;
-      if (slot) { slot.cd = 0; slot.charges = slot.maxCharges; slot.recharge = 0; }
-    }
   }
 
   onBossDefeated() {
@@ -1529,6 +1562,7 @@ export class Run {
       if (e.slowTime > 0) { e.slowTime -= dt; if (e.slowTime <= 0) e.slow = 0; }
       if (e.poisonTime > 0) { e.poisonTime -= dt; this.hitEnemy(e, e.poison * dt, { tick: true, silent: true }); if (e.dead) continue; }
       if (e.bleedTime > 0) { e.bleedTime -= dt; this.hitEnemy(e, e.bleed * dt, { tick: true, silent: true }); if (e.dead) continue; }
+      if (e.bloodFangStackTime > 0) { e.bloodFangStackTime -= dt; if (e.bloodFangStackTime <= 0) e.bloodFangStacks = 0; }
       if (e.markTime > 0) {
         const elapsed = Math.min(dt, e.markTime);
         if (e.markDps) this.hitEnemy(e, e.markDps * elapsed, { source: 'mark', tick: true, silent: true });

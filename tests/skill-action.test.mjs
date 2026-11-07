@@ -167,3 +167,14 @@ test('frost and whirling have short visible windups, allow movement, and buffer 
     assert.equal(run.skillQueue.length, 0);
   }
 });
+
+test('new sustain attacks visibly wind up and buffer the next skill without blocking movement', () => {
+  for (const id of ['blood_fang', 'life_drain', 'shadow_strike']) {
+    const run = runWith([id, 'claw_slash']); const e = run.enemies[0]; const x = run.player.x;
+    const casts = []; run.on('skill:cast', event => casts.push(event.id));
+    assert.ok(run.castSlot(0).ok); assert.deepEqual(run.castSlot(1), { ok:true, queued:true });
+    for (let i = 0; i < 3; i++) run.step(1/60, { moveX:1 });
+    assert.ok(run.player.x > x); assert.equal(e.hp, e.hpMax, `${id}: startup precedes damage`);
+    tick(run, 0.5); assert.ok(e.hp < e.hpMax); assert.deepEqual(casts, [id, 'claw_slash']);
+  }
+});
