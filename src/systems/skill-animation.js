@@ -236,6 +236,24 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  lucky_paw: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.08, frontX: -3, frontY: 2, backX: 0, backY: 1 }],
+      [0.09, { crouch: 0.38, lean: -0.30, bodyRoll: 0.20, frontX: -15, frontY: -20, backX: -28, backY: 8, headTilt: -0.22 }],
+      [0.15, { crouch: 0.12, lean: 0.24, bodyRoll: -0.25, frontX: 14, frontY: -35, backX: -30, backY: 18, headTilt: 0.20 }],
+      [0.28, {}],
+    ],
+  },
+  mana_snack: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.06, frontX: -3, frontY: 1, backX: -2, backY: 1 }],
+      [0.09, { crouch: 0.45, lean: -0.30, bodyRoll: -0.22, frontX: -15, frontY: -23, backX: -23, backY: -6, headTilt: -0.24 }],
+      [0.15, { crouch: 0.30, lean: 0.30, bodyRoll: 0.25, frontX: 10, frontY: -30, backX: -30, backY: 12, headTilt: 0.24 }],
+      [0.28, {}],
+    ],
+  },
   phantom_step: {
     // The destination marker appears immediately; the body pose plays while it waits.
     startup: 0.08, active: 0.08, recovery: 0.10, windup: 0,

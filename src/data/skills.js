@@ -298,7 +298,7 @@ export const SKILLS = [
   {
     id: 'healing_purr', category: 'heal', rarity: 'common', pattern: 'heal',
     name: { vi: 'Gừ Chữa Lành', en: 'Healing Purr' },
-    desc: { vi: 'Tiếng gừ hồi máu tức thời và thêm theo thời gian.', en: 'A purr heals now and keeps mending.' },
+    desc: { vi: 'Hồi máu tức thời; nâng cấp để hồi theo thời gian.', en: 'Heal instantly; upgrade to heal over time.' },
     cost: 26, cd: 9, range: 0, ranks: [R(1, 'Hồi 22% máu'), R(1, 'Hồi 28%', { heal: 0.28 }), R(1, 'Hồi thêm theo thời gian', { overTime: true }), R(1, 'Hồi cả đồng minh', { team: true }), R(1, 'Loại bỏ làm chậm', { cleanse: true })],
     params: { heal: 0.22, time: 0 }, icon: { glyph: 'heart', tint: '#67e8a0' }, starter: true,
   },
@@ -327,7 +327,7 @@ export const SKILLS = [
     id: 'mana_snack', category: 'utility', rarity: 'common', pattern: 'heal',
     name: { vi: 'Bánh Năng Lượng', en: 'Mana Snack' },
     desc: { vi: 'Ăn một miếng, hồi ngay năng lượng.', en: 'A bite restores a chunk of energy.' },
-    cost: 0, cd: 16, range: 0, ranks: [R(1, 'Hồi 40 năng lượng'), R(1, 'Hồi 55', { energy: 55 }), R(1, 'Giảm hồi chiêu 12%', { cdr: 0.12 }), R(1, 'Hồi cả máu', { heal: 0.1 }), R(1, 'Hồi chiêu nhanh hơn', { cdCut: 4 })],
+    cost: 0, cd: 16, range: 0, ranks: [R(1, 'Hồi 40 năng lượng'), R(1, 'Hồi 55', { energy: 55 }), R(1, 'Giảm 12% hồi chiêu trong 8 giây', { cdr: 0.12 }), R(1, 'Hồi cả máu', { heal: 0.1 }), R(1, 'Hồi chiêu nhanh hơn', { cdCut: 4 })],
     params: { heal: 0, energy: 40 }, icon: { glyph: 'snack', tint: '#ffc966' },
   },
   {

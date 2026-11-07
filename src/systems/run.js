@@ -707,7 +707,7 @@ export class Run {
     let critRoll = this.rng.float();
     const forceCrit = this.consumeForceCrit();
     const res = computeDamage({
-      base: stats.atk, atk: 1, crit: stats.crit, critDmg: stats.critDmg,
+      base: stats.atk, atk: 1, crit: this.effectiveCrit(), critDmg: stats.critDmg,
       roll: critRoll, forceCrit, execute: this.mods.execute, backstab: this.mods.backstab,
       targetHpFrac: target.hp / target.hpMax, roll02: 0.5,
     });
@@ -734,6 +734,8 @@ export class Run {
       if (near) this.hitEnemy(near, dmg * this.mods.ricochet, { source: 'ricochet' });
     }
   }
+
+  effectiveCrit() { return clamp(this.stats.crit + this.buffValue('crit'), 0, 0.85); }
 
   consumeForceCrit() {
     if (this.forceCrit) { this.forceCrit = false; return true; }
@@ -835,7 +837,7 @@ export class Run {
         (this.slotsTimeouts ||= []).push({ at: this.time + windup, fn: () => this.executeSkill(slot, values, i) });
       } else this.executeSkill(slot, values, i);
     }
-    const cooldown = Math.max(0.1, values.cd * (1 - this.stats.cdr) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed'))));
+    const cooldown = Math.max(0.1, values.cd * (1 - clamp(this.stats.cdr + this.buffValue('cdr'), 0, 0.6)) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed'))));
     if (!options.reserved) slot.charges = Math.max(0, slot.charges - 1);
     if (slot.recharge <= 0) { slot.recharge = cooldown; slot.rechargeDuration = cooldown; }
     slot.cd = slot.charges > 0 ? 0 : slot.recharge;
@@ -991,7 +993,7 @@ export class Run {
           visited.add(current.uid);
           points.push({ x: current.x, y: current.y - 18 });
           const hit = computeDamage({ base: this.skillDamage(def, power * (1 - i * 0.12)), atk: 1,
-            crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(),
+            crit: this.effectiveCrit(), critDmg: this.stats.critDmg, roll: this.rng.float(),
             forceCrit: this.consumeForceCrit(), execute: this.mods.execute, targetHpFrac: current.hp / current.hpMax });
           this.hitEnemy(current, hit.damage, { source: 'skill', crit: hit.isCrit });
           if (rv.stun) this.applyStatus(current, 'stun', rv.stun * potency);
@@ -1061,7 +1063,7 @@ export class Run {
         p.facing = tgt.x >= p.x ? 1 : -1;
         p.invuln = Math.max(p.invuln, 0.3);
         const forced = this.consumeForceCrit();
-        const hit = computeDamage({ base: this.skillDamage(def, power), atk: 1, crit: this.stats.crit,
+        const hit = computeDamage({ base: this.skillDamage(def, power), atk: 1, crit: this.effectiveCrit(),
           critDmg: this.stats.critDmg, roll: this.rng.float(), forceCrit: forced || !!rv.forceCrit,
           execute: this.mods.execute, targetHpFrac: tgt.hp / tgt.hpMax });
         this.hitEnemy(tgt, hit.damage, { source: 'skill', crit: hit.isCrit });
@@ -1184,6 +1186,9 @@ export class Run {
           armor: (rv.armor ?? def.params.armor ?? 0) * potency,
           reflect: (rv.reflect ?? def.params.reflect ?? 0) * potency,
           crit: (rv.crit ?? def.params.crit ?? 0) * potency,
+          fortune: (rv.fortune ?? def.params.fortune ?? 0) * potency,
+          goldGain: (rv.gold || 0) * potency,
+          teamCrit: rv.team ? (rv.crit ?? def.params.crit ?? 0) * potency : 0,
           energyRegenFlat: rv.regen ? def.params.regen || 6 : 0,
           onHitHeal: (rv.onHitHeal || 0) * potency,
           reflectSplash: !!rv.splash,
@@ -1228,7 +1233,7 @@ export class Run {
         }
         this.energy = Math.min(this.stats.energyMax, this.energy + ((rv.energy ?? def.params.energy) || 0) * potency);
         if (rv.overTime) this.addBuff({ id: def.id + '_hot', time: 5, regen: amount / 5, tint: def.icon.tint });
-        if (rv.cdr) this.stats.cdr = Math.min(0.6, this.stats.cdr + rv.cdr);
+        if (rv.cdr) this.addBuff({ id: def.id + '_cdr', time: 8, cdr: rv.cdr, tint: def.icon.tint });
         this.emit('fx:heal', { x: p.x, y: p.y, color: def.icon.tint });
         break;
       }
@@ -1236,7 +1241,7 @@ export class Run {
         emitCast();
         const tgt = this.nearestEnemy(p.x, p.y, values.range * area);
         if (!tgt) break;
-        const hit = computeDamage({ base: this.skillDamage(def, power), atk: 1, crit: this.stats.crit,
+        const hit = computeDamage({ base: this.skillDamage(def, power), atk: 1, crit: this.effectiveCrit(),
           critDmg: this.stats.critDmg, roll: this.rng.float(), forceCrit: this.consumeForceCrit(),
           execute: this.mods.execute, targetHpFrac: tgt.hp / tgt.hpMax });
         const dmg = hit.damage;
@@ -1452,7 +1457,7 @@ export class Run {
 
   skillHit(e, def, power, rv = {}, knockAngle = null) {
     const res = computeDamage({
-      base: def ? this.skillDamage(def, power) : power, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg,
+      base: def ? this.skillDamage(def, power) : power, atk: 1, crit: this.effectiveCrit(), critDmg: this.stats.critDmg,
       roll: this.rng.float(), forceCrit: this.consumeForceCrit(),
       execute: this.mods.execute,
       targetHpFrac: e.hp / e.hpMax,
@@ -1504,6 +1509,13 @@ export class Run {
   hitEnemy(enemy, amount, opts = {}) {
     if (!enemy || enemy.dead || !(amount > 0)) return 0;
     let dmg = amount * (1 + this.soulDamageBonus);
+    // Lucky Paw rank five shares only its own bonus with living summons.
+    // Orbiting objects, DoTs, blasts and reflected shots do not roll summon crits.
+    const teamCrit = this.buffValue('teamCrit');
+    if (opts.source === 'minion' && !opts.tick && teamCrit > 0 && this.rng.chance(clamp(teamCrit, 0, 0.85))) {
+      dmg *= this.stats.critDmg;
+      opts = { ...opts, crit: true };
+    }
     // On-hit upgrades used to trigger only from the removed auto attack.
     // Keep them useful on deliberate skill hits instead.
     if (opts.source === 'skill' && !opts.tick) {
@@ -1528,7 +1540,7 @@ export class Run {
       this.emit('fx:hit', { x: enemy.x, y: enemy.y - (enemy.def.radius || 14) * 0.9, amount: dmg, crit: !!opts.crit, source: opts.source, enemy });
       this.emit('damage', { amount: dmg, crit: !!opts.crit, x: enemy.x, y: enemy.y - (enemy.def.radius || 14) - 12, target: 'enemy' });
     }
-    if (opts.crit) this.player.attackAnim = 1;
+    if (opts.crit && opts.source !== 'minion') this.player.attackAnim = 1;
     if (enemy.hp <= 0) this.killEnemy(enemy, opts);
     return dmg;
   }
@@ -1568,14 +1580,17 @@ export class Run {
     // xp & gold drops
     const xp = Math.round(enemy.xp * (1 + this.mods.xpGain));
     this.spawnPickup(enemy.x, enemy.y, 'xp', xp);
-    if (this.rng.chance(clamp(enemy.gold, 0.02, 1))) this.spawnPickup(enemy.x + this.rng.range(-12, 12), enemy.y, 'gold', Math.max(1, Math.round(enemy.gold * 3 * (1 + this.mods.goldGain))));
-    if (this.rng.chance(0.035) && !enemy.boss) this.spawnPickup(enemy.x, enemy.y, 'hp', 0.08);
+    const fortune = Math.max(0, (this.mods.fortune || 0) + this.buffValue('fortune'));
+    const dropChance = (base) => clamp(base * (1 + fortune), 0, 1);
+    const goldGain = this.mods.goldGain + this.buffValue('goldGain');
+    if (this.rng.chance(dropChance(clamp(enemy.gold, 0.02, 1)))) this.spawnPickup(enemy.x + this.rng.range(-12, 12), enemy.y, 'gold', Math.max(1, Math.round(enemy.gold * 3 * (1 + goldGain))));
+    if (this.rng.chance(dropChance(0.035)) && !enemy.boss) this.spawnPickup(enemy.x, enemy.y, 'hp', 0.08);
     // Permanent-upgrade currency drops often enough to make early progress.
     if (enemy.boss || enemy.mini) {
       // Credit boss rewards immediately: the wave can end before loot is collected.
       this.embersFound = (this.embersFound || 0) + (enemy.boss ? 20 : 10);
       this.emit('pickup', { kind: 'ember', x: enemy.x, y: enemy.y, auto: true });
-    } else if (this.rng.chance(0.18)) this.spawnPickup(enemy.x + 10, enemy.y, 'ember', 2);
+    } else if (this.rng.chance(dropChance(0.18))) this.spawnPickup(enemy.x + 10, enemy.y, 'ember', 2);
     if (this.mods.killHeal) this.heal(this.stats.hpMax * this.mods.killHeal, { silent: true });
     if (this.mods.killBoom) {
       this.arcDamage(enemy.x, enemy.y, 70, 70, 1, TAU, null, this.mods.killBoom, {}, true);
@@ -2642,7 +2657,7 @@ export class Run {
             pr.hits.add(e.uid);
             const res = pr.source === 'minion' || pr.source === 'orbit' || pr.source === 'reflect'
               ? { damage: pr.damage, isCrit: false }
-              : computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
+              : computeDamage({ base: pr.damage, atk: 1, crit: this.effectiveCrit(), critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
             const hpBefore = e.hp;
             const dealt = this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
             if (pr.burnDps > 0) this.applyStatus(e, 'burn', pr.burnDps, 3);

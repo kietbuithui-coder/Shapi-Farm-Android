@@ -3904,8 +3904,8 @@
       "scaling": "health",
       "count": 1,
       "declaredEffects": {
-        "vi": "Tiếng gừ hồi máu tức thời và thêm theo thời gian.",
-        "en": "A purr heals now and keeps mending."
+        "vi": "Hồi máu tức thời; nâng cấp để hồi theo thời gian.",
+        "en": "Heal instantly; upgrade to heal over time."
       },
       "control": {},
       "declaredDelay": 0,
@@ -4219,8 +4219,8 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -4299,7 +4299,7 @@
         },
         {
           "dmg": 1,
-          "note": "Giảm hồi chiêu 12%",
+          "note": "Giảm 12% hồi chiêu trong 8 giây",
           "cdr": 0.12
         },
         {
@@ -4321,8 +4321,8 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
