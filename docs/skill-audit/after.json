@@ -3768,13 +3768,12 @@
       "energy": 22,
       "parameters": {
         "time": 4,
-        "armor": 0.4,
-        "root": true
+        "armor": 0.2
       },
       "ranks": [
         {
           "dmg": 1,
-          "note": "Không bị đẩy lùi"
+          "note": "Chống đẩy, giảm 20% sát thương"
         },
         {
           "dmg": 1,
@@ -3783,7 +3782,7 @@
         },
         {
           "dmg": 1,
-          "note": "Sát thương va chạm quanh bạn",
+          "note": "Sát thương quanh bạn",
           "thorns": true
         },
         {
@@ -3801,14 +3800,12 @@
       "count": 1,
       "declaredEffects": {
         "vi": "Đứng vững như tượng: miễn đẩy lùi, giảm sát thương.",
-        "en": "Root in place: knockback immunity, heavy armor."
+        "en": "Stand firm: knockback immunity and damage reduction."
       },
-      "control": {
-        "root": true
-      },
+      "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -4493,7 +4490,6 @@
       "energy": 22,
       "parameters": {
         "time": 2,
-        "forceCrit": true,
         "move": 0
       },
       "ranks": [
@@ -4525,13 +4521,13 @@
       "scaling": "speed",
       "count": 1,
       "declaredEffects": {
-        "vi": "Kẻ địch mất dấu bạn; đòn kế tiếp chí mạng.",
-        "en": "Enemies lose your trail; next hit crits."
+        "vi": "Ẩn khỏi quái thường đến khi đánh trúng; boss và đòn cũ vẫn nguy hiểm.",
+        "en": "Hide from ordinary enemies until a direct hit; bosses and existing attacks remain dangerous."
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,

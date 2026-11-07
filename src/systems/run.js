@@ -1179,6 +1179,8 @@ export class Run {
       case 'buff': {
         emitCast({ buff: true });
         const time = rv.time || def.params.time;
+        // Reapplying the veil refreshes it without detonating the old copy.
+        if (def.id === 'night_veil') this.endNightVeil(false);
         this.addBuff({
           id: def.id, time,
           atkSpeed: (rv.atkSpeed ?? def.params.atkSpeed ?? 0) * potency,
@@ -1194,10 +1196,15 @@ export class Run {
           reflectSplash: !!rv.splash,
           drawback: rv.noDrawback ? 0 : def.params.drawback || 0,
           forceCrit: !!rv.forceCrit,
+          stealth: def.id === 'night_veil',
+          veilBoom: def.id === 'night_veil' && rv.boom ? this.skillDamage(def, 1) : 0,
+          stoneAura: def.id === 'stone_stance' && rv.thorns ? this.skillDamage(def, 0.4) : 0,
+          stoneHeal: def.id === 'stone_stance' ? (rv.heal || 0) * potency : 0,
+          stoneX: p.x, stoneY: p.y,
           trail: !!rv.trail,
           trailDamage: rv.trail ? this.skillDamage(def, power * 0.25) : 0,
           trailCooldown: 0, trailX: p.x, trailY: p.y,
-          noKnockback: true,
+          noKnockback: def.id === 'stone_stance' || !!rv.knockImmune,
           tint: def.icon.tint,
         });
         if (rv.forceCrit) this.forceCrit = true;
@@ -1406,12 +1413,33 @@ export class Run {
     return v || fallback;
   }
 
+  isVeiled() { return this.player.buffs.some((b) => b.stealth && b.time > 0); }
+
+  endNightVeil(detonate = true) {
+    const p = this.player;
+    let damage = 0;
+    for (let i = p.buffs.length - 1; i >= 0; i--) {
+      if (p.buffs[i].id !== 'night_veil') continue;
+      damage = Math.max(damage, p.buffs[i].veilBoom || 0);
+      p.buffs.splice(i, 1);
+    }
+    if (detonate && damage > 0) this.blast({ x: p.x, y: p.y - 12, explode: 90, damage, tint: '#8b90b8' }, null, 1);
+  }
+
   updateBuffs(dt) {
     const p = this.player;
     let emittedSprintTrail = false;
+    let stoneHeal = 0, stoneDamage = 0;
     for (let i = p.buffs.length - 1; i >= 0; i--) {
       const b = p.buffs[i];
+      const activeDt = Math.max(0, Math.min(dt, b.time));
       b.time -= dt;
+      if (b.id === 'stone_stance') {
+        const still = !p.moving && Math.hypot(p.x - b.stoneX, p.y - b.stoneY) < 0.01;
+        if (still) stoneHeal = Math.max(stoneHeal, b.stoneHeal * activeDt);
+        stoneDamage = Math.max(stoneDamage, b.stoneAura * activeDt);
+        b.stoneX = p.x; b.stoneY = p.y;
+      }
       if (b.regen || b.heal) this.heal(((b.regen || 0) + (b.heal || 0)) * dt, { silent: true });
       if (b.trail) {
         b.trailCooldown = Math.max(0, b.trailCooldown - dt);
@@ -1429,7 +1457,15 @@ export class Run {
       if (b.burn) {
         for (const e of this.enemies) if (!e.dead && dist2(e.x, e.y, p.x, p.y) < (b.radius || 100) ** 2) this.hitEnemy(e, b.burn * dt, { source: 'aura', silent: true, tick: true });
       }
-      if (b.time <= 0) p.buffs.splice(i, 1);
+      if (b.time <= 0) {
+        if (b.stealth) this.endNightVeil();
+        else p.buffs.splice(i, 1);
+      }
+    }
+    if (stoneHeal) this.heal(stoneHeal, { silent: true });
+    if (stoneDamage) for (const e of this.enemies) {
+      if (!e.dead && dist2(e.x, e.y, p.x, p.y) < (70 + e.radius) ** 2)
+        this.hitEnemy(e, stoneDamage, { source: 'stance', tick: true, silent: true });
     }
   }
 
@@ -1542,6 +1578,7 @@ export class Run {
     }
     if (opts.crit && opts.source !== 'minion') this.player.attackAnim = 1;
     if (enemy.hp <= 0) this.killEnemy(enemy, opts);
+    if (opts.source === 'skill' && !opts.tick && this.isVeiled()) this.endNightVeil();
     return dmg;
   }
 
@@ -1671,6 +1708,16 @@ export class Run {
           const distance = dist2(e.x, e.y, m.x, m.y);
           if (distance < best) { best = distance; aggroTarget = m; }
         }
+      }
+      // Ordinary enemies lose track of a veiled player, but may continue
+      // attacking a taunting lion. Existing hazards/projectiles remain live.
+      if (aggroTarget === p && this.isVeiled()) {
+        e.windupT = 0; e.leash = 0;
+        e.attackCd = Math.max(0, e.attackCd - dt);
+        if (e.burstT > 0) e.burstT = Math.max(0, e.burstT - dt);
+        if (e.leapT > 0) e.leapT = Math.max(0, e.leapT - dt);
+        if (e.diveT > 0) e.diveT = Math.max(0, e.diveT - dt);
+        continue;
       }
       const tx = aggroTarget.x;
       const ty = aggroTarget.y;
@@ -1915,9 +1962,11 @@ export class Run {
     }
     if (enemy.boss || enemy.mini) {
       // Bosses deal no contact damage: every point of damage has a tell you can read.
-      const a = angle(enemy.x, enemy.y, this.player.x, this.player.y);
-      this.player.x += Math.cos(a) * 3;
-      this.player.y += Math.sin(a) * 2;
+      if (!this.buffValue('noKnockback')) {
+        const a = angle(enemy.x, enemy.y, this.player.x, this.player.y);
+        this.player.x += Math.cos(a) * 3;
+        this.player.y += Math.sin(a) * 2;
+      }
       return;
     }
     this.emit('enemy:attack', { enemy, kind: 'touch' });

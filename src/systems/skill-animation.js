@@ -236,6 +236,24 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  stone_stance: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.10, frontX: -4, frontY: 3, backX: 0, backY: 2 }],
+      [0.09, { crouch: 0.35, lean: -0.32, bodyRoll: 0.18, frontX: -12, frontY: -22, backX: -25, backY: -15, headTilt: -0.20 }],
+      [0.15, { crouch: 0.82, lean: 0.26, bodyRoll: -0.25, frontX: 30, frontY: 24, backX: -31, backY: 22, headTilt: 0.18 }],
+      [0.28, {}],
+    ],
+  },
+  night_veil: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.08, frontX: -2, frontY: 2, backX: 0, backY: 1 }],
+      [0.09, { crouch: 0.46, lean: -0.38, bodyRoll: -0.23, frontX: -14, frontY: 10, backX: -29, backY: -14, headTilt: -0.24 }],
+      [0.15, { crouch: 0.28, lean: 0.25, bodyRoll: 0.27, frontX: 34, frontY: -28, backX: -31, backY: -24, headTilt: 0.20 }],
+      [0.28, {}],
+    ],
+  },
   lucky_paw: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [

@@ -291,9 +291,9 @@ export const SKILLS = [
   {
     id: 'stone_stance', category: 'defense', rarity: 'rare', pattern: 'buff',
     name: { vi: 'Thế Đá', en: 'Stone Stance' },
-    desc: { vi: 'Đứng vững như tượng: miễn đẩy lùi, giảm sát thương.', en: 'Root in place: knockback immunity, heavy armor.' },
-    cost: 22, cd: 14, range: 0, ranks: [R(1, 'Không bị đẩy lùi'), R(1, '-40% sát thương', { armor: 0.4 }), R(1, 'Sát thương va chạm quanh bạn', { thorns: true }), R(1, 'Lâu hơn', { time: 6 }), R(1, 'Hồi máu khi đứng yên', { heal: 2 })],
-    params: { time: 4, armor: 0.4, root: true }, icon: { glyph: 'stone', tint: '#a8b0c0' },
+    desc: { vi: 'Đứng vững như tượng: miễn đẩy lùi, giảm sát thương.', en: 'Stand firm: knockback immunity and damage reduction.' },
+    cost: 22, cd: 14, range: 0, ranks: [R(1, 'Chống đẩy, giảm 20% sát thương'), R(1, '-40% sát thương', { armor: 0.4 }), R(1, 'Sát thương quanh bạn', { thorns: true }), R(1, 'Lâu hơn', { time: 6 }), R(1, 'Hồi máu khi đứng yên', { heal: 2 })],
+    params: { time: 4, armor: 0.2 }, icon: { glyph: 'stone', tint: '#a8b0c0' },
   },
   {
     id: 'healing_purr', category: 'heal', rarity: 'common', pattern: 'heal',
@@ -340,9 +340,9 @@ export const SKILLS = [
   {
     id: 'night_veil', category: 'utility', rarity: 'rare', pattern: 'buff',
     name: { vi: 'Màn Đêm', en: 'Night Veil' },
-    desc: { vi: 'Kẻ địch mất dấu bạn; đòn kế tiếp chí mạng.', en: 'Enemies lose your trail; next hit crits.' },
+    desc: { vi: 'Ẩn khỏi quái thường đến khi đánh trúng; boss và đòn cũ vẫn nguy hiểm.', en: 'Hide from ordinary enemies until a direct hit; bosses and existing attacks remain dangerous.' },
     cost: 22, cd: 13, range: 0, ranks: [R(1, 'Tàng hình 2 giây'), R(1, 'Chí mạng chắc chắn sau tàng hình', { forceCrit: true }), R(1, 'Lâu hơn', { time: 3 }), R(1, 'Tốc chạy +20%', { move: 0.2 }), R(1, 'Nổ sát thương khi hiện hình', { boom: true })],
-    params: { time: 2, forceCrit: true, move: 0 }, icon: { glyph: 'veil', tint: '#8b90b8' },
+    params: { time: 2, move: 0 }, icon: { glyph: 'veil', tint: '#8b90b8' },
   },
   {
     id: 'mirror_paw', category: 'defense', rarity: 'epic', pattern: 'shield',

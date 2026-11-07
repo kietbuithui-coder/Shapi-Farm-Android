@@ -74,6 +74,17 @@ export function drawPlayerActor(ctx, run, t, opts = {}) {
     ctx.restore();
   }
 
+  // Stone Stance's damaging rank has a readable ground radius.
+  if (p.buffs?.some((b) => b.stoneAura > 0 && b.time > 0)) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(190,200,215,0.45)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 70, 70, 0, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // shield bubble
   if (p.shield > 0) {
     ctx.save();
@@ -106,7 +117,10 @@ export function drawPlayerActor(ctx, run, t, opts = {}) {
     ctx.restore();
   }
 
+  ctx.save();
+  if (p.buffs?.some((b) => b.stealth && b.time > 0)) ctx.globalAlpha *= 0.42;
   drawCat(ctx, run.cat, pose, { x: p.x, y: p.y, scale, facing });
+  ctx.restore();
   return pose;
 }
 
