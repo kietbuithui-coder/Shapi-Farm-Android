@@ -585,7 +585,10 @@ export class Run {
     }
     if (p.shieldTime > 0) {
       p.shieldTime -= dt;
-      if (p.shieldTime <= 0) p.shield = 0;
+      if (p.shieldTime <= 0) {
+        p.shield = 0; p.shieldEffect = null;
+        p.buffs = p.buffs.filter(b => !b.reflectProjectiles);
+      }
     }
   }
 
@@ -1149,8 +1152,15 @@ export class Run {
       case 'shield': {
         emitCast({ buff: true });
         const amount = this.stats.hpMax * (def.params.shield || 0.3) * (rv.shield || 1) * potency;
-        this.applyShield(amount, rv.time || def.params.time || 7);
-        if (def.params.reflectProjectiles) this.addBuff({ id: def.id, time: rv.time || def.params.time || 7, reflectProjectiles: true });
+        const shieldEffect = {
+          id: def.id,
+          breakHeal: rv.heal ? this.stats.hpMax * rv.heal * this.skillCoefficient(def) : 0,
+          breakInvuln: rv.invuln || 0,
+          breakBlast: rv.boom && def.id === 'purr_shield' ? { radius: 95 * area, damage: this.skillDamage(def, 0.8), tint: def.icon.tint } : null,
+        };
+        this.applyShield(amount, rv.time || def.params.time || 7, shieldEffect);
+        if (def.params.reflectProjectiles) this.addBuff({ id: def.id, time: rv.time || def.params.time || 7,
+          reflectProjectiles: true, reflectBlast: rv.boom ? 55 * area : 0 });
         if (def.params.reviveWard) { this.reviveWard = true; this.reviveWardTime = def.params.time || 8; }
         this.emit('fx:shield', { x: p.x, y: p.y, color: def.icon.tint });
         break;
@@ -1292,8 +1302,11 @@ export class Run {
     return 9 * this.skillPotency(def) * mult;
   }
 
-  applyShield(amount, time) {
+  applyShield(amount, time, effect = null) {
     const p = this.player;
+    // Shields share one pool, not separate layers. Only a shield that actually
+    // replaces the pool owns its break effect; weaker shields cannot steal it.
+    if (amount > 0 && amount >= p.shield) p.shieldEffect = effect;
     p.shield = Math.max(p.shield, amount);
     p.shieldMax = Math.max(p.shieldMax || 0, amount);
     p.shieldTime = time;
@@ -2520,7 +2533,7 @@ export class Run {
           if (e.dead || pr.hits.has(e.uid)) continue;
           if (dist2(pr.x, pr.y, e.x, e.y - 12) < (pr.radius + e.radius) ** 2) {
             pr.hits.add(e.uid);
-            const res = pr.source === 'minion' || pr.source === 'orbit'
+            const res = pr.source === 'minion' || pr.source === 'orbit' || pr.source === 'reflect'
               ? { damage: pr.damage, isCrit: false }
               : computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
             this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
@@ -2538,9 +2551,11 @@ export class Run {
           if (p.shield > 0 && this.buffValue('reflectProjectiles')) {
             // A reflected projectile still consumes the shield as an incoming
             // hit; it is then redirected rather than duplicated.
+            const reflectBlast = this.buffValue('reflectBlast');
             this.damagePlayer(pr.damage, null, pr);
             const target = this.nearestEnemy(pr.x, pr.y, 520);
             pr.owner = 'player'; pr.source = 'reflect'; pr.homing = 0;
+            if (reflectBlast) pr.explode = reflectBlast;
             pr.angle = target ? Math.atan2((target.y - 12 - pr.y) / 0.72, target.x - pr.x) : pr.angle + Math.PI;
             pr.life = Math.max(pr.life, 1.5); pr.hits.clear();
           } else {
@@ -3089,12 +3104,17 @@ export class Run {
     // them and react.
     const maxHit = this.stats.hpMax * MAX_HIT_SHARE;
     if (dmg > maxHit) dmg = maxHit;
-    // shield absorbs first
+    // Shield-break effects belong to the pool that was actually depleted.
+    let brokenShield = null;
     if (p.shield > 0) {
       const absorbed = Math.min(p.shield, dmg);
       p.shield -= absorbed;
       dmg -= absorbed;
       this.emit('fx:shieldHit', { x: p.x, y: p.y, amount: absorbed });
+      if (absorbed > 0 && p.shield <= 0) {
+        brokenShield = p.shieldEffect; p.shieldEffect = null;
+        p.buffs = p.buffs.filter(b => !b.reflectProjectiles);
+      }
     }
     this.hp -= dmg;
     p.invuln = 0.62;
@@ -3113,18 +3133,26 @@ export class Run {
         }
       }
     }
+    if (brokenShield?.breakBlast) {
+      const b = brokenShield.breakBlast;
+      this.blast({ x: p.x, y: p.y - 12, explode: b.radius, damage: b.damage, tint: b.tint }, null, 1);
+    }
+    let revived = false;
     if (this.hp <= 0) {
-      if (this.reviveWard) { this.reviveWard = false; this.hp = 1; this.player.invuln = 1.2; this.emit('player:reviveWard', {}); return; }
-      if (this.mods.revive > 0 && !this.reviveUsed) {
+      if (this.reviveWard) {
+        this.reviveWard = false; this.hp = 1; this.player.invuln = 1.2; revived = true;
+        this.emit('player:reviveWard', {});
+      } else if (this.mods.revive > 0 && !this.reviveUsed) {
         this.reviveUsed = true;
         this.hp = this.stats.hpMax * this.mods.revive;
-        this.player.invuln = 1.6;
+        this.player.invuln = 1.6; revived = true;
         this.emit('player:revive', {});
-        return;
-      }
-      this.playerDeath();
-    } else if (this.buffValue('onHitHeal') > 0) {
-      this.heal(this.buffValue('onHitHeal'));
+      } else this.playerDeath();
+    }
+    if (p.alive && this.hp > 0) {
+      if (brokenShield?.breakHeal) this.heal(brokenShield.breakHeal);
+      if (brokenShield?.breakInvuln) p.invuln = Math.max(p.invuln, brokenShield.breakInvuln);
+      if (!revived && this.buffValue('onHitHeal') > 0) this.heal(this.buffValue('onHitHeal'));
     }
   }
 

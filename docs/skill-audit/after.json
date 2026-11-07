@@ -2559,8 +2559,8 @@
       },
       "control": {},
       "declaredDelay": 0.25,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.25s, active 0.1s, recovery 0.13s",
+      "recovery": "0.13s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -4633,8 +4633,8 @@
       },
       "control": {},
       "declaredDelay": 0.25,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.25s, active 0.1s, recovery 0.12s",
+      "recovery": "0.12s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,

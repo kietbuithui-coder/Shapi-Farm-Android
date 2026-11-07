@@ -128,6 +128,24 @@ export const SKILL_ACTIONS = {
       [0.48, {}],
     ],
   },
+  mirror_paw: {
+    startup: 0.25, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.08, frontX: -3, frontY: 1, backX: 1, backY: 0 }],
+      [0.24, { crouch: 0.35, lean: -0.35, bodyRoll: -0.15, frontX: -20, frontY: -12, backX: 10, backY: 10, headTilt: -0.16 }],
+      [0.30, { crouch: 0.45, lean: 0.12, bodyRoll: 0.25, frontX: 29, frontY: -25, backX: 21, backY: 15, headTilt: 0.20 }],
+      [0.47, {}],
+    ],
+  },
+  kitten_army: {
+    startup: 0.25, active: 0.10, recovery: 0.13,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.08, frontX: -4, frontY: 2, backX: 0, backY: 2 }],
+      [0.24, { crouch: 0.75, lean: 0.16, bodyRoll: -0.16, frontX: 14, frontY: 10, backX: -17, backY: 14, headTilt: 0.15 }],
+      [0.31, { crouch: 0.18, lean: 0.34, bodyRoll: 0.16, frontX: 33, frontY: -14, backX: 20, backY: -25, headTilt: -0.23 }],
+      [0.48, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [
