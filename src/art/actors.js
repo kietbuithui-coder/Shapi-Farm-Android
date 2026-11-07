@@ -280,6 +280,19 @@ function drawStatusPips(ctx, e, t) {
 
 /** Minions (kittens, spirits, lions) and orbiting orbs. */
 export function drawMinion(ctx, m, t) {
+  if (m.kind !== 'orb' && m.shield > 0 && m.shieldTime > 0) {
+    const lion = m.kind === 'lion';
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, m.life / 1.2);
+    ctx.fillStyle = 'rgba(143,224,255,0.07)';
+    ctx.strokeStyle = 'rgba(180,240,255,0.85)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.ellipse(m.x, m.y - (lion ? 27 : 11), lion ? 34 : 16, lion ? 39 : 18, 0, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
   if (m.kind === 'orb') {
     const r = m.radius || 14;
     ctx.save();

@@ -240,7 +240,7 @@ export const SKILLS = [
   {
     id: 'catnip_frenzy', category: 'utility', rarity: 'rare', pattern: 'buff',
     name: { vi: 'Bạc Hà Điên', en: 'Catnip Frenzy' },
-    desc: { vi: 'Tăng tốc đánh và tốc chạy, nhưng nhận thêm sát thương.', en: 'Attack and movement surge — at a cost.' },
+    desc: { vi: 'Tăng tốc đánh nhưng nhận thêm sát thương; nâng cấp tăng tốc chạy.', en: 'Gain attack speed at a cost; upgrades add movement speed.' },
     cost: 18, cd: 14, range: 0, ranks: [R(1, '+35% tốc đánh, 6 giây'), R(1, '+45%', { atkSpeed: 0.45 }), R(1, '+30% tốc chạy', { move: 0.3 }), R(1, 'Hồi năng lượng liên tục', { regen: true }), R(1, 'Không còn nhận thêm sát thương', { noDrawback: true })],
     params: { time: 6, atkSpeed: 0.35, move: 0, drawback: 0.15, regen: 0 }, icon: { glyph: 'leaf', tint: '#9ad14b' },
   },
@@ -271,7 +271,7 @@ export const SKILLS = [
     id: 'purr_shield', category: 'defense', rarity: 'rare', pattern: 'shield',
     name: { vi: 'Khiên Gừ', en: 'Purr Shield' },
     desc: { vi: 'Tiếng gừ tạo khiên hấp thụ sát thương.', en: 'A purring barrier soaks up damage.' },
-    cost: 24, cd: 10, range: 0, ranks: [R(1, 'Khiên 30% máu tối đa'), R(1, 'Khiên +25%', { shield: 1.25 }), R(1, 'Nổ khi vỡ', { boom: true }), R(1, 'Khiên lan sang đồng minh', { team: true }), R(1, 'Nhanh hơn', { cdCut: 2 })],
+    cost: 24, cd: 10, range: 0, ranks: [R(1, 'Khiên 30% máu tối đa'), R(1, 'Khiên +25%', { shield: 1.25 }), R(1, 'Nổ khi vỡ', { boom: true }), R(1, 'Khiên lan sang đồng minh gần', { team: true }), R(1, 'Nhanh hơn', { cdCut: 2 })],
     params: { shield: 0.3, time: 7 }, icon: { glyph: 'bubble', tint: '#8fe0ff' },
   },
   {

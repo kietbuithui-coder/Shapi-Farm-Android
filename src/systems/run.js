@@ -442,6 +442,7 @@ export class Run {
     this.updateDash(dt);
     this.updatePhantomStep(dt);
     this.updateSkillCooldowns(dt);
+    this.updateMinionShields(dt);
     this.updateEnemies(dt);
     this.updateBosses(dt);
     this.updateProjectiles(dt);
@@ -1219,7 +1220,16 @@ export class Run {
           breakInvuln: rv.invuln || 0,
           breakBlast: rv.boom && def.id === 'purr_shield' ? { radius: 95 * area, damage: this.skillDamage(def, 0.8), tint: def.icon.tint } : null,
         };
-        this.applyShield(amount, rv.time || def.params.time || 7, shieldEffect);
+        const duration = rv.time || def.params.time || 7;
+        this.applyShield(amount, duration, shieldEffect);
+        if (def.id === 'purr_shield' && rv.team) {
+          const fraction = (def.params.shield || 0.3) * (rv.shield || 1) * potency;
+          for (const m of this.minions) {
+            if (m.kind === 'orb' || !(m.hp > 0) || !(m.life > 0) || !(m.maxHp > 0)) continue;
+            if (dist2(m.x, m.y, p.x, p.y) > 180 * 180) continue;
+            this.applyMinionShield(m, m.maxHp * fraction, duration, shieldEffect.breakBlast);
+          }
+        }
         if (def.params.reflectProjectiles) this.addBuff({ id: def.id, time: rv.time || def.params.time || 7,
           reflectProjectiles: true, reflectBlast: rv.boom ? 55 * area : 0 });
         if (def.params.reviveWard) { this.reviveWard = true; this.reviveWardTime = def.params.time || 8; }
@@ -1400,6 +1410,42 @@ export class Run {
     p.shieldMax = Math.max(p.shieldMax || 0, amount);
     p.shieldTime = time;
     this.emit('fx:shield', { x: p.x, y: p.y, amount });
+  }
+
+  applyMinionShield(minion, amount, duration, breakBlast = null) {
+    if (!(amount > 0)) return;
+    if (amount >= (minion.shield || 0)) minion.shieldBlast = breakBlast;
+    minion.shield = Math.max(minion.shield || 0, amount);
+    minion.shieldMax = Math.max(minion.shieldMax || 0, amount);
+    minion.shieldTime = duration;
+    this.emit('fx:shield', { x: minion.x, y: minion.y, amount });
+  }
+
+  updateMinionShields(dt) {
+    for (const m of this.minions) {
+      if (!(m.shieldTime > 0)) continue;
+      m.shieldTime = Math.max(0, m.shieldTime - dt);
+      if (m.shieldTime === 0) { m.shield = 0; m.shieldMax = 0; m.shieldBlast = null; }
+    }
+  }
+
+  damageMinion(target, amount) {
+    if (!(target.hp > 0) || !(target.life > 0) || !(amount > 0)) return;
+    let remaining = amount;
+    if (target.shield > 0 && target.shieldTime > 0) {
+      const absorbed = Math.min(target.shield, remaining);
+      target.shield -= absorbed;
+      remaining -= absorbed;
+      this.emit('fx:shieldHit', { x: target.x, y: target.y, amount: absorbed });
+      if (target.shield <= 0) {
+        const burst = target.shieldBlast;
+        target.shieldBlast = null;
+        target.shieldTime = 0;
+        target.shieldMax = 0;
+        if (burst) this.blast({ x: target.x, y: target.y - 12, explode: burst.radius, damage: burst.damage, tint: burst.tint }, null, 1);
+      }
+    }
+    target.hp = Math.max(0, target.hp - remaining);
   }
 
   addBuff(buff) {
@@ -1955,7 +2001,7 @@ export class Run {
 
   enemyTouch(enemy, mult = 1, target = this.player) {
     if (target !== this.player) {
-      target.hp = Math.max(0, target.hp - enemy.dmg * mult);
+      this.damageMinion(target, enemy.dmg * mult);
       this.emit('enemy:attack', { enemy, kind: 'touch', target });
       this.emit('fx:impact', { x: target.x, y: target.y, radius: 20, color: target.tint });
       return;

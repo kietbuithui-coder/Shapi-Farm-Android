@@ -259,6 +259,24 @@ export const SKILL_ACTIONS = {
       [0.26, {}],
     ],
   },
+  purr_shield: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.08, frontX: -3, frontY: 1, backX: 0, backY: 2 }],
+      [0.09, { crouch: 0.40, lean: -0.30, bodyRoll: -0.18, frontX: -17, frontY: -20, backX: 7, backY: -18, headTilt: -0.25 }],
+      [0.15, { crouch: 0.24, lean: 0.18, bodyRoll: 0.20, frontX: 28, frontY: -22, backX: -34, backY: -16, headTilt: 0.22 }],
+      [0.28, {}],
+    ],
+  },
+  catnip_frenzy: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.10, frontX: -4, frontY: 1, backX: 0, backY: 2 }],
+      [0.09, { crouch: 0.62, lean: -0.42, bodyRoll: 0.25, frontX: -20, frontY: 13, backX: -31, backY: 8, headTilt: -0.25 }],
+      [0.15, { crouch: 0.04, lean: 0.36, bodyRoll: -0.30, frontX: 32, frontY: -34, backX: -25, backY: -34, headTilt: 0.25, airborne: 0.45 }],
+      [0.28, {}],
+    ],
+  },
   stone_stance: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [

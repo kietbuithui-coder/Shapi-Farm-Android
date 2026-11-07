@@ -48,7 +48,7 @@ test('iron fur rank five heals only on valid nonlethal hits, including shielded 
 });
 
 test('catnip rank four restores energy rather than health, rank five removes drawback', () => {
-  const rank = rank => { const r = setup('catnip_frenzy', rank); r.hp = 60; r.energy = 20; r.castSlot(0); return r; };
+  const rank = rank => { const r = setup('catnip_frenzy', rank); r.hp = 60; r.energy = 20; r.castSlot(0); release(r); return r; };
   const low = rank(3), high = rank(4); low.stats.regen = high.stats.regen = 0;
   low.updatePlayer(1, {}); high.updatePlayer(1, {}); low.updateBuffs(1); high.updateBuffs(1);
   assert.ok(Math.abs(high.energy - low.energy - 6) < 1e-6); assert.equal(high.hp, 60);
