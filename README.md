@@ -288,3 +288,9 @@ Art, code, sound synthesis and text are original to this project. Typefaces:
 [Lora](https://fonts.google.com/specimen/Lora) and
 [Be Vietnam Pro](https://fonts.google.com/specimen/Be+Vietnam+Pro), both SIL Open
 Font License, subsetted and inlined at build time.
+
+### Chơi file HTML trên điện thoại
+
+Tải `index.html` về máy rồi mở bằng trình duyệt hỗ trợ JavaScript và Canvas. Game có thể chạy không cần mạng sau khi tải; không cần tải thêm tài nguyên. Trong trận có **bốn nút kỹ năng** và một nút **NÉ** riêng; kéo cần ảo để di chuyển, có thể vừa di chuyển vừa bấm kỹ năng hoặc né. Cài đặt cho phép đổi tay và cỡ nút. Xoay màn hình sẽ đặt lại cần ảo, nên nhấc tay rồi kéo lại sau khi xoay.
+
+Tiến trình dùng bộ nhớ của trình duyệt. Với file tải về (`file://`), việc lưu lâu dài phụ thuộc trình duyệt và quyền lưu trữ; nếu game báo không lưu được, dữ liệu chỉ tồn tại trong phiên hiện tại. Không xóa dữ liệu trình duyệt nếu muốn giữ tiến trình. Các kiểm thử tự động mô phỏng màn hình và cảm ứng, không thay thế việc chơi thử trên máy thật.

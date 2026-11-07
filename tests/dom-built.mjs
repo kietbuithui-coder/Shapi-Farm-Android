@@ -53,7 +53,10 @@ function prepare() {
   };
   globalThis.window = globalThis;
   canvas.addEventListener = addL;
-  canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1280, height: 720, right: 1280, bottom: 720 });
+  canvas.getBoundingClientRect = () => {
+    const w = parseFloat(canvas.style.width) || 1280, h = parseFloat(canvas.style.height) || 720;
+    return { left: 0, top: 0, width: w, height: h, right: w, bottom: h };
+  };
   canvas.style = {};
   canvas.clientWidth = 1280;
   canvas.clientHeight = 720;
@@ -79,13 +82,14 @@ function prepare() {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   if (!scripts.length) throw new Error('no inline script found in index.html');
   const bundle = scripts[scripts.length - 1];
-  return { bundle, canvas };
+  const dispatch = (type, event = {}) => { for (const fn of [...(listeners.get(type) || [])]) fn({ preventDefault() {}, ...event }); };
+  return { bundle, canvas, dispatch };
 }
 
 /** Boot the built bundle. Returns the live game plus boot-screen state. */
 export async function bootGame() {
   if (!built) {
-    const { bundle, canvas } = prepare();
+    const { bundle, canvas, dispatch } = prepare();
     // eslint-disable-next-line no-new-func
     new Function(bundle)();
     // Run the frames the game queued (boot draws one, then schedules the loop).
@@ -93,11 +97,12 @@ export async function bootGame() {
       const batch = rafQueue.splice(0);
       for (const fn of batch) fn(16 * (i + 1));
     }
-    built = { canvas };
+    built = { canvas, dispatch };
   }
   return {
     game: globalThis.__catLegends,
     canvas: built.canvas,
+    dispatch: built.dispatch,
     bootHidden: !!(bootEl && (bootEl.gone || bootEl.removed)),
   };
 }

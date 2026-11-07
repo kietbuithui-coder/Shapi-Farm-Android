@@ -98,6 +98,8 @@ test('selecting a cat shows THAT cat in the preview rail', async () => {
 
 test('the player stays visible and clear of the thumb pad on a phone', async () => {
   const { game, step, rects } = await bootGame({ width: 840, height: 380 });
+  Object.defineProperty(globalThis, 'navigator', { value: { maxTouchPoints: 5, getGamepads: () => [] }, configurable: true });
+  game.resize();
   step(4);
   const play = rects().find((r) => r.id === 'play');
   game.click('play', play.x + play.w / 2, play.y + play.h / 2);
@@ -115,9 +117,7 @@ test('the player stays visible and clear of the thumb pad on a phone', async () 
     run.player.y = y;
     game.camera.snapNext = true;
     step(3);
-    const k = game.renderer.scale;
-    const sx = game.renderer.offsetX + x * k;
-    const sy = game.renderer.offsetY + y * k;
+    const { x: sx, y: sy } = game.renderer.worldToScreen(x, y);
     assert.ok(sx >= 0 && sx <= 840, `player off screen horizontally at (${x},${y}) -> ${sx.toFixed(0)}`);
     assert.ok(sy >= 0 && sy <= 380, `player off screen vertically at (${x},${y}) -> ${sy.toFixed(0)}`);
     assert.ok(

@@ -177,20 +177,26 @@ export function createStorage() {
   }
   const mem = new Map();
   return {
-    persistent: !!backend,
+    get persistent() { return !!backend; },
     read(key) {
-      try { return backend ? backend.getItem(key) : (mem.has(key) ? mem.get(key) : null); }
-      catch { return null; }
+      try {
+        if (backend) {
+          const value = backend.getItem(key);
+          if (value === null) mem.delete(key); else mem.set(key, value);
+          return value;
+        }
+        return mem.has(key) ? mem.get(key) : null;
+      } catch { backend = null; return mem.has(key) ? mem.get(key) : null; }
     },
     write(key, value) {
       mem.set(key, value);
       if (!backend) return false;
       try { backend.setItem(key, value); return true; }
-      catch { return false; }
+      catch { backend = null; return false; }
     },
     remove(key) {
       mem.delete(key);
-      try { backend && backend.removeItem(key); } catch { /* ignore */ }
+      try { backend && backend.removeItem(key); } catch { backend = null; }
     },
   };
 }

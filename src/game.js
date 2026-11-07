@@ -26,7 +26,7 @@ const SCALE_SETTINGS = ['skillScaleHealth', 'skillScaleSpeed', 'skillScaleArmor'
 const SLIDER_SETTINGS = ['music', 'sfx', 'voice', 'shake', 'viewDistance', ...SCALE_SETTINGS];
 import { buildWiki } from './data/wiki.js';
 import { CATS, CAT_BY_ID } from './data/cats.js';
-import { PALETTE } from './data/palette.js';
+import { PALETTE, FONT } from './data/palette.js';
 import { SKILLS, SKILL_BY_ID, STARTER_SKILLS } from './data/skills.js';
 import { PERK_LINES, PERK_TIERS, PERK_COST, perkBonuses } from './data/perks.js';
 import { ACHIEVEMENTS } from './data/achievements.js';
@@ -60,6 +60,7 @@ export class Game {
     this.input = new Input(canvas, {
       onPause: () => this.togglePause(),
       onAny: () => this.wake(),
+      canStartTouch: (x, y) => this.canStartMoveTouch(x, y),
     });
 
     this.scene = 'home';
@@ -70,6 +71,7 @@ export class Game {
     this.pending = null;
     this.time = 0;
     this.acc = 0;
+    this.pendingDodge = false;
     this.last = 0;
     this.hover = null;
     this.run = null;
@@ -160,20 +162,20 @@ export class Game {
     });
     this.canvas.addEventListener('pointerdown', (e) => {
       const { x, y } = this.localPoint(e);
-      if (e.pointerType === 'touch' && this.mobile) {
+      if (e.pointerType === 'touch' && this.mobile && this.controlsActive()) {
+        // Input's earlier listener owns the steering pointer. Other fingers may
+        // still press skills while movement continues.
+        if (this.input.touch.id === e.pointerId) return;
         const hit = this.touch.hitTest(x, y);
         if (hit) {
           if (hit.kind === 'skill') {
             this.touch.press(hit.index);
             this.castSkill(hit.index);
-          } else if (hit.kind === 'pause') this.togglePause(true);
+          } else if (hit.kind === 'dodge') this.input.pressed.dodge = true;
+          else if (hit.kind === 'pause') this.togglePause(true);
           else if (hit.kind === 'fullscreen') this.toggleFullscreen();
           return;
         }
-        // Movement is owned by the Input layer, but WHICH side is the stick
-        // depends on handedness — hardcoding "left half" silently broke
-        // left-handed players (their stick taps opened menus instead).
-        if (this.touch.inStickZone(x, y)) return;
       }
       this.hover = this.hitTest(x, y);
       this.click(this.hover, x, y);
@@ -184,6 +186,15 @@ export class Game {
     this.canvas.addEventListener('pointerup', release);
     this.canvas.addEventListener('pointercancel', release);
     addEventListener('pointerup', release);
+  }
+
+  controlsActive() {
+    return this.scene === 'run' && this.run?.state === RUN_STATE.FIGHT && !this.paused && !this.overlay;
+  }
+
+  canStartMoveTouch(x, y) {
+    if (!this.mobile || !this.controlsActive() || this.touch.hitTest(x, y) || this.hitTest(x, y)) return false;
+    return this.touch.leftHanded ? x > this.w * 0.45 : x < this.w * 0.55;
   }
 
   /**
@@ -217,7 +228,7 @@ export class Game {
     const cssH = Math.max(240, innerHeight);
     this.cssW = cssW;
     this.cssH = cssH;
-    this.mobile = (navigator.maxTouchPoints || 0) > 0 && cssW < 1100;
+    this.mobile = (navigator.maxTouchPoints || 0) > 0;
     this.dpr = Math.min(devicePixelRatio || 1, this.profile.settings.quality === 'low' ? 1.25 : 2);
     this.renderer.quality = this.profile.settings.quality === 'low' ? 'low' : 'high';
     this.renderer.resize(cssW, cssH, this.dpr);
@@ -225,10 +236,22 @@ export class Game {
     this.overScale = 1;
     this.w = cssW;
     this.h = cssH;
+    // CSS environment insets are zero when unavailable (including headless and
+    // browsers that do not expose cutout information).
     this.safe = { top: 0, right: 0, bottom: 0, left: 0 };
+    const probe = document.getElementById?.('safe-area');
+    if (probe && typeof getComputedStyle === 'function') {
+      const style = getComputedStyle(probe);
+      for (const side of ['top', 'right', 'bottom', 'left']) {
+        const value = parseFloat(style['padding' + side[0].toUpperCase() + side.slice(1)]);
+        this.safe[side] = Number.isFinite(value) ? clamp(value, 0, Math.min(cssW, cssH) / 4) : 0;
+      }
+    }
+    this.input.cancelTouch();
+    this.input.w = this.w; this.input.h = this.h;
     this.hud.layout(this.w, this.h, this.safe, this.mobile);
     this.touch.layout(this.w, this.h, this.safe, this.run);
-    if (this.run) this.input.enabled = true;
+    this.input.enabled = this.scene !== 'run' || (!this.paused && !this.overlay);
   }
 
   /* ── scene plumbing ───────────────────────────────────────────────────── */
@@ -344,6 +367,9 @@ export class Game {
     this.bot = this.botMode ? new BotBrain(this.run) : null;
     this.botTimer = 0;
     this.run.start();
+    this.acc = 0;
+    this.pendingDodge = false;
+    this.input.cancelTouch();
     this.ending = false;
     this.paused = false;
     // The run wraps a follow-camera: it tracks the cat and picks a zoom that
@@ -465,19 +491,12 @@ export class Game {
   drawHitboxes(ctx, dpr) {
     const run = this.run;
     if (!run) return;
-    const cam = this.camera;
-    const sx = this.w, sy = this.h;
-    // The world is drawn by the renderer's own arena fit (fitArena), NOT by a
-    // centred camera transform — so this overlay has to use the same numbers or
-    // it draws circles that do not line up with the sprites. The renderer owns
-    // scale/offset; cam.zoom is already folded into renderer.scale.
-    const k = this.renderer.scale;
-    const ox = this.renderer.offsetX;
-    const oy = this.renderer.offsetY;
-    const toScreen = (x, y) => ({
-      x: ox + x * k + cam.shakeX,
-      y: oy + y * k + cam.shakeY,
-    });
+    // Use exactly the transform used to draw the world (including view-distance
+    // and DPR), not fitArena's preliminary framing values.
+    const transform = this.renderer.worldTransform;
+    if (!transform) return;
+    const k = transform.scale / dpr;
+    const toScreen = (x, y) => this.renderer.worldToScreen(x, y);
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.lineWidth = 1.5;
@@ -514,6 +533,8 @@ export class Game {
     const next = typeof force === 'boolean' ? force : !this.paused;
     if (next === this.paused) return;
     this.paused = next;
+    this.input.cancelTouch();
+    this.pendingDodge = false;
     this.input.enabled = !next;
     this.input.pressed.dodge = false;
     this.input.pressed.cast = [false, false, false, false];
@@ -792,7 +813,7 @@ export class Game {
   }
 
   castSkill(index) {
-    if (this.scene !== 'run' || !this.run || this.overlay) return;
+    if (this.scene !== 'run' || !this.run || this.overlay || this.paused) return;
     const res = this.run.castSlot(index);
     if (res.ok) this.touch.press(index);
     else audio.ui?.('deny');
@@ -868,7 +889,12 @@ export class Game {
     if (finished && this.paused) this.togglePause(false);
     const inOverlay = !!this.overlay || this.paused;
     this.input.enabled = !inOverlay;
+    if (inOverlay || run.state !== RUN_STATE.FIGHT) this.input.cancelTouch();
     const state = this.input.poll(dt, { width: this.w, height: this.h });
+    // The render loop may run faster than the fixed 60 Hz simulation. Preserve
+    // one-shot dodges until a simulation step actually consumes them.
+    if (inOverlay || run.state !== RUN_STATE.FIGHT) this.pendingDodge = false;
+    else if (!this.botMode && state.dodge) this.pendingDodge = true;
 
     // autoplay: the bot replaces human input entirely while it is on
     if (this.botMode && !inOverlay) {
@@ -881,13 +907,16 @@ export class Game {
     }
 
     if (!inOverlay) {
-      const simInput = this.botMode && this.spawnOnlyInput ? this.spawnOnlyInput : state;
+      const sourceInput = this.botMode && this.spawnOnlyInput ? this.spawnOnlyInput : state;
+      const simInput = { ...sourceInput, dodge: this.botMode ? sourceInput.dodge : this.pendingDodge };
       // fixed-ish step: run the simulation at up to 120 Hz but never spiral
       this.acc = Math.min(this.acc + dt, 0.1);
       const step = 1 / 60;
       let guard = 0;
       while (this.acc >= step && guard++ < 6) {
         if (!this.paused) run.step(step, simInput);
+        this.pendingDodge = false;
+        simInput.dodge = false;
         this.acc -= step;
       }
       // skill buttons from input
@@ -905,7 +934,7 @@ export class Game {
     const lead = (run.player.facing || 1) * 26;
     this.camera.update(dt, this.time, {
       x: run.player.x + lead, y: run.player.y - 20, worldW: ARENA.w, worldH: ARENA.h,
-    }, this.w / Math.max(0.001, this.renderer.scale || 1), this.h / Math.max(0.001, this.renderer.scale || 1));
+    }, this.w, this.h);
     this.camera.snapNext = false;
 
     // run state → overlays
@@ -958,7 +987,7 @@ export class Game {
     // world or menu background
     if (this.scene === 'run' && this.run) {
       this.renderer.fitArena(this.camera);
-      this.renderer.drawWorld(this.run, this.pres, this.camera, this.time, {});
+      this.renderer.drawWorld(this.run, this.pres, this.camera, this.time, { mobile: this.mobile });
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       if (this.showHitboxes) this.drawHitboxes(ctx, dpr);
       this.drawRunOverlays(ctx, w, h);
@@ -999,6 +1028,17 @@ export class Game {
       case 'results': rects = Scenes.drawResults(ctx, { ...base, summary: this.summary || {}, victory: !!this.summary?.victory }); break;
       default: break;
     }
+    if (this.scene === 'home' && !this.store.storage.persistent) {
+      ctx.save();
+      ctx.fillStyle = '#ffbc87';
+      ctx.font = `700 10px ${FONT.ui}`;
+      ctx.textAlign = 'left';
+      const x = this.safe.left + 12, y = this.safe.top + 18;
+      ctx.fillText(lang === 'en' ? 'Save unavailable' : 'Không lưu được', x, y);
+      ctx.font = `600 9px ${FONT.ui}`;
+      ctx.fillText(lang === 'en' ? 'Progress lasts only this session' : 'Tiến trình chỉ còn trong phiên này', x, y + 14);
+      ctx.restore();
+    }
     this._cachedRects = rects;
   }
 
@@ -1012,14 +1052,15 @@ export class Game {
     this.hud.draw(ctx, run, lang, {
       t: this.sceneT, showNight: true, showBot: true, botOn: this.botMode,
       fullscreen: this.isFullscreen, hideCornerButtons: touchOwnsCorners,
+      hideSkills: this.mobile,
     });
     this.hitRects = [...this.hud.hitRects];
 
     // touch controls only on touch devices, and never under a modal
     if (this.mobile && !this.overlay && !this.paused) {
       const buttons = this.touch.layout(w, h, this.safe, run);
-      this.input.setTouchButtons?.(buttons.concat([this.touch.pauseRect, this.touch.fullscreenRect]));
-      this.touch.draw(ctx, run, this.input, this.sceneT, { fullscreen: this.isFullscreen });
+      this.input.setTouchButtons?.(buttons.concat([this.touch.dodgeRect, this.touch.pauseRect, this.touch.fullscreenRect]));
+      this.touch.draw(ctx, run, this.input, this.sceneT, { fullscreen: this.isFullscreen, lang });
       this.hitRects = this.hitRects.filter((r) => !r.id?.startsWith('skill'));
     }
 
@@ -1058,17 +1099,19 @@ export class Game {
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
     const n = Math.max(1, this.rewards.length);
-    const cardW = Math.min(240, (w - 120) / n - 16);
-    const cardH = 250;
-    const total = n * cardW + (n - 1) * 16;
-    const x0 = w / 2 - total / 2;
-    const y0 = h / 2 - cardH / 2;
+    const portrait = h > w;
+    const cardW = portrait ? Math.min(360, w - this.safe.left - this.safe.right - 40) : Math.min(240, (w - 120) / n - 16);
+    const cardH = portrait ? Math.min(160, (h - this.safe.top - this.safe.bottom - 60 - (n - 1) * 16) / n) : 250;
+    const total = n * (portrait ? cardH : cardW) + (n - 1) * 16;
+    const x0 = portrait ? (w - cardW) / 2 : (w - total) / 2;
+    const y0 = portrait ? (h - total) / 2 : (h - cardH) / 2;
     const rects = [];
     this.rewards.forEach((r, i) => {
-      const x = x0 + i * (cardW + 16);
+      const x = portrait ? x0 : x0 + i * (cardW + 16);
+      const y = portrait ? y0 + i * (cardH + 16) : y0;
       const isHover = this.hover === 'reward:' + i;
-      drawRewardCard(ctx, x, y0, cardW, cardH, r, isHover, this.localize(r.label));
-      rects.push({ id: 'reward:' + i, x, y: y0, w: cardW, h: cardH });
+      drawRewardCard(ctx, x, y, cardW, cardH, r, isHover, this.localize(r.label));
+      rects.push({ id: 'reward:' + i, x, y, w: cardW, h: cardH });
     });
     return rects;
   }
@@ -1079,7 +1122,7 @@ export class Game {
     for (const r of list) {
       if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return r.id;
     }
-    if (this.scene === 'run') {
+    if (this.scene === 'run' && !this.mobile && !this.paused && !this.overlay) {
       const s = this.hud.hitTest(x, y);
       if (s) return s;
     }
@@ -1105,12 +1148,13 @@ function drawRewardCard(ctx, x, y, w, h, reward, hover, label) {
   ctx.lineWidth = hover ? 2 : 1.2;
   ctx.stroke();
   ctx.restore();
-  drawIcon(ctx, reward.icon || 'star', x + w / 2, y + 86, 48, '#ffe8a8');
+  const wide = w > h * 1.5;
+  drawIcon(ctx, reward.icon || 'star', wide ? x + 46 : x + w / 2, wide ? y + h / 2 : y + 86, 48, '#ffe8a8');
   ctx.save();
   ctx.font = `600 15px ${'"Be Vietnam Pro", sans-serif'}`;
   ctx.fillStyle = '#f4ecd8';
-  ctx.textAlign = 'center';
-  ctx.fillText(label || '', x + w / 2, y + 170);
+  ctx.textAlign = wide ? 'left' : 'center';
+  ctx.fillText(label || '', wide ? x + 82 : x + w / 2, wide ? y + h / 2 + 5 : y + 170, wide ? w - 98 : w - 20);
   ctx.restore();
 }
 

@@ -17,7 +17,7 @@ const KEYMAP = {
 };
 
 export class Input {
-  constructor(canvas, { onPause, onAny } = {}) {
+  constructor(canvas, { onPause, onAny, canStartTouch } = {}) {
     this.canvas = canvas;
     this.state = { moveX: 0, moveY: 0, dodge: false, cast: [false, false, false, false] };
     this.keys = new Set();
@@ -26,6 +26,7 @@ export class Input {
     this.pointer = { x: 0, y: 0, down: false, worldX: 0, worldY: 0 };
     this.onPause = onPause;
     this.onAny = onAny;
+    this.canStartTouch = canStartTouch;
     this.usingTouch = false;
     this.usingPad = false;
     this.enabled = true;
@@ -59,7 +60,7 @@ export class Input {
       const action = KEYMAP[e.code];
       if (action) this.keys.delete(action);
     });
-    addEventListener('blur', () => this.keys.clear());
+    addEventListener('blur', () => { this.keys.clear(); this.cancelTouch(); });
 
     const rectOf = () => this.canvas.getBoundingClientRect();
     this.canvas.addEventListener('pointermove', (e) => {
@@ -77,6 +78,7 @@ export class Input {
       if (e.pointerType === 'touch') { this._touchUp(e); return; }
       this.pointer.down = false;
     });
+    addEventListener('pointercancel', (e) => { if (e.pointerType === 'touch') this._touchUp(e); });
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     this.canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     this.canvas.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
@@ -87,39 +89,32 @@ export class Input {
     this.usingTouch = true;
     this.lastDevice = 'touch';
     if (this.onAny) this.onAny();
+    if (!this.enabled) return;
+    const { x, y } = this.touchPoint(e);
+    const width = this.w || this.canvas.clientWidth || this.canvas.getBoundingClientRect().width;
+    const allowed = this.canStartTouch ? this.canStartTouch(x, y) : x < width * 0.55;
+    if (!allowed || this.touch.id !== null) return;
+    this.touch.active = true;
+    this.touch.id = e.pointerId;
+    this.touch.ox = x; this.touch.oy = y;
+    this.touch.x = x; this.touch.y = y;
+    this.touch.nx = 0; this.touch.ny = 0; this.touch.mag = 0;
+    this.touch.originX = x; this.touch.originY = y;
+    this._touchMoved = false;
+    // Keep the steering finger tracked outside the canvas where supported.
+    try { this.canvas.setPointerCapture?.(e.pointerId); } catch { /* unsupported */ }
+  }
+
+  touchPoint(e) {
     const r = this.canvas.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    // Skill buttons are hit-tested by the game (it owns the HUD layout); the
-    // input layer only needs the movement half of the screen.
-    //
-    // Anywhere on the movement half starts the stick, and the finger's own
-    // landing point is the origin. That is deliberate (it is what makes the
-    // whole lower-left corner a valid thumb target, so a thumb that lands a
-    // little outside the drawn ring still works), and it means the ring's
-    // on-screen position is presentation rather than a hit area.
-    if (x < this.w * 0.55) {
-      if (this.touch.id === null) {
-        this.touch.active = true;
-        this.touch.id = e.pointerId;
-        this.touch.ox = x;
-        this.touch.oy = y;
-        this.touch.x = x;
-        this.touch.y = y;
-        this.touch.nx = 0;
-        this.touch.ny = 0;
-        this.touch.mag = 0;
-        this.touch.originX = x;
-        this.touch.originY = y;
-        this._touchMoved = false;
-      }
-    }
+    const w = this.w || this.canvas.clientWidth || r.width;
+    const h = this.h || this.canvas.clientHeight || r.height;
+    return { x: (e.clientX - r.left) * w / Math.max(1, r.width),
+      y: (e.clientY - r.top) * h / Math.max(1, r.height) };
   }
 
   _touchMove(e) {
-    const r = this.canvas.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
+    const { x, y } = this.touchPoint(e);
     if (e.pointerId === this.touch.id) {
       const dx = x - this.touch.ox;
       const dy = y - this.touch.oy;
@@ -149,12 +144,13 @@ export class Input {
 
   _touchUp(e) {
     if (e.pointerId === this.touch.id) {
-      this.touch.active = false;
-      this.touch.id = null;
-      this.touch.nx = 0;
-      this.touch.ny = 0;
-      this.touch.mag = 0;
+      this.cancelTouch();
     }
+  }
+
+  cancelTouch() {
+    this.touch.active = false; this.touch.id = null;
+    this.touch.nx = 0; this.touch.ny = 0; this.touch.mag = 0;
   }
 
   /* ── gamepad ──────────────────────────────────────────────────────────── */

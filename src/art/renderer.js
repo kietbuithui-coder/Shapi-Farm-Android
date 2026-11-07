@@ -80,7 +80,9 @@ export class Renderer {
     if (scrolling) {
       // Aim for a comfortable band instead of the whole arena: roughly 300px of
       // on-screen height for the play strip plus context.
-      const band = Math.max(byHeight * 1.45, this.height / 300);
+      // Portrait cannot use the landscape 300px-high band: that zooms the
+      // cat to half the screen and hides incoming enemies on a phone.
+      const band = tall ? byHeight * 0.9 : Math.max(byHeight * 1.45, this.height / 300);
       fit = Math.max(fit, band);
     }
     this.scale = fit * (camera?.zoom || 1);
@@ -126,6 +128,12 @@ export class Renderer {
     ctx.fillRect(0, 0, this.width, this.height);
   }
 
+  worldToScreen(x, y) {
+    const t = this.worldTransform;
+    if (!t) return null;
+    return { x: (t.x + x * t.scale) / this.dpr, y: (t.y + y * t.scale) / this.dpr };
+  }
+
   drawWorld(run, pres, camera, t, opts = {}) {
     const ctx = this.ctx;
     // View distance is relative to the original 1.62x magnification. A 1.5
@@ -141,24 +149,29 @@ export class Renderer {
     const maxY = Math.max(visH / 2, floorBottom + 26 - visH / 2);
     const view = {
       x: clamp(camera.x || ARENA.w / 2, visW / 2, Math.max(visW / 2, ARENA.w - visW / 2)),
-      y: clamp(camera.y || ARENA.h / 2, visH / 2, maxY),
+      y: camera.autoZoom ? clamp(camera.y || ARENA.h / 2, 0, ARENA.h)
+        : clamp(camera.y || ARENA.h / 2, visH / 2, maxY),
     };
     // The view centre must map to the canvas centre. (Using the arena's centre
     // here breaks at any scale other than 1, which is every real device.)
-    const sx = this.width / 2 - view.x * this.scale * VIEW + (camera.shakeX || 0) * 0.5;
-    const sy = this.height / 2 - view.y * this.scale * VIEW + (camera.shakeY || 0) * 0.5;
+    const worldScale = this.scale * VIEW;
+    const yAnchor = opts.mobile ? (this.cssH < 500 ? 0.40 : 0.44) : 0.5;
+    const sx = this.width / 2 - view.x * worldScale + (camera.shakeX || 0) * 0.5;
+    const sy = this.height * yAnchor - view.y * worldScale + (camera.shakeY || 0) * 0.5;
+    this.worldTransform = { x: sx, y: sy, scale: worldScale };
+    const extendFloor = (this.height - sy) / worldScale > ARENA.h;
     ctx.save();
     ctx.translate(sx, sy);
     ctx.scale(this.scale * VIEW, this.scale * VIEW);
     // Tall viewports see past the bottom edge of the 660px arena, which showed
     // as a black band under the terrace where the touch controls sit. Extend the
     // stone downward so the frame stays filled instead of cut off.
-    if (visH > ARENA.h * 0.9) {
+    if (extendFloor) {
       ctx.fillStyle = '#0b0d16';
       ctx.fillRect(-ARENA.w, ARENA.h - 1, ARENA.w * 3, visH * 2);
     }
     ctx.drawImage(env, 0, 0, ARENA.w, ARENA.h);
-    if (visH > ARENA.h * 0.9) {
+    if (extendFloor) {
       // seam + receding floor so the extension reads as stone, not a pasted block
       const g = ctx.createLinearGradient(0, ARENA.h, 0, ARENA.h + visH);
       g.addColorStop(0, 'rgba(28,26,40,0.92)');

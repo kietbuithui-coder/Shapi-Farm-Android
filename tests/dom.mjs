@@ -107,7 +107,10 @@ export async function bootGame({ width = 1280, height = 720, localStorageSeed = 
     addEventListener: addL,
   };
   canvas.addEventListener = addL;
-  canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width, height, right: width, bottom: height });
+  canvas.getBoundingClientRect = () => {
+    const w = parseFloat(canvas.style.width) || width, h = parseFloat(canvas.style.height) || height;
+    return { left: 0, top: 0, width: w, height: h, right: w, bottom: h };
+  };
   canvas.style = {};
   canvas.clientWidth = width;
   canvas.clientHeight = height;
@@ -128,6 +131,7 @@ export async function bootGame({ width = 1280, height = 720, localStorageSeed = 
     configurable: true,
     writable: true,
   });
+  globalThis.window = globalThis;
   globalThis.AudioContext = undefined;
 
   const { Game } = await import('../src/game.js');
@@ -158,7 +162,10 @@ export async function bootGame({ width = 1280, height = 720, localStorageSeed = 
   }
   function flushFade() { step(22); } // > TRANSITION (0.26s)
 
-  return { canvas, game, step, draw, click, rects, flushFade, localStorage: globalThis.localStorage };
+  const dispatch = (type, event = {}) => {
+    for (const fn of [...(listeners.get(type) || [])]) fn({ preventDefault() {}, ...event });
+  };
+  return { canvas, game, step, draw, click, rects, flushFade, dispatch, localStorage: globalThis.localStorage };
 }
 
 /** Alias used by tests/dom-built.mjs when booting the built bundle. */

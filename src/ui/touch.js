@@ -16,6 +16,7 @@ import { TAU, clamp } from '../core/math.js';
 import { drawIcon } from '../art/icons.js';
 import { FONT } from '../data/palette.js';
 import { hexA } from '../art/actors.js';
+import { DASH_COST } from '../systems/run.js';
 
 /** Vertical space the layout needs for margins, so the budget maths stays honest. */
 function edgeReserve(h) { return h < 500 ? 34 : 48; }
@@ -137,6 +138,10 @@ export class TouchControls {
     const slots = run?.slots || [];
     this.buttons = pos.map((p, i) => ({ index: i, x: p.x, y: p.y, w: size, h: size, slot: slots[i] }));
     this.stick = stick;
+    const dashSize = Math.max(34, size * 0.8);
+    const clusterX = Math.min(...pos.map(p => p.x));
+    this.dodgeRect = { x: skillOnRight ? clusterX - gap - dashSize : clusterX + clusterW + gap,
+      y: bottom - dashSize, w: dashSize, h: dashSize };
     this.size = size;
     this.gap = gap;
     void sideRight; void sideLeft;
@@ -188,6 +193,8 @@ export class TouchControls {
       const cy = b.y + b.h / 2;
       if (Math.hypot(x - cx, y - cy) <= b.w / 2 + 4) return { kind: 'skill', index: b.index };
     }
+    const dash = this.dodgeRect;
+    if (dash && Math.hypot(x - dash.x - dash.w / 2, y - dash.y - dash.h / 2) <= dash.w / 2 + 4) return { kind: 'dodge' };
     const inRect = (r) => r.w > 0 && r.h > 0 && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
     if (inRect(this.pauseRect)) return { kind: 'pause' };
     if (this.fullscreenRect && inRect(this.fullscreenRect)) return { kind: 'fullscreen' };
@@ -316,6 +323,20 @@ export class TouchControls {
         ctx.fillText(String(b.index + 1), cx - r * 0.72, cy - r * 0.52);
         ctx.restore();
       }
+    }
+
+    // A distinct, smaller movement button, not a fifth skill.
+    const d = this.dodgeRect;
+    if (d) {
+      const cx = d.x + d.w / 2, cy = d.y + d.h / 2, radius = d.w / 2;
+      const ready = (run?.player?.dashCd || 0) <= 0 && run?.energy >= DASH_COST;
+      ctx.beginPath(); ctx.arc(cx, cy, radius, 0, TAU);
+      ctx.fillStyle = ready ? 'rgba(44,68,63,0.85)' : 'rgba(12,18,28,0.68)'; ctx.fill();
+      ctx.strokeStyle = ready ? 'rgba(130,232,204,0.8)' : 'rgba(130,170,160,0.3)'; ctx.lineWidth = 1.5; ctx.stroke();
+      drawIcon(ctx, 'pounce', cx, cy - radius * 0.17, radius * 1.0, ready ? '#a0e8d0' : '#78968e');
+      ctx.font = `700 ${Math.max(8, Math.round(radius * 0.39))}px ${FONT.ui}`;
+      ctx.textAlign = 'center'; ctx.fillStyle = '#e3f6ee';
+      ctx.fillText(opts.lang === 'en' ? 'DODGE' : 'NÉ', cx, cy + radius * 0.72);
     }
 
     // ── pause + fullscreen

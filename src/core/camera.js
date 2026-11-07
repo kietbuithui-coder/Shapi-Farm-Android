@@ -52,8 +52,12 @@ export class Camera {
     const halfW = viewW / (2 * this.zoom);
     const halfH = viewH / (2 * this.zoom);
     if (focus) {
-      const tx = clamp(focus.x, halfW, Math.max(halfW, focus.worldW - halfW));
-      const ty = clamp(focus.y, halfH, Math.max(halfH, focus.worldH - halfH));
+      // The renderer owns the actual world scale and edge clamp. Clamping the
+      // target using CSS pixels here can put edge players off-screen at high DPI.
+      const tx = this.autoZoom ? clamp(focus.x, 0, focus.worldW)
+        : clamp(focus.x, halfW, Math.max(halfW, focus.worldW - halfW));
+      const ty = this.autoZoom ? clamp(focus.y, 0, focus.worldH)
+        : clamp(focus.y, halfH, Math.max(halfH, focus.worldH - halfH));
       // Snapping on the first frame of a run avoids a visible slide from the
       // previous run's position — the camera looked like it was drifting.
       const k = this.snapNext ? 1 : Math.min(1, dt * 7);

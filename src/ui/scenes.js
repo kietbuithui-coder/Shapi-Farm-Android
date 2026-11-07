@@ -153,8 +153,9 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   ctx.fill();
 
   // title block
-  const left = safe.left + 64;
-  const topY = h * 0.3;
+  const portrait = h > w;
+  const left = safe.left + (portrait ? 24 : 64);
+  const topY = portrait ? Math.max(safe.top + 100, h * 0.22) : h * 0.3;
   ctx.save();
   ctx.textAlign = 'left';
   ctx.font = `700 ${Math.min(74, w * 0.075)}px ${FONT.display}`;
@@ -178,8 +179,9 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   // Play button, and the play button's width was being used as the rail width.
   // Room to the hero cat is the real limit; stay clear of it.
   const heroLeftEdge = w * 0.73 - Math.min(w, h) * 0.42;
-  const btnW = Math.min(420, w * 0.34);
-  const railW = Math.max(btnW, Math.min(w - left - 24, heroLeftEdge - left - 18));
+  const btnW = portrait ? Math.min(300, w - safe.right - left - 24) : Math.min(420, w * 0.34);
+  const railW = portrait ? w - safe.right - left - 24
+    : Math.max(btnW, Math.min(w - left - 24, heroLeftEdge - left - 18));
   const btnH = 58;
   let by = topY + 74;
   const playR = button(ctx, { x: left, y: by, w: btnW, h: btnH, label: tr(lang, 'play'), icon: 'pounce', primary: true, hover: hover === 'play', font: '19px' });
@@ -272,6 +274,7 @@ function blinkAt(t, phase) {
 
 /* ───────────────────────────── cat select ───────────────────────────── */
 export function drawCatSelect(ctx, { w, h, safe, t, lang, profile, hover, selected, selectedPrev, fadeT = 1, botMode }) {
+  if (h > w) return drawPortraitCats(ctx, { w, h, safe, t, lang, profile, hover, selected, botMode });
   drawBackdrop(ctx, w, h, t, PALETTE.ember, 0.9);
   sceneTitle(ctx, tr(lang, 'cats'), t2(lang, 'Chọn Người Bạn Đồng Hành', 'Choose Your Companion'), safe.left + 30, safe.top + 92);
   const rects = [];
@@ -438,6 +441,67 @@ export function drawCatSelect(ctx, { w, h, safe, t, lang, profile, hover, select
   return rects;
 }
 
+// Portrait has no room for a side-by-side grid and detail rail. Stack them
+// instead, retaining the same action IDs used by the normal menu.
+function drawPortraitCats(ctx, { w, h, safe, t, lang, profile, hover, selected, botMode }) {
+  drawBackdrop(ctx, w, h, t, PALETTE.ember, 0.9);
+  const rects = [];
+  sceneTitle(ctx, tr(lang, 'cats'), t2(lang, 'Chọn Người Bạn Đồng Hành', 'Choose Your Companion'), safe.left + 24, safe.top + 88);
+  const x0 = safe.left + 24, width = w - safe.left - safe.right - 48;
+  const cols = w < 360 ? 5 : 4, rows = Math.ceil(CATS.length / cols), gap = 8;
+  const cw = (width - gap * (cols - 1)) / cols;
+  const top = safe.top + 124;
+  const ch = Math.min(90, Math.max(56, (h - safe.bottom - top - 210 - gap * (rows - 1)) / rows));
+  CATS.forEach((cat, i) => {
+    const x = x0 + (i % cols) * (cw + gap), y = top + Math.floor(i / cols) * (ch + gap);
+    const unlocked = isCatUnlocked(profile, cat), active = selected === cat.id;
+    roundRect(ctx, x, y, cw, ch, 12); ctx.fillStyle = active ? 'rgba(255,201,102,0.12)' : 'rgba(12,16,30,0.9)'; ctx.fill();
+    ctx.strokeStyle = active ? 'rgba(255,201,102,0.85)' : 'rgba(255,201,102,0.2)'; ctx.lineWidth = active ? 1.8 : 1; ctx.stroke();
+    ctx.save(); ctx.globalAlpha = unlocked ? 1 : 0.4;
+    drawCatFace(ctx, cat, x + cw / 2, y + ch * 0.37, Math.min(cw * 0.68, ch * 0.56), { t, blink: blinkAt(t, i * 0.1) });
+    ctx.restore();
+    const label = unlocked ? trimTo(ctx, localize(cat.name, lang), cw - 6, 9, 700) : String(cat.unlock.embers);
+    text(ctx, label, x + cw / 2, y + ch - 9, { size: 9, weight: 700, align: 'center', color: unlocked ? '#f4ecd8' : '#ffb87b' });
+    rects.push({ id: 'cat:' + cat.id, x, y, w: cw, h: ch });
+  });
+  const py = top + rows * ch + (rows - 1) * gap + 16;
+  const ph = h - safe.bottom - 20 - py;
+  panel(ctx, x0, py, width, ph, { radius: 16 });
+  const cat = CAT_BY_ID[selected] || CATS[0], unlocked = isCatUnlocked(profile, cat);
+  drawCatFace(ctx, cat, x0 + 45, py + 48, 62, { t, blink: blinkAt(t, 0.5) });
+  text(ctx, trimTo(ctx, localize(cat.name, lang), width - 108, 18, 700), x0 + 88, py + 36, { size: 18, weight: 700, color: '#ffe8a8' });
+  text(ctx, trimTo(ctx, localize(cat.title, lang), width - 108, 10, 700), x0 + 88, py + 57, { size: 10, weight: 700, color: 'rgba(200,210,232,0.8)' });
+  if (ph >= 235) {
+    text(ctx, localize(cat.passive.name, lang), x0 + 18, py + 96, { size: 12, weight: 700, color: '#ffe8a8' });
+    wrapText(ctx, localize(cat.passive.desc, lang), x0 + 18, py + 115, width - 36, 15, { size: 11, color: 'rgba(200,210,232,0.82)' });
+  }
+  if (ph >= 310) {
+    const stats = [
+      [{ vi: 'Máu', en: 'Health' }, cat.base.hp / 170],
+      [{ vi: 'Sát thương', en: 'Power' }, cat.base.atk / 1.25],
+      [{ vi: 'Tốc độ', en: 'Speed' }, cat.base.move / 1.2],
+      [{ vi: 'Chí mạng', en: 'Crit' }, cat.base.crit / 0.18],
+    ];
+    stats.forEach(([label, value], i) => {
+      const sy = py + 168 + i * 20;
+      text(ctx, localize(label, lang), x0 + 18, sy + 4, { size: 10, weight: 600, color: 'rgba(154,168,200,0.9)' });
+      meter(ctx, x0 + 100, sy - 4, width - 118, 6, clamp(value, 0.06, 1), { color: hexA(cat.color, 0.5), color2: cat.color });
+    });
+  }
+  const actionY = py + ph - 104, bw = (width - 44) / 2;
+  if (unlocked) {
+    const equipped = selected === profile.loadout.cat;
+    rects.push({ id: 'equip', ...button(ctx, { x: x0 + 16, y: actionY + 36, w: bw, h: 44, label: equipped ? tr(lang, 'equipped') : tr(lang, 'equip'), primary: equipped, hover: hover === 'equip', font: '12px' }) });
+    rects.push({ id: 'start', ...button(ctx, { x: x0 + 28 + bw, y: actionY + 36, w: bw, h: 44, label: botMode ? tr(lang, 'spectate') : tr(lang, 'start'), hover: hover === 'start', font: '12px' }) });
+  } else {
+    const canBuy = profile.embers >= cat.unlock.embers;
+    rects.push({ id: 'unlock', ...button(ctx, { x: x0 + 16, y: actionY + 36, w: width - 32, h: 44, label: String(cat.unlock.embers), icon: 'ember', primary: canBuy, disabled: !canBuy, hover: hover === 'unlock', font: '14px' }) });
+  }
+  iconButton(ctx, { x: safe.left + 26, y: safe.top + 26, r: 19, icon: 'back', hover: hover === 'back' });
+  rects.push({ id: 'back', x: safe.left + 7, y: safe.top + 7, w: 38, h: 38 });
+  return rects;
+}
+
 export function wrapText(ctx, str, x, y, maxW, lineH, opts = {}) {
   ctx.save();
   ctx.font = `${opts.weight || 500} ${opts.size || 12}px ${opts.font || FONT.ui}`;
@@ -554,7 +618,7 @@ export function drawSkillSelect(ctx, { w, h, safe, t, lang, profile, hover, sele
     rects.push({ id: 'slot:' + i, x, y: slotY, w: slotSize, h: slotSize });
   }
   // active cat reminder
-  drawCatFace(ctx, cat, slotX + totalW + 52, slotY + slotSize / 2, 44, { t, blink: blinkAt(t, 0.6) });
+  if (slotX + totalW + 74 <= w - safe.right) drawCatFace(ctx, cat, slotX + totalW + 52, slotY + slotSize / 2, 44, { t, blink: blinkAt(t, 0.6) });
 
   // Skill grid. The pool is 52 skills; only a page's worth fits on screen, and
   // silently dropping the rest made 38 skills impossible to equip. The grid is
@@ -1195,17 +1259,19 @@ export function drawLevelUp(ctx, { w, h, safe, t, lang, offers, hover, level }) 
 
   const n = offers.length;
   const gap = 18;
-  const cardW = Math.min(240, (w - safe.left - safe.right - 80 - gap * (n - 1)) / n);
-  const cardH = Math.min(296, h * 0.46);
+  const portrait = h > w;
+  const cardW = portrait ? Math.min(360, w - safe.left - safe.right - 40) : Math.min(240, (w - safe.left - safe.right - 80 - gap * (n - 1)) / n);
+  const cardY = portrait ? h * 0.29 : h * 0.34;
+  const cardH = portrait ? Math.min(160, (h - safe.bottom - 20 - cardY - 12 * (n - 1)) / Math.max(1, n)) : Math.min(296, h * 0.46);
   const totalW = cardW * n + gap * (n - 1);
-  const startX = w / 2 - totalW / 2;
-  const cardY = h * 0.34;
+  const startX = portrait ? (w - cardW) / 2 : w / 2 - totalW / 2;
   offers.forEach((o, i) => {
-    const x = startX + i * (cardW + gap);
+    const x = portrait ? startX : startX + i * (cardW + gap);
+    const y = cardY + (portrait ? i * (cardH + 12) : 0);
     const isHover = hover === 'offer:' + i;
-    const float = Math.sin(t * 1.6 + i * 0.8) * 3;
-    drawOfferCard(ctx, { x, y: cardY + float, w: cardW, h: cardH, offer: o, hover: isHover, t, lang });
-    rects.push({ id: 'offer:' + i, x, y: cardY - 8, w: cardW, h: cardH + 16 });
+    const float = portrait ? 0 : Math.sin(t * 1.6 + i * 0.8) * 3;
+    drawOfferCard(ctx, { x, y: y + float, w: cardW, h: cardH, offer: o, hover: isHover, t, lang });
+    rects.push({ id: 'offer:' + i, x, y, w: cardW, h: cardH });
   });
   return rects;
 }
@@ -1241,6 +1307,29 @@ function drawOfferCard(ctx, { x, y, w, h, offer, hover, t, lang }) {
   ctx.fillStyle = wash;
   ctx.fillRect(x, y, w, h * 0.48);
   ctx.restore();
+
+  // Wide portrait cards use a horizontal layout instead of stretching the
+  // narrow vertical-card design, leaving readable space for the effect text.
+  if (w > h * 1.5) {
+    const sk = isSkill ? SKILL_BY_ID[offer.skillId] : null;
+    const branch = isSkill && offer.branch ? sk.branch?.options.find(o => o.id === offer.branch) : null;
+    const skillName = isSkill ? localize(sk.name, lang) : localize(offer.name, lang);
+    const name = branch ? `${skillName} · ${localize(branch.name, lang)}` : skillName;
+    const note = isSkill ? L(sk.ranks[offer.rank - 1]?.note, lang) : localize(offer.desc, lang);
+    const desc = branch ? `${localize(branch.note, lang)} · ${note}` : note;
+    const iconX = x + 44, iconY = y + h / 2, radius = Math.min(26, h * 0.22);
+    ctx.beginPath(); ctx.arc(iconX, iconY, radius, 0, TAU); ctx.fillStyle = 'rgba(8,10,20,0.7)'; ctx.fill();
+    ctx.strokeStyle = hexA(accent, 0.65); ctx.lineWidth = 1.6; ctx.stroke();
+    drawIcon(ctx, isSkill ? sk.icon.glyph : (offer.glyph || 'paw'), iconX, iconY, radius * 1.1, accent);
+    const tx = x + 82, tw = w - 96;
+    text(ctx, trimTo(ctx, name, tw, 13, 700), tx, y + 26, { size: 13, weight: 700, color: '#f6efdd' });
+    ctx.save(); ctx.beginPath(); ctx.rect(tx, y + 34, tw, Math.max(0, h - 58)); ctx.clip();
+    wrapText(ctx, desc, tx, y + 48, tw, 15, { size: 11, color: 'rgba(214,222,240,0.86)', weight: 500 }); ctx.restore();
+    const progress = isSkill ? `${offer.rank - 2} → ${offer.rank - 1}/${Math.max(0, (sk.ranks?.length || 1) - 1)}`
+      : offer.max ? `${offer.level || 0} → ${(offer.level || 0) + 1}/${offer.max}` : '';
+    text(ctx, `${localize(rar.label, lang)}  ${progress}`, tx, y + h - 10, { size: 9, weight: 700, color: hexA(accent, 0.85) });
+    ctx.restore(); return;
+  }
 
   // icon medallion
   const cx = x + w / 2;
@@ -1359,7 +1448,7 @@ export function drawPause(ctx, { w, h, safe, t, lang, hover, run }) {
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
   const rects = [];
-  const pw = Math.min(360, w * 0.42);
+  const pw = Math.min(360, w * (h > w ? 0.9 : 0.42));
   const ph = 330;
   const px = w / 2 - pw / 2;
   const py = h / 2 - ph / 2;

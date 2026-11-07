@@ -55,7 +55,9 @@ export class Hud {
     }
     this.skillSize = size;
     this.bossBar = { x: w * 0.5 - Math.min(360, w * 0.31), y: safe.top + 27, w: Math.min(720, w * 0.62), h: 11 };
-    this.botRect = { x: left, y: h - safe.bottom - 46, w: 112, h: 32 };
+    // Keep AUTO away from the thumb stick and the left-handed skill grid.
+    this.botRect = mobile ? { x: left, y: safe.top + 78, w: 112, h: 32 }
+      : { x: left, y: h - safe.bottom - 46, w: 112, h: 32 };
   }
 
   update(dt, run) {
@@ -258,7 +260,7 @@ export class Hud {
     }
 
     // ── skill slots
-    run.slots.forEach((slot, i) => {
+    if (!opts.hideSkills) run.slots.forEach((slot, i) => {
       const r = this.skillRects[i];
       this.drawSlot(ctx, r, slot, run, i, lang, opts.t || 0);
     });
