@@ -228,7 +228,7 @@ test('a boss fight can be finished — no unwinnable stall', () => {
   let frames = 0;
   const limit = 60 * 90;
   while (run.boss && frames < limit && run.state !== RUN_STATE.DEAD) {
-    run.boss.hp -= 2.5;                       // steady damage from the "player"
+    run.hitEnemy(run.boss, 2.5, { source: 'test' }); // steady damage through the real damage/death path
     run.player.invuln = 1;                    // keep the player alive
     run.step(DT, {});
     while (run.state === RUN_STATE.LEVELUP) run.chooseOffer(0);

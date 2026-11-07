@@ -1,0 +1,5628 @@
+{
+  "methodology": {
+    "seed": 73,
+    "character": "tabby",
+    "rank": 1,
+    "crit": 0,
+    "seconds": 12,
+    "fixedStep": 0.016666666666666666,
+    "scenario": "Single cast, unlimited-health stationary dummies 70px away; group includes 5 near and behind; moving uses moveX -0.35 after cast; input is normalized to full movement speed. Damage per cooldown is a theoretical ratio, not actual rotation DPS.",
+    "warning": "TargetsHit counts only damage, not control. Intentional healing/shields/mobility can have zero damage; temporary utility and counterplay require separate tests. Dummy boss/elite are flags, not real boss AI. No human playtest."
+  },
+  "skills": [
+    {
+      "id": "claw_slash",
+      "name": {
+        "vi": "Vuốt Sắc",
+        "en": "Claw Slash"
+      },
+      "category": "physical",
+      "role": "single / frontal",
+      "pattern": "melee",
+      "rarity": "common",
+      "damageMultiplier": null,
+      "cooldown": 0.34,
+      "range": 86,
+      "energy": 0,
+      "parameters": {
+        "arc": 1.5,
+        "hits": 1,
+        "facing": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Một đường vuốt"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +15%",
+          "mult": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Xa hơn",
+          "range": 100
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +20%",
+          "mult": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Chảy máu",
+          "status": "bleed"
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Vuốt một đường phía trước.",
+        "en": "A single claw slash ahead."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 9.53,
+          "burst1s": 9.53,
+          "maxHit": 9.53,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 28.03
+        },
+        "group": {
+          "cast": true,
+          "damage": 26.78,
+          "burst1s": 26.78,
+          "maxHit": 9.49,
+          "firstHit": 0,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 78.78
+        },
+        "elite": {
+          "cast": true,
+          "damage": 8.67,
+          "burst1s": 8.67,
+          "maxHit": 8.67,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 25.49
+        },
+        "boss": {
+          "cast": true,
+          "damage": 9.53,
+          "burst1s": 9.53,
+          "maxHit": 9.53,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 28.03
+        },
+        "moving": {
+          "cast": true,
+          "damage": 9.53,
+          "burst1s": 9.53,
+          "maxHit": 9.53,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 28.03
+        }
+      }
+    },
+    {
+      "id": "triple_scratch",
+      "name": {
+        "vi": "Liên Vuốt",
+        "en": "Triple Scratch"
+      },
+      "category": "physical",
+      "role": "AoE sustained",
+      "pattern": "combo",
+      "rarity": "common",
+      "damageMultiplier": null,
+      "cooldown": 4.1,
+      "range": 140,
+      "energy": 12,
+      "parameters": {
+        "hits": 3,
+        "gap": 0.12,
+        "lastKnock": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Ba nhát"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +20%",
+          "mult": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Nhát cuối đẩy lùi",
+          "knock": 210
+        },
+        {
+          "dmg": 1,
+          "note": "Bốn nhát",
+          "count": 4
+        },
+        {
+          "dmg": 1,
+          "note": "Mỗi nhát hồi năng lượng",
+          "energyOnHit": 4
+        }
+      ],
+      "scaling": "damage",
+      "count": 3,
+      "declaredEffects": {
+        "vi": "Ba nhát quét diện rộng quanh mèo, áp dụng hiệu ứng đòn đánh.",
+        "en": "Three wide sweeps around the cat that apply on-hit effects."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 27.61,
+          "burst1s": 27.61,
+          "maxHit": 9.53,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 6.73
+        },
+        "group": {
+          "cast": true,
+          "damage": 133.07,
+          "burst1s": 133.07,
+          "maxHit": 9.49,
+          "firstHit": 0.02,
+          "targetsHit": 5,
+          "normalizedDamagePerCooldown": 32.46
+        },
+        "elite": {
+          "cast": true,
+          "damage": 26.61,
+          "burst1s": 26.61,
+          "maxHit": 9.41,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 6.49
+        },
+        "boss": {
+          "cast": true,
+          "damage": 27.61,
+          "burst1s": 27.61,
+          "maxHit": 9.53,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 6.73
+        },
+        "moving": {
+          "cast": true,
+          "damage": 27.61,
+          "burst1s": 27.61,
+          "maxHit": 9.53,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 6.73
+        }
+      }
+    },
+    {
+      "id": "pounce",
+      "name": {
+        "vi": "Vồ Mồi",
+        "en": "Pounce"
+      },
+      "category": "mobility",
+      "role": "mobility / hybrid",
+      "pattern": "dash",
+      "rarity": "common",
+      "damageMultiplier": 1.15,
+      "cooldown": 4.5,
+      "range": 170,
+      "energy": 20,
+      "parameters": {
+        "damage": 1.15,
+        "duration": 0.2,
+        "invuln": true,
+        "knock": 180
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Lao và miễn thương"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Xa hơn",
+          "range": 210
+        },
+        {
+          "dmg": 1,
+          "note": "Choáng khi trúng",
+          "stun": 0.5
+        },
+        {
+          "dmg": 1,
+          "note": "Hai lần dùng",
+          "charges": 2
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Lao tới, húc văng kẻ địch trên đường.",
+        "en": "Leap forward, shoving anything in the path."
+      },
+      "control": {
+        "knock": 180
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 10.96,
+          "burst1s": 10.96,
+          "maxHit": 10.96,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.44
+        },
+        "group": {
+          "cast": true,
+          "damage": 10.01,
+          "burst1s": 10.01,
+          "maxHit": 10.01,
+          "firstHit": 0.03,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.22
+        },
+        "elite": {
+          "cast": true,
+          "damage": 9.97,
+          "burst1s": 9.97,
+          "maxHit": 9.97,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.21
+        },
+        "boss": {
+          "cast": true,
+          "damage": 10.96,
+          "burst1s": 10.96,
+          "maxHit": 10.96,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.44
+        },
+        "moving": {
+          "cast": true,
+          "damage": 10.96,
+          "burst1s": 10.96,
+          "maxHit": 10.96,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.44
+        }
+      }
+    },
+    {
+      "id": "whirling_claws",
+      "name": {
+        "vi": "Vuốt Xoáy",
+        "en": "Whirling Claws"
+      },
+      "category": "aoe",
+      "role": "AoE / control",
+      "pattern": "nova",
+      "rarity": "rare",
+      "damageMultiplier": 1.3,
+      "cooldown": 5,
+      "range": 118,
+      "energy": 28,
+      "parameters": {
+        "damage": 1.3,
+        "knock": 150
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Một vòng xoáy"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính +12%",
+          "radius": 132
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +20%",
+          "mult": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Hai vòng",
+          "repeats": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Đẩy lùi mạnh",
+          "knock": 260
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Xoay người, chém mọi thứ quanh mình.",
+        "en": "Spin, carving everything around you."
+      },
+      "control": {
+        "knock": 150
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 12.39,
+          "burst1s": 12.39,
+          "maxHit": 12.39,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.48
+        },
+        "group": {
+          "cast": true,
+          "damage": 57.43,
+          "burst1s": 57.43,
+          "maxHit": 12.34,
+          "firstHit": 0.02,
+          "targetsHit": 5,
+          "normalizedDamagePerCooldown": 11.49
+        },
+        "elite": {
+          "cast": true,
+          "damage": 11.27,
+          "burst1s": 11.27,
+          "maxHit": 11.27,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.25
+        },
+        "boss": {
+          "cast": true,
+          "damage": 12.39,
+          "burst1s": 12.39,
+          "maxHit": 12.39,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.48
+        },
+        "moving": {
+          "cast": true,
+          "damage": 12.39,
+          "burst1s": 12.39,
+          "maxHit": 12.39,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.48
+        }
+      }
+    },
+    {
+      "id": "brutal_bite",
+      "name": {
+        "vi": "Cắn Tàn Bạo",
+        "en": "Brutal Bite"
+      },
+      "category": "physical",
+      "role": "single / frontal",
+      "pattern": "melee",
+      "rarity": "rare",
+      "damageMultiplier": 1.7,
+      "cooldown": 3.4,
+      "range": 84,
+      "energy": 22,
+      "parameters": {
+        "arc": 1.2,
+        "damage": 1.7,
+        "status": "bleed",
+        "lifesteal": 0.12
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Gây chảy máu"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Chảy máu lâu hơn",
+          "bleedTime": 4.5
+        },
+        {
+          "dmg": 1,
+          "note": "Hút máu",
+          "lifesteal": 0.25
+        },
+        {
+          "dmg": 1,
+          "note": "Hạ gục mục tiêu yếu",
+          "execute": 0.18
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Cú cắn nặng khiến mục tiêu chảy máu.",
+        "en": "A heavy bite that leaves the target bleeding."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 37.32,
+          "burst1s": 23.08,
+          "maxHit": 16.2,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.98
+        },
+        "group": {
+          "cast": true,
+          "damage": 108.88,
+          "burst1s": 66.18,
+          "maxHit": 16.13,
+          "firstHit": 0,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 32.02
+        },
+        "elite": {
+          "cast": true,
+          "damage": 35.85,
+          "burst1s": 21.62,
+          "maxHit": 14.73,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.54
+        },
+        "boss": {
+          "cast": true,
+          "damage": 37.32,
+          "burst1s": 23.08,
+          "maxHit": 16.2,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.98
+        },
+        "moving": {
+          "cast": true,
+          "damage": 37.32,
+          "burst1s": 23.08,
+          "maxHit": 16.2,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.98
+        }
+      }
+    },
+    {
+      "id": "shadow_strike",
+      "name": {
+        "vi": "Đâm Bóng",
+        "en": "Shadow Strike"
+      },
+      "category": "physical",
+      "role": "reposition / single",
+      "pattern": "teleportStrike",
+      "rarity": "rare",
+      "damageMultiplier": 2,
+      "cooldown": 6,
+      "range": 260,
+      "energy": 26,
+      "parameters": {
+        "damage": 2
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Dịch chuyển sau mục tiêu"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Tầm xa hơn",
+          "range": 320
+        },
+        {
+          "dmg": 1,
+          "note": "Hoàn năng lượng khi hạ gục",
+          "refundKill": true
+        },
+        {
+          "dmg": 1,
+          "note": "Chí mạng chắc chắn",
+          "forceCrit": true
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Lướt sau lưng mục tiêu và đâm hiểm.",
+        "en": "Slip behind a target and stab deep."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 18,
+          "burst1s": 18,
+          "maxHit": 18,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3
+        },
+        "group": {
+          "cast": true,
+          "damage": 18,
+          "burst1s": 18,
+          "maxHit": 18,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3
+        },
+        "elite": {
+          "cast": true,
+          "damage": 18,
+          "burst1s": 18,
+          "maxHit": 18,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3
+        },
+        "boss": {
+          "cast": true,
+          "damage": 18,
+          "burst1s": 18,
+          "maxHit": 18,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3
+        },
+        "moving": {
+          "cast": true,
+          "damage": 18,
+          "burst1s": 18,
+          "maxHit": 18,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3
+        }
+      }
+    },
+    {
+      "id": "rending_wave",
+      "name": {
+        "vi": "Sóng Vuốt",
+        "en": "Rending Wave"
+      },
+      "category": "physical",
+      "role": "line projectile",
+      "pattern": "shockwave",
+      "rarity": "epic",
+      "damageMultiplier": 1.6,
+      "cooldown": 6.5,
+      "range": 300,
+      "energy": 30,
+      "parameters": {
+        "damage": 1.6,
+        "speed": 620,
+        "width": 54
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Sóng thẳng"
+        },
+        {
+          "dmg": 1,
+          "note": "Rộng hơn",
+          "width": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Xuyên thấu mục tiêu",
+          "pierce": true
+        },
+        {
+          "dmg": 1,
+          "note": "Hai sóng",
+          "count": 2
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Một nhát chém phóng ra thành sóng xung kích.",
+        "en": "A slash that travels as a shockwave."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 15.25,
+          "burst1s": 15.25,
+          "maxHit": 15.25,
+          "firstHit": 0.33,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.35
+        },
+        "group": {
+          "cast": true,
+          "damage": 13.93,
+          "burst1s": 13.93,
+          "maxHit": 13.93,
+          "firstHit": 0.33,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.14
+        },
+        "elite": {
+          "cast": true,
+          "damage": 13.87,
+          "burst1s": 13.87,
+          "maxHit": 13.87,
+          "firstHit": 0.33,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.13
+        },
+        "boss": {
+          "cast": true,
+          "damage": 15.25,
+          "burst1s": 15.25,
+          "maxHit": 15.25,
+          "firstHit": 0.33,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.35
+        },
+        "moving": {
+          "cast": true,
+          "damage": 15.25,
+          "burst1s": 15.25,
+          "maxHit": 15.25,
+          "firstHit": 0.42,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.35
+        }
+      }
+    },
+    {
+      "id": "executioner",
+      "name": {
+        "vi": "Đao Phủ",
+        "en": "Executioner"
+      },
+      "category": "physical",
+      "role": "single / execute",
+      "pattern": "execute",
+      "rarity": "epic",
+      "damageMultiplier": 2.4,
+      "cooldown": 9,
+      "range": 92,
+      "energy": 34,
+      "parameters": {
+        "damage": 2.4,
+        "threshold": 0.2
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hạ gục dưới 20% máu"
+        },
+        {
+          "dmg": 1,
+          "note": "Ngưỡng 25%",
+          "threshold": 0.25
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Dùng lại ngay khi hạ gục",
+          "resetKill": true
+        },
+        {
+          "dmg": 1,
+          "note": "Ngưỡng 35%",
+          "threshold": 0.35
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Xử tử mục tiêu máu thấp, nếu không thì chém mạnh.",
+        "en": "Execute a weakened target; otherwise hit hard."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 21.6,
+          "burst1s": 21.6,
+          "maxHit": 21.6,
+          "firstHit": 0.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.4
+        },
+        "group": {
+          "cast": true,
+          "damage": 21.6,
+          "burst1s": 21.6,
+          "maxHit": 21.6,
+          "firstHit": 0.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.4
+        },
+        "elite": {
+          "cast": true,
+          "damage": 21.6,
+          "burst1s": 21.6,
+          "maxHit": 21.6,
+          "firstHit": 0.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.4
+        },
+        "boss": {
+          "cast": true,
+          "damage": 21.6,
+          "burst1s": 21.6,
+          "maxHit": 21.6,
+          "firstHit": 0.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.4
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "phantom_step",
+      "name": {
+        "vi": "Bước Ma",
+        "en": "Phantom Step"
+      },
+      "category": "mobility",
+      "role": "mobility",
+      "pattern": "blink",
+      "rarity": "rare",
+      "damageMultiplier": 0.7,
+      "cooldown": 5.5,
+      "range": 200,
+      "energy": 18,
+      "parameters": {
+        "damage": 0.7,
+        "invuln": 0.28
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Dịch chuyển sau 1 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Bỏ lại ảo ảnh gây sát thương",
+          "decoy": 0.6
+        },
+        {
+          "dmg": 1,
+          "note": "Khoảng trống ngắn hơn",
+          "cdCut": 1
+        },
+        {
+          "dmg": 1,
+          "note": "Bất tử thoáng chốc",
+          "invuln": 0.8
+        },
+        {
+          "dmg": 1,
+          "note": "Ảo ảnh nổ tung",
+          "decoyBoom": true
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Tạo bóng ma tại điểm đến, dịch chuyển sau 1 giây.",
+        "en": "Leave a ghost at the destination and blink there after 1 second."
+      },
+      "control": {},
+      "declaredDelay": 1,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "arcane_paw",
+      "name": {
+        "vi": "Vuốt Ảo Ảnh",
+        "en": "Arcane Paw"
+      },
+      "category": "magic",
+      "role": "single / projectile",
+      "pattern": "projectile",
+      "rarity": "common",
+      "damageMultiplier": 1,
+      "cooldown": 0.52,
+      "range": 420,
+      "energy": 0,
+      "parameters": {
+        "speed": 520,
+        "damage": 1,
+        "homing": 0.06,
+        "spread": 0.09
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Đạn phép cơ bản"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +15%",
+          "mult": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Xuyên một mục tiêu",
+          "pierce": 1
+        },
+        {
+          "dmg": 1,
+          "note": "Thêm một đạn",
+          "count": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Nổ khi trúng",
+          "explode": 0.5
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Bắn một dấu chân phép hướng về mục tiêu.",
+        "en": "Hurl a glowing sigil at your target."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 9.53,
+          "burst1s": 9.53,
+          "maxHit": 9.53,
+          "firstHit": 0.1,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 18.33
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 8.67,
+          "burst1s": 8.67,
+          "maxHit": 8.67,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 16.67
+        },
+        "boss": {
+          "cast": true,
+          "damage": 9.53,
+          "burst1s": 9.53,
+          "maxHit": 9.53,
+          "firstHit": 0.1,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 18.33
+        },
+        "moving": {
+          "cast": true,
+          "damage": 9.53,
+          "burst1s": 9.53,
+          "maxHit": 9.53,
+          "firstHit": 0.1,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 18.33
+        }
+      }
+    },
+    {
+      "id": "fireball",
+      "name": {
+        "vi": "Cầu Lửa",
+        "en": "Fireball"
+      },
+      "category": "magic",
+      "role": "single / projectile",
+      "pattern": "projectile",
+      "rarity": "rare",
+      "damageMultiplier": 1.8,
+      "cooldown": 3.2,
+      "range": 400,
+      "energy": 26,
+      "parameters": {
+        "speed": 400,
+        "damage": 1.8,
+        "blast": 82,
+        "explode": 0.85
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Nổ và bắt lửa"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính nổ +15%",
+          "blast": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Thêm một cầu lửa",
+          "count": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Để lại vùng cháy",
+          "burnZone": true
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Cầu lửa phát nổ và gây cháy nhẹ trong 3 giây.",
+        "en": "A fireball explodes and burns foes lightly for 3 seconds."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 34.32,
+          "burst1s": 30.14,
+          "maxHit": 17.15,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.73
+        },
+        "group": {
+          "cast": true,
+          "damage": 67.18,
+          "burst1s": 54.55,
+          "maxHit": 15.67,
+          "firstHit": 0.15,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 21
+        },
+        "elite": {
+          "cast": true,
+          "damage": 32.77,
+          "burst1s": 28.59,
+          "maxHit": 15.6,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.24
+        },
+        "boss": {
+          "cast": true,
+          "damage": 34.32,
+          "burst1s": 30.14,
+          "maxHit": 17.15,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.73
+        },
+        "moving": {
+          "cast": true,
+          "damage": 34.32,
+          "burst1s": 30.14,
+          "maxHit": 17.15,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 10.73
+        }
+      }
+    },
+    {
+      "id": "frost_nova",
+      "name": {
+        "vi": "Băng Tân",
+        "en": "Frost Nova"
+      },
+      "category": "control",
+      "role": "AoE / control",
+      "pattern": "nova",
+      "rarity": "rare",
+      "damageMultiplier": 0.7,
+      "cooldown": 7,
+      "range": 150,
+      "energy": 30,
+      "parameters": {
+        "damage": 0.7,
+        "radius": 150,
+        "slow": 0.45,
+        "slowTime": 2.6,
+        "freeze": 0.6
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Làm chậm"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính +14%",
+          "radius": 168
+        },
+        {
+          "dmg": 1,
+          "note": "Đóng băng lâu hơn",
+          "freeze": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Mảnh băng văng ra",
+          "shards": 6
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Sóng băng làm chậm và đóng băng kẻ địch.",
+        "en": "A cold ring that chills and freezes."
+      },
+      "control": {
+        "slow": 0.45,
+        "slowTime": 2.6,
+        "freeze": 0.6
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 7.39,
+          "burst1s": 7.39,
+          "maxHit": 7.39,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.06
+        },
+        "group": {
+          "cast": true,
+          "damage": 34.26,
+          "burst1s": 34.26,
+          "maxHit": 7.36,
+          "firstHit": 0.02,
+          "targetsHit": 5,
+          "normalizedDamagePerCooldown": 4.89
+        },
+        "elite": {
+          "cast": true,
+          "damage": 6.72,
+          "burst1s": 6.72,
+          "maxHit": 6.72,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 0.96
+        },
+        "boss": {
+          "cast": true,
+          "damage": 7.39,
+          "burst1s": 7.39,
+          "maxHit": 7.39,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.06
+        },
+        "moving": {
+          "cast": true,
+          "damage": 7.39,
+          "burst1s": 7.39,
+          "maxHit": 7.39,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.06
+        }
+      }
+    },
+    {
+      "id": "thunder_purr",
+      "name": {
+        "vi": "Sấm Gừ Gừ",
+        "en": "Thunder Purr"
+      },
+      "category": "magic",
+      "role": "chain / multi",
+      "pattern": "chain",
+      "rarity": "rare",
+      "damageMultiplier": 1.15,
+      "cooldown": 5.5,
+      "range": 300,
+      "energy": 28,
+      "parameters": {
+        "damage": 1.15,
+        "jumps": 2,
+        "jumpRange": 180
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Nhảy 2 lần"
+        },
+        {
+          "dmg": 1,
+          "note": "Nhảy 3 lần",
+          "jumps": 3
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Choáng ngắn",
+          "stun": 0.3
+        },
+        {
+          "dmg": 1,
+          "note": "Nhảy 5 lần",
+          "jumps": 5
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Tia sét nhảy giữa các mục tiêu gần nhau.",
+        "en": "Lightning that leaps between targets."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 10.35,
+          "burst1s": 10.35,
+          "maxHit": 10.35,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.88
+        },
+        "group": {
+          "cast": true,
+          "damage": 19.46,
+          "burst1s": 19.46,
+          "maxHit": 10.35,
+          "firstHit": 0,
+          "targetsHit": 2,
+          "normalizedDamagePerCooldown": 3.54
+        },
+        "elite": {
+          "cast": true,
+          "damage": 10.35,
+          "burst1s": 10.35,
+          "maxHit": 10.35,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.88
+        },
+        "boss": {
+          "cast": true,
+          "damage": 10.35,
+          "burst1s": 10.35,
+          "maxHit": 10.35,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.88
+        },
+        "moving": {
+          "cast": true,
+          "damage": 10.35,
+          "burst1s": 10.35,
+          "maxHit": 10.35,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.88
+        }
+      }
+    },
+    {
+      "id": "meteor_paw",
+      "name": {
+        "vi": "Thiên Thạch Mèo",
+        "en": "Meteor Paw"
+      },
+      "category": "aoe",
+      "role": "delayed burst / AoE",
+      "pattern": "meteor",
+      "rarity": "epic",
+      "damageMultiplier": 3,
+      "cooldown": 10,
+      "range": 340,
+      "energy": 40,
+      "parameters": {
+        "damage": 3,
+        "radius": 96,
+        "delay": 0.7
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Rơi sau 0.7 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính +15%",
+          "radius": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Rơi nhanh hơn",
+          "delay": 0.5
+        },
+        {
+          "dmg": 1,
+          "note": "Hai thiên thạch",
+          "count": 2
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Gọi một thiên thạch rơi xuống điểm chỉ định.",
+        "en": "Call a meteor onto a marked spot."
+      },
+      "control": {},
+      "declaredDelay": 0.7,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 54,
+          "burst1s": 54,
+          "maxHit": 27,
+          "firstHit": 0.7,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.4
+        },
+        "group": {
+          "cast": true,
+          "damage": 54,
+          "burst1s": 54,
+          "maxHit": 27,
+          "firstHit": 0.7,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.4
+        },
+        "elite": {
+          "cast": true,
+          "damage": 54,
+          "burst1s": 54,
+          "maxHit": 27,
+          "firstHit": 0.7,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.4
+        },
+        "boss": {
+          "cast": true,
+          "damage": 54,
+          "burst1s": 54,
+          "maxHit": 27,
+          "firstHit": 0.7,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.4
+        },
+        "moving": {
+          "cast": true,
+          "damage": 54,
+          "burst1s": 54,
+          "maxHit": 27,
+          "firstHit": 0.7,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.4
+        }
+      }
+    },
+    {
+      "id": "lunar_beam",
+      "name": {
+        "vi": "Tia Trăng",
+        "en": "Lunar Beam"
+      },
+      "category": "magic",
+      "role": "line burst",
+      "pattern": "beam",
+      "rarity": "epic",
+      "damageMultiplier": 2.2,
+      "cooldown": 9,
+      "range": 420,
+      "energy": 38,
+      "parameters": {
+        "damage": 2.2,
+        "length": 460,
+        "width": 46,
+        "delay": 0.18
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Chùm sáng dài"
+        },
+        {
+          "dmg": 1,
+          "note": "Rộng hơn",
+          "width": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Làm mù (chậm)",
+          "slow": 0.5
+        },
+        {
+          "dmg": 1,
+          "note": "Chùm sáng thứ hai",
+          "repeats": 2
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Chùm sáng trăng xuyên thẳng hàng địch.",
+        "en": "A moonlit lance through a line of foes."
+      },
+      "control": {},
+      "declaredDelay": 0.18,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 198,
+          "burst1s": 198,
+          "maxHit": 19.8,
+          "firstHit": 0.18,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 22
+        },
+        "group": {
+          "cast": true,
+          "damage": 198,
+          "burst1s": 198,
+          "maxHit": 19.8,
+          "firstHit": 0.18,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 22
+        },
+        "elite": {
+          "cast": true,
+          "damage": 198,
+          "burst1s": 198,
+          "maxHit": 19.8,
+          "firstHit": 0.18,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 22
+        },
+        "boss": {
+          "cast": true,
+          "damage": 198,
+          "burst1s": 198,
+          "maxHit": 19.8,
+          "firstHit": 0.18,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 22
+        },
+        "moving": {
+          "cast": true,
+          "damage": 198,
+          "burst1s": 198,
+          "maxHit": 19.8,
+          "firstHit": 0.18,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 22
+        }
+      }
+    },
+    {
+      "id": "void_maw",
+      "name": {
+        "vi": "Miệng Hố Đen",
+        "en": "Void Maw"
+      },
+      "category": "magic",
+      "role": "AoE / pull",
+      "pattern": "pull",
+      "rarity": "mythic",
+      "damageMultiplier": 2.6,
+      "cooldown": 14,
+      "range": 320,
+      "energy": 52,
+      "parameters": {
+        "damage": 2.6,
+        "radius": 104,
+        "pullTime": 1,
+        "core": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hút rồi nổ"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính +15%",
+          "radius": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +35%",
+          "mult": 1.35
+        },
+        {
+          "dmg": 1,
+          "note": "Làm chậm sau nổ",
+          "slow": 0.5
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi máu theo sát thương",
+          "lifesteal": 0.3
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Mở hố đen hút kẻ địch vào rồi nuốt chửng.",
+        "en": "A singularity drags foes in, then eats them."
+      },
+      "control": {
+        "pullTime": 1
+      },
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 32.76,
+          "burst1s": 0,
+          "maxHit": 32.76,
+          "firstHit": 1.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.34
+        },
+        "group": {
+          "cast": true,
+          "damage": 163.8,
+          "burst1s": 0,
+          "maxHit": 32.76,
+          "firstHit": 1.27,
+          "targetsHit": 5,
+          "normalizedDamagePerCooldown": 11.7
+        },
+        "elite": {
+          "cast": true,
+          "damage": 32.76,
+          "burst1s": 0,
+          "maxHit": 32.76,
+          "firstHit": 1.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.34
+        },
+        "boss": {
+          "cast": true,
+          "damage": 32.76,
+          "burst1s": 0,
+          "maxHit": 32.76,
+          "firstHit": 1.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.34
+        },
+        "moving": {
+          "cast": true,
+          "damage": 32.76,
+          "burst1s": 0,
+          "maxHit": 32.76,
+          "firstHit": 1.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.34
+        }
+      }
+    },
+    {
+      "id": "hex_brand",
+      "name": {
+        "vi": "Ấn Nguyền",
+        "en": "Hex Brand"
+      },
+      "category": "utility",
+      "role": "utility / synergy",
+      "pattern": "mark",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 8,
+      "range": 360,
+      "energy": 20,
+      "parameters": {
+        "amp": 0.18,
+        "time": 7
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Mục tiêu nhận +18% sát thương"
+        },
+        {
+          "dmg": 1,
+          "note": "+24%",
+          "amp": 0.24
+        },
+        {
+          "dmg": 1,
+          "note": "Lan sang mục tiêu gần",
+          "spread": 110
+        },
+        {
+          "dmg": 1,
+          "note": "Ấn gây sát thương theo thời gian",
+          "tick": true
+        },
+        {
+          "dmg": 1,
+          "note": "+36%",
+          "amp": 0.36
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Đóng ấn lên mục tiêu: nó nhận thêm sát thương.",
+        "en": "Brand a target: it takes extra damage."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "gravity_well",
+      "name": {
+        "vi": "Giếng Trọng Lực",
+        "en": "Gravity Well"
+      },
+      "category": "control",
+      "role": "sustained / control",
+      "pattern": "zone",
+      "rarity": "epic",
+      "damageMultiplier": null,
+      "cooldown": 9,
+      "range": 320,
+      "energy": 32,
+      "parameters": {
+        "radius": 100,
+        "time": 3.2,
+        "slow": 0.6,
+        "dps": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Làm chậm mạnh"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính +15%",
+          "radius": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Kéo nhẹ kẻ địch vào",
+          "pull": 40
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương theo thời gian",
+          "dps": 0.5
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 4.5
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Vùng không gian níu chân mọi kẻ địch bên trong.",
+        "en": "A field that pins anything inside."
+      },
+      "control": {
+        "slow": 0.6
+      },
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "hairball_cannon",
+      "name": {
+        "vi": "Đại Bác Búi Lông",
+        "en": "Hairball Cannon"
+      },
+      "category": "projectile",
+      "role": "single / projectile",
+      "pattern": "projectile",
+      "rarity": "common",
+      "damageMultiplier": 1.25,
+      "cooldown": 2.2,
+      "range": 340,
+      "energy": 16,
+      "parameters": {
+        "speed": 460,
+        "damage": 1.25,
+        "knock": 120,
+        "spread": 0.1
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Đạn nặng, đẩy lùi"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +20%",
+          "mult": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Thêm một búi",
+          "count": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Nảy tường",
+          "bounce": true
+        },
+        {
+          "dmg": 1,
+          "note": "Bắn tỏa 5 búi",
+          "count": 5,
+          "spreadWide": true
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Phun loạt búi lông nặng.",
+        "en": "Spit a heavy wad of fur."
+      },
+      "control": {
+        "knock": 120
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 11.91,
+          "burst1s": 11.91,
+          "maxHit": 11.91,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.41
+        },
+        "group": {
+          "cast": true,
+          "damage": 10.88,
+          "burst1s": 10.88,
+          "maxHit": 10.88,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.95
+        },
+        "elite": {
+          "cast": true,
+          "damage": 10.83,
+          "burst1s": 10.83,
+          "maxHit": 10.83,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.92
+        },
+        "boss": {
+          "cast": true,
+          "damage": 11.91,
+          "burst1s": 11.91,
+          "maxHit": 11.91,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.41
+        },
+        "moving": {
+          "cast": true,
+          "damage": 11.91,
+          "burst1s": 11.91,
+          "maxHit": 11.91,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.41
+        }
+      }
+    },
+    {
+      "id": "magic_yarn",
+      "name": {
+        "vi": "Cuộn Len Phép",
+        "en": "Magic Yarn"
+      },
+      "category": "projectile",
+      "role": "projectile / hybrid",
+      "pattern": "boomerang",
+      "rarity": "rare",
+      "damageMultiplier": 1.3,
+      "cooldown": 4.4,
+      "range": 300,
+      "energy": 22,
+      "parameters": {
+        "damage": 1.3,
+        "speed": 430,
+        "dist": 300
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Bay và quay lại"
+        },
+        {
+          "dmg": 1,
+          "note": "Trói 0.6 giây",
+          "root": 0.6
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Hai cuộn",
+          "count": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Vẽ vòng len gây sát thương",
+          "trailBoom": true
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Cuộn len bay đi rồi quay lại, trói kẻ địch.",
+        "en": "Yarn flies out, returns, and binds foes."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 12.39,
+          "burst1s": 12.39,
+          "maxHit": 12.39,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.82
+        },
+        "group": {
+          "cast": true,
+          "damage": 11.32,
+          "burst1s": 11.32,
+          "maxHit": 11.32,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.57
+        },
+        "elite": {
+          "cast": true,
+          "damage": 11.27,
+          "burst1s": 11.27,
+          "maxHit": 11.27,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.56
+        },
+        "boss": {
+          "cast": true,
+          "damage": 12.39,
+          "burst1s": 12.39,
+          "maxHit": 12.39,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.82
+        },
+        "moving": {
+          "cast": true,
+          "damage": 12.39,
+          "burst1s": 12.39,
+          "maxHit": 12.39,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.82
+        }
+      }
+    },
+    {
+      "id": "paw_boomerang",
+      "name": {
+        "vi": "Vuốt Hồi Lực",
+        "en": "Paw Boomerang"
+      },
+      "category": "projectile",
+      "role": "projectile / hybrid",
+      "pattern": "boomerang",
+      "rarity": "rare",
+      "damageMultiplier": 1.45,
+      "cooldown": 4.8,
+      "range": 330,
+      "energy": 24,
+      "parameters": {
+        "damage": 1.45,
+        "speed": 480,
+        "dist": 330
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Cắt cả đi và về"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Xuyên mục tiêu",
+          "pierce": true
+        },
+        {
+          "dmg": 1,
+          "note": "Ba chiếc",
+          "count": 3
+        },
+        {
+          "dmg": 1,
+          "note": "Hút máu",
+          "lifesteal": 0.2
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Chiếc vuốt phép xoay về phía bạn, cắt cả đường về.",
+        "en": "A spinning claw cuts both ways."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 13.82,
+          "burst1s": 13.82,
+          "maxHit": 13.82,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.88
+        },
+        "group": {
+          "cast": true,
+          "damage": 12.62,
+          "burst1s": 12.62,
+          "maxHit": 12.62,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.63
+        },
+        "elite": {
+          "cast": true,
+          "damage": 12.57,
+          "burst1s": 12.57,
+          "maxHit": 12.57,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.62
+        },
+        "boss": {
+          "cast": true,
+          "damage": 13.82,
+          "burst1s": 13.82,
+          "maxHit": 13.82,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.88
+        },
+        "moving": {
+          "cast": true,
+          "damage": 13.82,
+          "burst1s": 13.82,
+          "maxHit": 13.82,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.88
+        }
+      }
+    },
+    {
+      "id": "spirit_orbs",
+      "name": {
+        "vi": "Cầu Hồn",
+        "en": "Spirit Orbs"
+      },
+      "category": "projectile",
+      "role": "sustained / summon",
+      "pattern": "orbit",
+      "rarity": "epic",
+      "damageMultiplier": 0.65,
+      "cooldown": 8,
+      "range": 120,
+      "energy": 30,
+      "parameters": {
+        "damage": 0.65,
+        "count": 3,
+        "radius": 78,
+        "time": 6
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Ba cầu, 6 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Bốn cầu",
+          "count": 4
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính rộng hơn",
+          "radius": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Cầu bắn tia khi lướt qua địch",
+          "shoot": true
+        }
+      ],
+      "scaling": "damage",
+      "count": 3,
+      "declaredEffects": {
+        "vi": "Ba linh cầu xoay quanh bạn, tự đâm kẻ lại gần.",
+        "en": "Three orbs circle you and strike intruders."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 70.2,
+          "burst1s": 11.7,
+          "maxHit": 5.85,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 8.78
+        },
+        "group": {
+          "cast": true,
+          "damage": 222.3,
+          "burst1s": 40.95,
+          "maxHit": 5.85,
+          "firstHit": 0.28,
+          "targetsHit": 4,
+          "normalizedDamagePerCooldown": 27.79
+        },
+        "elite": {
+          "cast": true,
+          "damage": 46.8,
+          "burst1s": 11.7,
+          "maxHit": 5.85,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.85
+        },
+        "boss": {
+          "cast": true,
+          "damage": 49.14,
+          "burst1s": 8.19,
+          "maxHit": 4.09,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 6.14
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "needle_barrage",
+      "name": {
+        "vi": "Mưa Kim",
+        "en": "Needle Barrage"
+      },
+      "category": "projectile",
+      "role": "sustained / projectile",
+      "pattern": "barrage",
+      "rarity": "rare",
+      "damageMultiplier": 0.4,
+      "cooldown": 4.6,
+      "range": 380,
+      "energy": 26,
+      "parameters": {
+        "count": 7,
+        "damage": 0.4,
+        "speed": 700,
+        "spread": 0.5,
+        "duration": 0.35
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "7 kim"
+        },
+        {
+          "dmg": 1,
+          "note": "9 kim",
+          "count": 9
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +20%",
+          "mult": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Xuyên một mục tiêu",
+          "pierce": 1
+        },
+        {
+          "dmg": 1,
+          "note": "12 kim",
+          "count": 12
+        }
+      ],
+      "scaling": "damage",
+      "count": 7,
+      "declaredEffects": {
+        "vi": "Xả một loạt kim nhỏ về phía mục tiêu.",
+        "en": "Unload a spray of fine needles."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 25.26,
+          "burst1s": 25.26,
+          "maxHit": 3.8,
+          "firstHit": 0.1,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.49
+        },
+        "group": {
+          "cast": true,
+          "damage": 24.73,
+          "burst1s": 24.73,
+          "maxHit": 3.8,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.38
+        },
+        "elite": {
+          "cast": true,
+          "damage": 24.5,
+          "burst1s": 24.5,
+          "maxHit": 3.61,
+          "firstHit": 0.1,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.33
+        },
+        "boss": {
+          "cast": true,
+          "damage": 25.26,
+          "burst1s": 25.26,
+          "maxHit": 3.8,
+          "firstHit": 0.1,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.49
+        },
+        "moving": {
+          "cast": true,
+          "damage": 25.42,
+          "burst1s": 25.42,
+          "maxHit": 3.8,
+          "firstHit": 0.12,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.53
+        }
+      }
+    },
+    {
+      "id": "starfall_volley",
+      "name": {
+        "vi": "Mưa Sao",
+        "en": "Starfall Volley"
+      },
+      "category": "projectile",
+      "role": "delayed AoE",
+      "pattern": "volley",
+      "rarity": "epic",
+      "damageMultiplier": 1,
+      "cooldown": 9.5,
+      "range": 360,
+      "energy": 36,
+      "parameters": {
+        "count": 5,
+        "damage": 1,
+        "radius": 62,
+        "spread": 150,
+        "delay": 0.9
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "5 sao rơi"
+        },
+        {
+          "dmg": 1,
+          "note": "7 sao",
+          "count": 7
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Vùng rơi rộng hơn",
+          "spread": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Sao cuối cùng choáng",
+          "stun": 0.6
+        }
+      ],
+      "scaling": "damage",
+      "count": 5,
+      "declaredEffects": {
+        "vi": "Gọi một chùm sao rơi xuống quanh khu vực.",
+        "en": "A cluster of stars rains down nearby."
+      },
+      "control": {},
+      "declaredDelay": 0.9,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 27,
+          "burst1s": 9,
+          "maxHit": 9,
+          "firstHit": 0.98,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 2.84
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "kitten_army",
+      "name": {
+        "vi": "Bầy Mèo Con",
+        "en": "Kitten Army"
+      },
+      "category": "summon",
+      "role": "summon",
+      "pattern": "summon",
+      "rarity": "epic",
+      "damageMultiplier": null,
+      "cooldown": 12,
+      "range": 260,
+      "energy": 34,
+      "parameters": {
+        "count": 3,
+        "duration": 9,
+        "kind": "kitten"
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Ba mèo con"
+        },
+        {
+          "dmg": 1,
+          "note": "Mèo con mạnh hơn",
+          "power": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Bốn mèo con",
+          "count": 4
+        },
+        {
+          "dmg": 1,
+          "note": "Mèo con hồi máu cho bạn",
+          "heal": 4
+        },
+        {
+          "dmg": 1,
+          "note": "Năm mèo con",
+          "count": 5
+        }
+      ],
+      "scaling": "health",
+      "count": 3,
+      "declaredEffects": {
+        "vi": "Triệu hồi ba mèo con lao vào kẻ địch.",
+        "en": "Summon three kittens that swarm foes."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 207.09,
+          "burst1s": 26.55,
+          "maxHit": 5.31,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 17.26
+        },
+        "group": {
+          "cast": true,
+          "damage": 207.09,
+          "burst1s": 26.55,
+          "maxHit": 5.31,
+          "firstHit": 0.28,
+          "targetsHit": 2,
+          "normalizedDamagePerCooldown": 17.26
+        },
+        "elite": {
+          "cast": true,
+          "damage": 207.09,
+          "burst1s": 21.24,
+          "maxHit": 5.31,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 17.26
+        },
+        "boss": {
+          "cast": true,
+          "damage": 113.9,
+          "burst1s": 14.6,
+          "maxHit": 2.92,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 9.49
+        },
+        "moving": {
+          "cast": true,
+          "damage": 201.78,
+          "burst1s": 15.93,
+          "maxHit": 5.31,
+          "firstHit": 0.57,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 16.82
+        }
+      }
+    },
+    {
+      "id": "spirit_cat",
+      "name": {
+        "vi": "Linh Miêu",
+        "en": "Spirit Cat"
+      },
+      "category": "summon",
+      "role": "summon",
+      "pattern": "summon",
+      "rarity": "epic",
+      "damageMultiplier": null,
+      "cooldown": 16,
+      "range": 260,
+      "energy": 42,
+      "parameters": {
+        "count": 1,
+        "duration": 11,
+        "kind": "spirit"
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Một linh miêu"
+        },
+        {
+          "dmg": 1,
+          "note": "Linh miêu nhanh hơn",
+          "speed": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "power": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Linh miêu phóng phép",
+          "ranged": true
+        },
+        {
+          "dmg": 1,
+          "note": "Kéo dài",
+          "time": 16
+        }
+      ],
+      "scaling": "health",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Một linh miêu lớn chiến đấu bên bạn.",
+        "en": "A great spectral cat fights beside you."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 58.41,
+          "burst1s": 5.31,
+          "maxHit": 5.31,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.65
+        },
+        "group": {
+          "cast": true,
+          "damage": 58.41,
+          "burst1s": 5.31,
+          "maxHit": 5.31,
+          "firstHit": 0.3,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.65
+        },
+        "elite": {
+          "cast": true,
+          "damage": 58.41,
+          "burst1s": 5.31,
+          "maxHit": 5.31,
+          "firstHit": 0.62,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.65
+        },
+        "boss": {
+          "cast": true,
+          "damage": 32.13,
+          "burst1s": 2.92,
+          "maxHit": 2.92,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.01
+        },
+        "moving": {
+          "cast": true,
+          "damage": 58.41,
+          "burst1s": 5.31,
+          "maxHit": 5.31,
+          "firstHit": 0.57,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.65
+        }
+      }
+    },
+    {
+      "id": "guardian_lion",
+      "name": {
+        "vi": "Sư Tử Hộ Mệnh",
+        "en": "Guardian Lion"
+      },
+      "category": "summon",
+      "role": "summon",
+      "pattern": "summon",
+      "rarity": "epic",
+      "damageMultiplier": null,
+      "cooldown": 18,
+      "range": 220,
+      "energy": 44,
+      "parameters": {
+        "count": 1,
+        "duration": 10,
+        "kind": "lion"
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Sư tử đá đứng yên"
+        },
+        {
+          "dmg": 1,
+          "note": "Sư tử đá đập mạnh hơn",
+          "power": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Sư tử đá hút đòn hộ bạn",
+          "taunt": true
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 14
+        },
+        {
+          "dmg": 1,
+          "note": "Linh khí hồi máu quanh nó",
+          "aura": "heal"
+        }
+      ],
+      "scaling": "health",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Sư tử đá đứng chắn và đè bẹp kẻ địch.",
+        "en": "A stone lion guards the ground."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 51.37,
+          "burst1s": 7.16,
+          "maxHit": 7.84,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.85
+        },
+        "group": {
+          "cast": true,
+          "damage": 260.59,
+          "burst1s": 36.75,
+          "maxHit": 7.86,
+          "firstHit": 0.28,
+          "targetsHit": 5,
+          "normalizedDamagePerCooldown": 14.48
+        },
+        "elite": {
+          "cast": true,
+          "damage": 51.31,
+          "burst1s": 7.77,
+          "maxHit": 7.84,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.85
+        },
+        "boss": {
+          "cast": true,
+          "damage": 51.37,
+          "burst1s": 7.16,
+          "maxHit": 7.84,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.85
+        },
+        "moving": {
+          "cast": true,
+          "damage": 51.37,
+          "burst1s": 7.16,
+          "maxHit": 7.84,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.85
+        }
+      }
+    },
+    {
+      "id": "ghost_paw",
+      "name": {
+        "vi": "Vuốt Ma",
+        "en": "Ghost Paw"
+      },
+      "category": "summon",
+      "role": "sustained / summon",
+      "pattern": "orbit",
+      "rarity": "rare",
+      "damageMultiplier": 0.5,
+      "cooldown": 9,
+      "range": 110,
+      "energy": 26,
+      "parameters": {
+        "damage": 0.5,
+        "count": 2,
+        "radius": 66,
+        "time": 5.5
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hai vuốt ma"
+        },
+        {
+          "dmg": 1,
+          "note": "Ba vuốt",
+          "count": 3
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính rộng hơn",
+          "radius": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Vuốt ma gây chảy máu",
+          "bleed": true
+        }
+      ],
+      "scaling": "health",
+      "count": 2,
+      "declaredEffects": {
+        "vi": "Những bàn chân ma xoay quanh bạn và tự chém.",
+        "en": "Ghost paws orbit you and slash for you."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 26.55,
+          "burst1s": 5.31,
+          "maxHit": 5.31,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.95
+        },
+        "group": {
+          "cast": true,
+          "damage": 53.1,
+          "burst1s": 15.93,
+          "maxHit": 5.31,
+          "firstHit": 0.02,
+          "targetsHit": 2,
+          "normalizedDamagePerCooldown": 5.9
+        },
+        "elite": {
+          "cast": true,
+          "damage": 26.55,
+          "burst1s": 5.31,
+          "maxHit": 5.31,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.95
+        },
+        "boss": {
+          "cast": true,
+          "damage": 18.58,
+          "burst1s": 3.72,
+          "maxHit": 3.72,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.06
+        },
+        "moving": {
+          "cast": true,
+          "damage": 5.31,
+          "burst1s": 5.31,
+          "maxHit": 5.31,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 0.59
+        }
+      }
+    },
+    {
+      "id": "rending_ground",
+      "name": {
+        "vi": "Đất Rách",
+        "en": "Rending Ground"
+      },
+      "category": "aoe",
+      "role": "sustained / control",
+      "pattern": "zone",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 8,
+      "range": 260,
+      "energy": 28,
+      "parameters": {
+        "radius": 90,
+        "time": 3,
+        "dps": 1.1,
+        "slow": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Vùng gai 3 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính +15%",
+          "radius": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Gai làm chậm",
+          "slow": 0.4
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 5
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Xé mặt đất thành vùng gai nhọn.",
+        "en": "Tear the ground into thorned ruin."
+      },
+      "control": {
+        "slow": 0
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 29.86,
+          "burst1s": 9.73,
+          "maxHit": 0.17,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.73
+        },
+        "group": {
+          "cast": true,
+          "damage": 29.86,
+          "burst1s": 9.73,
+          "maxHit": 0.17,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.73
+        },
+        "elite": {
+          "cast": true,
+          "damage": 29.86,
+          "burst1s": 9.73,
+          "maxHit": 0.17,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.73
+        },
+        "boss": {
+          "cast": true,
+          "damage": 29.86,
+          "burst1s": 9.73,
+          "maxHit": 0.17,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.73
+        },
+        "moving": {
+          "cast": true,
+          "damage": 29.86,
+          "burst1s": 9.73,
+          "maxHit": 0.17,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 3.73
+        }
+      }
+    },
+    {
+      "id": "catnip_frenzy",
+      "name": {
+        "vi": "Bạc Hà Điên",
+        "en": "Catnip Frenzy"
+      },
+      "category": "utility",
+      "role": "utility / defensive",
+      "pattern": "buff",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 14,
+      "range": 0,
+      "energy": 18,
+      "parameters": {
+        "time": 6,
+        "atkSpeed": 0.35,
+        "move": 0,
+        "drawback": 0.15,
+        "regen": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "+35% tốc đánh, 6 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "+45%",
+          "atkSpeed": 0.45
+        },
+        {
+          "dmg": 1,
+          "note": "+30% tốc chạy",
+          "move": 0.3
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi năng lượng liên tục",
+          "regen": true
+        },
+        {
+          "dmg": 1,
+          "note": "Miễn nhiễm trượt chân",
+          "noDrawback": true
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Tăng tốc đánh và tốc chạy, nhưng nhận thêm sát thương.",
+        "en": "Attack and movement surge — at a cost."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "moonlit_trap",
+      "name": {
+        "vi": "Bẫy Trăng",
+        "en": "Moonlit Trap"
+      },
+      "category": "utility",
+      "role": "control / trap",
+      "pattern": "trap",
+      "rarity": "rare",
+      "damageMultiplier": 0,
+      "cooldown": 7,
+      "range": 220,
+      "energy": 24,
+      "parameters": {
+        "radius": 88,
+        "root": 1.2,
+        "time": 18,
+        "damage": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Bẫy trói 1.2 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Bẫy nổ sát thương",
+          "damage": true
+        },
+        {
+          "dmg": 1,
+          "note": "Hai bẫy",
+          "count": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Bẫy dính cả kẻ địch xa",
+          "radius": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Trói lâu hơn",
+          "root": 2
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Đặt bẫy sáng: kẻ chạm vào bị trói và lộ vị trí.",
+        "en": "Place a radiant snare that roots and reveals."
+      },
+      "control": {
+        "root": 1.2
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "nine_lives",
+      "name": {
+        "vi": "Chín Mạng",
+        "en": "Nine Lives"
+      },
+      "category": "defense",
+      "role": "defensive",
+      "pattern": "shield",
+      "rarity": "epic",
+      "damageMultiplier": null,
+      "cooldown": 22,
+      "range": 0,
+      "energy": 30,
+      "parameters": {
+        "shield": 0.4,
+        "time": 8,
+        "reviveWard": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hấp thụ một đòn"
+        },
+        {
+          "dmg": 1,
+          "note": "Lá chắn dày hơn",
+          "shield": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi máu khi vỡ",
+          "heal": 0.2
+        },
+        {
+          "dmg": 1,
+          "note": "Thêm hồi chiêu nhanh",
+          "cdCut": 3
+        },
+        {
+          "dmg": 1,
+          "note": "Bất tử 1 giây khi vỡ",
+          "invuln": 1
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Lá chắn giữ lại mạng bạn trong một đòn chí tử.",
+        "en": "A ward that survives one killing blow."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "iron_fur",
+      "name": {
+        "vi": "Lông Sắt",
+        "en": "Iron Fur"
+      },
+      "category": "defense",
+      "role": "utility / defensive",
+      "pattern": "buff",
+      "rarity": "common",
+      "damageMultiplier": null,
+      "cooldown": 12,
+      "range": 0,
+      "energy": 20,
+      "parameters": {
+        "time": 5,
+        "armor": 0.35,
+        "reflect": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "-35% sát thương nhận"
+        },
+        {
+          "dmg": 1,
+          "note": "-45%",
+          "armor": 0.45
+        },
+        {
+          "dmg": 1,
+          "note": "Phản đòn",
+          "reflect": 0.2
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 8
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi máu khi nhận đòn",
+          "onHitHeal": 1
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Lông cứng như thép trong thời gian ngắn.",
+        "en": "Fur hardens like steel for a time."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "purr_shield",
+      "name": {
+        "vi": "Khiên Gừ",
+        "en": "Purr Shield"
+      },
+      "category": "defense",
+      "role": "defensive",
+      "pattern": "shield",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 10,
+      "range": 0,
+      "energy": 24,
+      "parameters": {
+        "shield": 0.3,
+        "time": 7
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Khiên 30% máu tối đa"
+        },
+        {
+          "dmg": 1,
+          "note": "Khiên +25%",
+          "shield": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Nổ khi vỡ",
+          "boom": true
+        },
+        {
+          "dmg": 1,
+          "note": "Khiên lan sang đồng minh",
+          "team": true
+        },
+        {
+          "dmg": 1,
+          "note": "Nhanh hơn",
+          "cdCut": 2
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Tiếng gừ tạo khiên hấp thụ sát thương.",
+        "en": "A purring barrier soaks up damage."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "reflective_claws",
+      "name": {
+        "vi": "Vuốt Phản Chiến",
+        "en": "Reflective Claws"
+      },
+      "category": "defense",
+      "role": "utility / defensive",
+      "pattern": "buff",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 13,
+      "range": 0,
+      "energy": 26,
+      "parameters": {
+        "time": 4,
+        "reflect": 0.4,
+        "armor": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Phản 40% sát thương"
+        },
+        {
+          "dmg": 1,
+          "note": "Phản 55%",
+          "reflect": 0.55
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 6
+        },
+        {
+          "dmg": 1,
+          "note": "Giảm sát thương nhận 20%",
+          "armor": 0.2
+        },
+        {
+          "dmg": 1,
+          "note": "Phản đòn lan ra xung quanh",
+          "splash": true
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Mỗi đòn nhận vào bị đáp trả gấp đôi.",
+        "en": "Every blow taken is answered twice over."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "guardian_aura",
+      "name": {
+        "vi": "Hào Quang Hộ Vệ",
+        "en": "Guardian Aura"
+      },
+      "category": "defense",
+      "role": "defensive / sustain",
+      "pattern": "aura",
+      "rarity": "epic",
+      "damageMultiplier": null,
+      "cooldown": 16,
+      "range": 110,
+      "energy": 32,
+      "parameters": {
+        "time": 7,
+        "radius": 100,
+        "heal": 2,
+        "armor": 0,
+        "burn": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hồi 2 máu/giây trong vùng"
+        },
+        {
+          "dmg": 1,
+          "note": "Giảm sát thương 15%",
+          "armor": 0.15
+        },
+        {
+          "dmg": 1,
+          "note": "Vùng rộng hơn",
+          "radius": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi 3.5 máu/giây",
+          "heal": 3.5
+        },
+        {
+          "dmg": 1,
+          "note": "Đốt kẻ địch trong vùng",
+          "burn": 0.8
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Vùng ấm áp quanh bạn giảm sát thương và hồi máu.",
+        "en": "A warm field that mends and protects."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "stone_stance",
+      "name": {
+        "vi": "Thế Đá",
+        "en": "Stone Stance"
+      },
+      "category": "defense",
+      "role": "utility / defensive",
+      "pattern": "buff",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 14,
+      "range": 0,
+      "energy": 22,
+      "parameters": {
+        "time": 4,
+        "armor": 0.4,
+        "root": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Không bị đẩy lùi"
+        },
+        {
+          "dmg": 1,
+          "note": "-40% sát thương",
+          "armor": 0.4
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương va chạm quanh bạn",
+          "thorns": true
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 6
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi máu khi đứng yên",
+          "heal": 2
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Đứng vững như tượng: miễn đẩy lùi, giảm sát thương.",
+        "en": "Root in place: knockback immunity, heavy armor."
+      },
+      "control": {
+        "root": true
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "healing_purr",
+      "name": {
+        "vi": "Gừ Chữa Lành",
+        "en": "Healing Purr"
+      },
+      "category": "heal",
+      "role": "healing / utility",
+      "pattern": "heal",
+      "rarity": "common",
+      "damageMultiplier": null,
+      "cooldown": 9,
+      "range": 0,
+      "energy": 26,
+      "parameters": {
+        "heal": 0.22,
+        "time": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hồi 22% máu"
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi 28%",
+          "heal": 0.28
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi thêm theo thời gian",
+          "overTime": true
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi cả đồng minh",
+          "team": true
+        },
+        {
+          "dmg": 1,
+          "note": "Loại bỏ làm chậm",
+          "cleanse": true
+        }
+      ],
+      "scaling": "health",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Tiếng gừ hồi máu tức thời và thêm theo thời gian.",
+        "en": "A purr heals now and keeps mending."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "life_drain",
+      "name": {
+        "vi": "Hút Sinh Lực",
+        "en": "Life Drain"
+      },
+      "category": "heal",
+      "role": "single / healing",
+      "pattern": "drain",
+      "rarity": "rare",
+      "damageMultiplier": 1.6,
+      "cooldown": 8,
+      "range": 220,
+      "energy": 24,
+      "parameters": {
+        "damage": 1.6,
+        "leech": 0.6,
+        "time": 1
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hút 60% sát thương"
+        },
+        {
+          "dmg": 1,
+          "note": "Hút 75%",
+          "leech": 0.75
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Tầm xa hơn",
+          "range": 280
+        },
+        {
+          "dmg": 1,
+          "note": "Hút cả đồng minh gần",
+          "area": true
+        }
+      ],
+      "scaling": "health",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Rút máu mục tiêu chuyển thành của bạn.",
+        "en": "Steal a target's vitality for yourself."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 16.99,
+          "burst1s": 16.99,
+          "maxHit": 16.99,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "group": {
+          "cast": true,
+          "damage": 16.99,
+          "burst1s": 16.99,
+          "maxHit": 16.99,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "elite": {
+          "cast": true,
+          "damage": 16.99,
+          "burst1s": 16.99,
+          "maxHit": 16.99,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "boss": {
+          "cast": true,
+          "damage": 16.99,
+          "burst1s": 16.99,
+          "maxHit": 16.99,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "moving": {
+          "cast": true,
+          "damage": 16.99,
+          "burst1s": 16.99,
+          "maxHit": 16.99,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        }
+      }
+    },
+    {
+      "id": "blood_fang",
+      "name": {
+        "vi": "Nanh Máu",
+        "en": "Blood Fang"
+      },
+      "category": "physical",
+      "role": "single / frontal",
+      "pattern": "melee",
+      "rarity": "rare",
+      "damageMultiplier": 1.5,
+      "cooldown": 5,
+      "range": 80,
+      "energy": 20,
+      "parameters": {
+        "damage": 1.5,
+        "arc": 1.2,
+        "lifesteal": 0.15,
+        "bleed": 1
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hút 15% sát thương"
+        },
+        {
+          "dmg": 1,
+          "note": "Chảy máu mạnh hơn",
+          "bleed": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Hút 25%",
+          "lifesteal": 0.25
+        },
+        {
+          "dmg": 1,
+          "note": "Lây chảy máu sang kẻ gần",
+          "spread": true
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Nhát cắn hút máu và cộng dồn chảy máu.",
+        "en": "A leeching bite that stacks bleeding."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.86
+        },
+        "group": {
+          "cast": true,
+          "damage": 13.06,
+          "burst1s": 13.06,
+          "maxHit": 13.06,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.61
+        },
+        "elite": {
+          "cast": true,
+          "damage": 13,
+          "burst1s": 13,
+          "maxHit": 13,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.6
+        },
+        "boss": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.86
+        },
+        "moving": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.86
+        }
+      }
+    },
+    {
+      "id": "lucky_paw",
+      "name": {
+        "vi": "Chân May Mắn",
+        "en": "Lucky Paw"
+      },
+      "category": "utility",
+      "role": "utility / defensive",
+      "pattern": "buff",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 15,
+      "range": 0,
+      "energy": 18,
+      "parameters": {
+        "time": 8,
+        "crit": 0.12,
+        "fortune": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "+12% chí mạng, 8 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "+12% rơi đồ",
+          "fortune": 0.12
+        },
+        {
+          "dmg": 1,
+          "note": "+20% chí mạng",
+          "crit": 0.2
+        },
+        {
+          "dmg": 1,
+          "note": "Nhận thêm vàng",
+          "gold": 0.3
+        },
+        {
+          "dmg": 1,
+          "note": "Chí mạng lan sang đồng minh",
+          "team": true
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Vận may tăng chí mạng và may mắn rơi đồ.",
+        "en": "Luck raises crit chance and loot drops."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "mana_snack",
+      "name": {
+        "vi": "Bánh Năng Lượng",
+        "en": "Mana Snack"
+      },
+      "category": "utility",
+      "role": "healing / utility",
+      "pattern": "heal",
+      "rarity": "common",
+      "damageMultiplier": null,
+      "cooldown": 16,
+      "range": 0,
+      "energy": 0,
+      "parameters": {
+        "heal": 0,
+        "energy": 40
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hồi 40 năng lượng"
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi 55",
+          "energy": 55
+        },
+        {
+          "dmg": 1,
+          "note": "Giảm hồi chiêu 12%",
+          "cdr": 0.12
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi cả máu",
+          "heal": 0.1
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi chiêu nhanh hơn",
+          "cdCut": 4
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Ăn một miếng, hồi ngay năng lượng.",
+        "en": "A bite restores a chunk of energy."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "time_fur",
+      "name": {
+        "vi": "Lông Thời Gian",
+        "en": "Time Fur"
+      },
+      "category": "control",
+      "role": "crowd control",
+      "pattern": "timeSlow",
+      "rarity": "mythic",
+      "damageMultiplier": null,
+      "cooldown": 20,
+      "range": 220,
+      "energy": 48,
+      "parameters": {
+        "radius": 220,
+        "time": 3,
+        "slow": 0.5,
+        "amp": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Làm chậm 50% trong 3 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Chậm 65%",
+          "slow": 0.65
+        },
+        {
+          "dmg": 1,
+          "note": "Vùng rộng hơn",
+          "radius": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25% trong lúc chậm",
+          "amp": 0.25
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 4.5
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Bẻ cong thời gian: kẻ địch gần như đứng hình.",
+        "en": "Bend time: enemies crawl to a halt."
+      },
+      "control": {
+        "slow": 0.5
+      },
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "night_veil",
+      "name": {
+        "vi": "Màn Đêm",
+        "en": "Night Veil"
+      },
+      "category": "utility",
+      "role": "utility / defensive",
+      "pattern": "buff",
+      "rarity": "rare",
+      "damageMultiplier": null,
+      "cooldown": 13,
+      "range": 0,
+      "energy": 22,
+      "parameters": {
+        "time": 2,
+        "forceCrit": true,
+        "move": 0
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Tàng hình 2 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Chí mạng chắc chắn sau tàng hình",
+          "forceCrit": true
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 3
+        },
+        {
+          "dmg": 1,
+          "note": "Tốc chạy +20%",
+          "move": 0.2
+        },
+        {
+          "dmg": 1,
+          "note": "Nổ sát thương khi hiện hình",
+          "boom": true
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Kẻ địch mất dấu bạn; đòn kế tiếp chí mạng.",
+        "en": "Enemies lose your trail; next hit crits."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "mirror_paw",
+      "name": {
+        "vi": "Vuốt Gương",
+        "en": "Mirror Paw"
+      },
+      "category": "defense",
+      "role": "defensive",
+      "pattern": "shield",
+      "rarity": "epic",
+      "damageMultiplier": null,
+      "cooldown": 12,
+      "range": 0,
+      "energy": 28,
+      "parameters": {
+        "shield": 0.25,
+        "time": 5,
+        "reflectProjectiles": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Phản đạn tầm xa"
+        },
+        {
+          "dmg": 1,
+          "note": "Lá chắn dày hơn",
+          "shield": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 7
+        },
+        {
+          "dmg": 1,
+          "note": "Phản cả phép",
+          "magic": true
+        },
+        {
+          "dmg": 1,
+          "note": "Phản đòn nổ tung",
+          "boom": true
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Lá chắn gương phản lại đòn tấn công tầm xa.",
+        "en": "A mirror ward throws ranged attacks back."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "wind_sprint",
+      "name": {
+        "vi": "Chạy Gió",
+        "en": "Wind Sprint"
+      },
+      "category": "mobility",
+      "role": "utility / defensive",
+      "pattern": "buff",
+      "rarity": "common",
+      "damageMultiplier": null,
+      "cooldown": 7,
+      "range": 0,
+      "energy": 14,
+      "parameters": {
+        "time": 3,
+        "move": 0.45,
+        "atkSpeed": 0,
+        "trail": false
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "+45% tốc chạy, 3 giây"
+        },
+        {
+          "dmg": 1,
+          "note": "Miễn đẩy lùi",
+          "knockImmune": true
+        },
+        {
+          "dmg": 1,
+          "note": "+60% tốc",
+          "move": 0.6
+        },
+        {
+          "dmg": 1,
+          "note": "Đòn đánh trong lúc chạy nhanh hơn",
+          "atkSpeed": 0.2
+        },
+        {
+          "dmg": 1,
+          "note": "Để lại vệt sát thương",
+          "trail": true
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Bứt tốc và lướt qua đòn đánh.",
+        "en": "Burst forward, slipping through attacks."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "blink_paw",
+      "name": {
+        "vi": "Vuốt Dịch Chuyển",
+        "en": "Blink Paw"
+      },
+      "category": "mobility",
+      "role": "mobility",
+      "pattern": "blink",
+      "rarity": "rare",
+      "damageMultiplier": 0,
+      "cooldown": 6,
+      "range": 230,
+      "energy": 16,
+      "parameters": {
+        "damage": 0,
+        "invuln": 0.2
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Dịch chuyển 200px"
+        },
+        {
+          "dmg": 1,
+          "note": "Xa hơn",
+          "range": 260
+        },
+        {
+          "dmg": 1,
+          "note": "Nổ nhỏ khi xuất hiện",
+          "damage": 0.8
+        },
+        {
+          "dmg": 1,
+          "note": "Hai lần dùng",
+          "charges": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Miễn thương khi lướt",
+          "invuln": 0.6
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Búng tay, đổi chỗ với ảo ảnh ban nãy.",
+        "en": "Snap your paws; trade places with an echo."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "group": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "elite": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "boss": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "double_leap",
+      "name": {
+        "vi": "Nhảy Đôi",
+        "en": "Double Leap"
+      },
+      "category": "mobility",
+      "role": "mobility / hybrid",
+      "pattern": "dash",
+      "rarity": "common",
+      "damageMultiplier": 0.9,
+      "cooldown": 6,
+      "range": 150,
+      "energy": 18,
+      "parameters": {
+        "damage": 0.9,
+        "charges": 2,
+        "knock": 90
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Hai lần nhảy"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +20%",
+          "mult": 1.2
+        },
+        {
+          "dmg": 1,
+          "note": "Xa hơn",
+          "range": 180
+        },
+        {
+          "dmg": 1,
+          "note": "Choáng khi trúng",
+          "stun": 0.4
+        },
+        {
+          "dmg": 1,
+          "note": "Để lại vệt lửa",
+          "trail": true
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Hai cú nhảy dài, cắt ngang đội hình địch.",
+        "en": "Two long leaps that cut through the pack."
+      },
+      "control": {
+        "knock": 90
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 8.58,
+          "burst1s": 8.58,
+          "maxHit": 8.58,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.43
+        },
+        "group": {
+          "cast": true,
+          "damage": 24.11,
+          "burst1s": 24.11,
+          "maxHit": 8.54,
+          "firstHit": 0,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 4.02
+        },
+        "elite": {
+          "cast": true,
+          "damage": 7.8,
+          "burst1s": 7.8,
+          "maxHit": 7.8,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.3
+        },
+        "boss": {
+          "cast": true,
+          "damage": 8.58,
+          "burst1s": 8.58,
+          "maxHit": 8.58,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.43
+        },
+        "moving": {
+          "cast": true,
+          "damage": 8.58,
+          "burst1s": 8.58,
+          "maxHit": 8.58,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.43
+        }
+      }
+    },
+    {
+      "id": "thunder_step",
+      "name": {
+        "vi": "Bước Sấm",
+        "en": "Thunder Step"
+      },
+      "category": "mobility",
+      "role": "mobility / hybrid",
+      "pattern": "dash",
+      "rarity": "epic",
+      "damageMultiplier": 1.5,
+      "cooldown": 8,
+      "range": 210,
+      "energy": 30,
+      "parameters": {
+        "damage": 1.5,
+        "duration": 0.16,
+        "knock": 60,
+        "elec": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Lao điện, sát thương cao"
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Xa hơn",
+          "range": 250
+        },
+        {
+          "dmg": 1,
+          "note": "Choáng ngắn",
+          "stun": 0.35
+        },
+        {
+          "dmg": 1,
+          "note": "Hai lần dùng",
+          "charges": 2
+        }
+      ],
+      "scaling": "speed",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Lao đi trong tia điện, đốt cháy kẻ trên đường.",
+        "en": "Dash on a lightning trail, scorching the path."
+      },
+      "control": {
+        "knock": 60
+      },
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.79
+        },
+        "group": {
+          "cast": true,
+          "damage": 40.18,
+          "burst1s": 40.18,
+          "maxHit": 14.23,
+          "firstHit": 0.27,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 5.02
+        },
+        "elite": {
+          "cast": true,
+          "damage": 13,
+          "burst1s": 13,
+          "maxHit": 13,
+          "firstHit": 0.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.62
+        },
+        "boss": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0.27,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.79
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "blood_moon",
+      "name": {
+        "vi": "Trăng Máu",
+        "en": "Blood Moon"
+      },
+      "category": "aoe",
+      "role": "AoE / control",
+      "pattern": "nova",
+      "rarity": "mythic",
+      "damageMultiplier": 1.9,
+      "cooldown": 18,
+      "range": 200,
+      "energy": 46,
+      "parameters": {
+        "damage": 1.9,
+        "radius": 190,
+        "knock": 120,
+        "bleed": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Sóng máu 2 vòng"
+        },
+        {
+          "dmg": 1,
+          "note": "Bán kính +15%",
+          "radius": 1.15
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi máu theo sát thương",
+          "lifesteal": 0.25
+        },
+        {
+          "dmg": 1,
+          "note": "Ba vòng",
+          "repeats": 3
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Mặt trăng máu mọc lên: kẻ địch xung quanh mất máu.",
+        "en": "A blood moon rises; foes around you bleed."
+      },
+      "control": {
+        "knock": 120
+      },
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 18.11,
+          "burst1s": 18.11,
+          "maxHit": 18.11,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.01
+        },
+        "group": {
+          "cast": true,
+          "damage": 83.93,
+          "burst1s": 83.93,
+          "maxHit": 18.03,
+          "firstHit": 0.28,
+          "targetsHit": 5,
+          "normalizedDamagePerCooldown": 4.66
+        },
+        "elite": {
+          "cast": true,
+          "damage": 16.47,
+          "burst1s": 16.47,
+          "maxHit": 16.47,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 0.91
+        },
+        "boss": {
+          "cast": true,
+          "damage": 18.11,
+          "burst1s": 18.11,
+          "maxHit": 18.11,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.01
+        },
+        "moving": {
+          "cast": true,
+          "damage": 18.11,
+          "burst1s": 18.11,
+          "maxHit": 18.11,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 1.01
+        }
+      }
+    },
+    {
+      "id": "soul_siphon",
+      "name": {
+        "vi": "Hút Linh Hồn",
+        "en": "Soul Siphon"
+      },
+      "category": "summon",
+      "role": "execute / sustain",
+      "pattern": "soul",
+      "rarity": "rare",
+      "damageMultiplier": 2.2,
+      "cooldown": 11,
+      "range": 260,
+      "energy": 28,
+      "parameters": {
+        "threshold": 0.25,
+        "heal": 0.08,
+        "stack": 0.04,
+        "dmg": 2.2
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Kết liễu hồi 8% máu"
+        },
+        {
+          "dmg": 1,
+          "note": "Hồi 12%",
+          "heal": 0.12
+        },
+        {
+          "dmg": 1,
+          "note": "Cộng dồn +4% sát thương",
+          "stack": 0.04
+        },
+        {
+          "dmg": 1,
+          "note": "Ngưỡng máu cao hơn",
+          "threshold": 0.35
+        },
+        {
+          "dmg": 1,
+          "note": "Cộng dồn +7%",
+          "stack": 0.07
+        }
+      ],
+      "scaling": "health",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Diệt một mục tiêu yếu để hồi máu và cộng dồn sức mạnh.",
+        "en": "Slay a weak foe to heal and grow stronger."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 23.36,
+          "burst1s": 23.36,
+          "maxHit": 23.36,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "group": {
+          "cast": true,
+          "damage": 23.36,
+          "burst1s": 23.36,
+          "maxHit": 23.36,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "elite": {
+          "cast": true,
+          "damage": 23.36,
+          "burst1s": 23.36,
+          "maxHit": 23.36,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "boss": {
+          "cast": true,
+          "damage": 23.36,
+          "burst1s": 23.36,
+          "maxHit": 23.36,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        },
+        "moving": {
+          "cast": true,
+          "damage": 23.36,
+          "burst1s": 23.36,
+          "maxHit": 23.36,
+          "firstHit": 0,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.12
+        }
+      }
+    },
+    {
+      "id": "blaze_orbit",
+      "name": {
+        "vi": "Lửa Quỹ Đạo",
+        "en": "Blaze Orbit"
+      },
+      "category": "aoe",
+      "role": "sustained / summon",
+      "pattern": "orbit",
+      "rarity": "epic",
+      "damageMultiplier": 0.8,
+      "cooldown": 10,
+      "range": 100,
+      "energy": 34,
+      "parameters": {
+        "damage": 0.8,
+        "count": 3,
+        "radius": 72,
+        "time": 6,
+        "burn": true
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Ba cầu lửa"
+        },
+        {
+          "dmg": 1,
+          "note": "Bốn cầu",
+          "count": 4
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Để lại vệt cháy",
+          "burnTrail": true
+        },
+        {
+          "dmg": 1,
+          "note": "Lâu hơn",
+          "time": 8
+        }
+      ],
+      "scaling": "damage",
+      "count": 3,
+      "declaredEffects": {
+        "vi": "Ba quả cầu lửa quay quanh, đốt mọi thứ.",
+        "en": "Three fire orbs circle you, scorching all."
+      },
+      "control": {},
+      "declaredDelay": 0.25,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 57.6,
+          "burst1s": 14.4,
+          "maxHit": 7.2,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.76
+        },
+        "group": {
+          "cast": true,
+          "damage": 158.4,
+          "burst1s": 28.8,
+          "maxHit": 7.2,
+          "firstHit": 0.28,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 15.84
+        },
+        "elite": {
+          "cast": true,
+          "damage": 57.6,
+          "burst1s": 14.4,
+          "maxHit": 7.2,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 5.76
+        },
+        "boss": {
+          "cast": true,
+          "damage": 40.32,
+          "burst1s": 10.08,
+          "maxHit": 5.04,
+          "firstHit": 0.28,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.03
+        },
+        "moving": {
+          "cast": true,
+          "damage": 0,
+          "burst1s": 0,
+          "maxHit": 0,
+          "firstHit": null,
+          "targetsHit": 0,
+          "normalizedDamagePerCooldown": 0
+        }
+      }
+    },
+    {
+      "id": "banana_peel",
+      "name": {
+        "vi": "Vỏ Chuối Phản Chủ",
+        "en": "Banana Peel"
+      },
+      "category": "control",
+      "role": "control / trap",
+      "pattern": "banana",
+      "rarity": "common",
+      "damageMultiplier": 1.2,
+      "cooldown": 5,
+      "range": 130,
+      "energy": 12,
+      "parameters": {
+        "radius": 38,
+        "root": 1.2,
+        "time": 9,
+        "damage": 1.2
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Trượt chân"
+        },
+        {
+          "dmg": 1,
+          "note": "Choáng lâu hơn",
+          "root": 1.8
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +25%",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Hai vỏ chuối",
+          "count": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Ba vỏ chuối",
+          "count": 3
+        }
+      ],
+      "scaling": "armor",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Thả vỏ chuối làm địch trượt chân và choáng.",
+        "en": "Drop a banana peel to trip and stun enemies."
+      },
+      "control": {
+        "root": 1.2
+      },
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 11.97,
+          "burst1s": 11.97,
+          "maxHit": 11.97,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.39
+        },
+        "group": {
+          "cast": true,
+          "damage": 11.97,
+          "burst1s": 11.97,
+          "maxHit": 11.97,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.39
+        },
+        "elite": {
+          "cast": true,
+          "damage": 11.97,
+          "burst1s": 11.97,
+          "maxHit": 11.97,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.39
+        },
+        "boss": {
+          "cast": true,
+          "damage": 11.97,
+          "burst1s": 11.97,
+          "maxHit": 11.97,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.39
+        },
+        "moving": {
+          "cast": true,
+          "damage": 11.97,
+          "burst1s": 11.97,
+          "maxHit": 11.97,
+          "firstHit": 0.02,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 2.39
+        }
+      }
+    },
+    {
+      "id": "flying_fish",
+      "name": {
+        "vi": "Cá Bay Tới Công Chuyện",
+        "en": "Flying Fish"
+      },
+      "category": "projectile",
+      "role": "single / knockback",
+      "pattern": "fish",
+      "rarity": "rare",
+      "damageMultiplier": 1.5,
+      "cooldown": 3,
+      "range": 360,
+      "energy": 14,
+      "parameters": {
+        "speed": 420,
+        "damage": 1.5,
+        "spread": 0.2
+      },
+      "ranks": [
+        {
+          "dmg": 1,
+          "note": "Cá bay"
+        },
+        {
+          "dmg": 1,
+          "note": "Cá đau hơn",
+          "mult": 1.25
+        },
+        {
+          "dmg": 1,
+          "note": "Hai con cá",
+          "count": 2
+        },
+        {
+          "dmg": 1,
+          "note": "Sát thương +30%",
+          "mult": 1.3
+        },
+        {
+          "dmg": 1,
+          "note": "Ba con cá",
+          "count": 3
+        }
+      ],
+      "scaling": "damage",
+      "count": 1,
+      "declaredEffects": {
+        "vi": "Ném cá vào mặt địch, gây sát thương và đẩy lùi.",
+        "en": "Throw a fish at a foe, dealing damage and knocking it back."
+      },
+      "control": {},
+      "declaredDelay": 0,
+      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
+      "recovery": "not implemented as an explicit lock",
+      "trials": {
+        "single": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.76
+        },
+        "group": {
+          "cast": true,
+          "damage": 13.06,
+          "burst1s": 13.06,
+          "maxHit": 13.06,
+          "firstHit": 0.15,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.35
+        },
+        "elite": {
+          "cast": true,
+          "damage": 13,
+          "burst1s": 13,
+          "maxHit": 13,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.33
+        },
+        "boss": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.76
+        },
+        "moving": {
+          "cast": true,
+          "damage": 14.29,
+          "burst1s": 14.29,
+          "maxHit": 14.29,
+          "firstHit": 0.13,
+          "targetsHit": 1,
+          "normalizedDamagePerCooldown": 4.76
+        }
+      }
+    }
+  ]
+}

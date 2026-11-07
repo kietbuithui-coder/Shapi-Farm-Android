@@ -1,5 +1,4 @@
-// 42 active skills. `pattern` selects a registered effect in systems/skill-patterns.js,
-// so adding content never means editing the combat engine.
+// 54 active skills. `pattern` selects an effect in systems/run.js.
 //
 // Fields
 //  category  : 10 gameplay families (drives UI grouping + upgrade pools)
@@ -127,14 +126,14 @@ export const SKILLS = [
     name: { vi: 'Thiên Thạch Mèo', en: 'Meteor Paw' },
     desc: { vi: 'Gọi một thiên thạch rơi xuống điểm chỉ định.', en: 'Call a meteor onto a marked spot.' },
     cost: 40, cd: 10, range: 340, ranks: [R(1, 'Rơi sau 0.7 giây'), R(1, 'Bán kính +15%', { radius: 1.15 }), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Rơi nhanh hơn', { delay: 0.5 }), R(1, 'Hai thiên thạch', { count: 2 })],
-    params: { damage: 3.0, radius: 96, delay: 0.7 }, icon: { glyph: 'meteor', tint: '#ff8f4d' },
+    params: { damage: 4.0, radius: 96, delay: 0.7 }, icon: { glyph: 'meteor', tint: '#ff8f4d' },
   },
   {
     id: 'lunar_beam', category: 'magic', rarity: 'epic', pattern: 'beam',
     name: { vi: 'Tia Trăng', en: 'Lunar Beam' },
     desc: { vi: 'Chùm sáng trăng xuyên thẳng hàng địch.', en: 'A moonlit lance through a line of foes.' },
     cost: 38, cd: 9, range: 420, ranks: [R(1, 'Chùm sáng dài'), R(1, 'Rộng hơn', { width: 1.3 }), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Làm mù (chậm)', { slow: 0.5 }), R(1, 'Chùm sáng thứ hai', { repeats: 2 })],
-    params: { damage: 2.2, length: 460, width: 46, delay: 0.18 }, icon: { glyph: 'moonbeam', tint: '#cfe4ff' },
+    params: { damage: 3.2, length: 460, width: 46, delay: 0.18 }, icon: { glyph: 'moonbeam', tint: '#cfe4ff' },
   },
   {
     id: 'void_maw', category: 'magic', rarity: 'mythic', pattern: 'pull',

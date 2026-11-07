@@ -684,7 +684,7 @@ export class Run {
       this.applyStatus(target, 'bleed', 6, 3);
     }
     if (this.mods.slowOnHit > 0) this.applyStatus(target, 'slow', this.mods.slowOnHit, 1.5);
-    if (this.mods.stunChance > 0 && this.rng.chance(this.mods.stunChance)) target.stun = Math.max(target.stun, 0.5);
+    if (this.mods.stunChance > 0 && this.rng.chance(this.mods.stunChance)) this.applyStatus(target, 'stun', 0.5);
     if (this.cat.passive.id === 'first_blood' && target.hp >= target.hpMax) dmg *= stats.critDmg;
     if (this.cat.passive.id === 'combo_flow') p.comboFlow = Math.min(0.4, (p.comboFlow || 0) + 0.04);
     if (this.cat.passive.id === 'marked_prey') {
@@ -869,7 +869,7 @@ export class Run {
             explode: def.params.explode ? (def.params.blast || def.params.explode) * (rv.blast || 1) * area : 0,
             burnDps: def.id === 'fireball' ? this.skillDamage(def, power) * 0.12 : 0,
             burn: !!rv.burnZone, tint: def.icon.tint, shape: def.icon.glyph,
-            source: 'skill', owner: 'player', life: 2.6, knock: def.pattern === 'fish' ? 220 : 0,
+            source: 'skill', owner: 'player', life: 2.6, knock: def.params.knock || (def.pattern === 'fish' ? 220 : 0),
           });
         }
         break;
@@ -898,7 +898,7 @@ export class Run {
           visited.add(current.uid);
           points.push({ x: current.x, y: current.y - 18 });
           this.hitEnemy(current, this.skillDamage(def, power * (1 - i * 0.12)), { source: 'skill', crit: this.rng.chance(this.stats.crit) });
-          if (rv.stun) current.stun = Math.max(current.stun, rv.stun);
+          if (rv.stun) this.applyStatus(current, 'stun', rv.stun);
           current = this.enemies.find((e) => !e.dead && !visited.has(e.uid) && dist2(e.x, e.y, current.x, current.y) < 190 * 190);
         }
         this.emit('fx:chain', { points, color: def.icon.tint });
@@ -1052,7 +1052,7 @@ export class Run {
           this.minions.push({
             kind, x: p.x + this.rng.range(-40, 40), y: p.y, t: 0,
             life: (rv.time || def.params.duration),
-            cd: 0.2, damage: this.skillDamage(def, power * 0.5) * power2, hp: 40 * power2 * potency,
+            cd: 0.2, damage: this.skillDamage(def, power * (kind === 'kitten' ? 0.33 : 0.5)) * power2, hp: 40 * power2 * potency,
             maxHp: 40 * power2 * potency, attackCd: 0, facing: p.facing,
             power: power2, ranged: !!rv.ranged, taunt: !!rv.taunt, area: !!rv.aura && rv.aura === 'heal',
             tint: def.icon.tint, def,
@@ -1125,8 +1125,7 @@ export class Run {
         for (const e of this.enemies) {
           if (e.dead) continue;
           if (dist2(e.x, e.y, p.x, p.y) < radius * radius) {
-            e.slow = Math.max(e.slow, clamp((rv.slow || def.params.slow) * potency, 0, 0.9));
-            e.slowTime = Math.max(e.slowTime, rv.time || def.params.time);
+            this.applyStatus(e, 'slow', clamp((rv.slow || def.params.slow) * potency, 0, 0.9), rv.time || def.params.time);
             if (rv.amp) e.mark = Math.max(e.mark || 0, rv.amp), e.markTime = Math.max(e.markTime || 0, rv.time || 3);
           }
         }
@@ -1258,7 +1257,7 @@ export class Run {
   }
 
   /* ── attacks ───────────────────────────────────────────────────────────── */
-  arcDamage(x, y, rx, ry, facing, arc, def, power, rv = {}, radial = false) {
+  arcDamage(x, y, rx, ry, facing, arc, def, power, rv = {}, radial = false, source = 'skill') {
     const reach = 1 + this.mods.skillArea;
     const list = this.enemies.filter((e) => !e.dead);
     let hitAny = false;
@@ -1272,7 +1271,8 @@ export class Run {
         if (Math.abs(a) > arc / 2) continue;
       }
       hitAny = true;
-      this.skillHit(e, def, power, rv);
+      if (source === 'minion') this.hitEnemy(e, power, { source: 'minion' });
+      else this.skillHit(e, def, power, rv);
     }
     if (!hitAny) this.emit('fx:whiff', { x, y });
     return hitAny;
@@ -1282,12 +1282,12 @@ export class Run {
     const res = computeDamage({
       base: def ? this.skillDamage(def, power) : power, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg,
       roll: this.rng.float(), forceCrit: this.consumeForceCrit(),
-      execute: this.mods.execute, amp: e.mark || 0,
+      execute: this.mods.execute,
       targetHpFrac: e.hp / e.hpMax,
     });
     this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
     if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, 3);
-    if (rv.stun || def?.params?.freeze) e.stun = Math.max(e.stun, (rv.stun || def.params.freeze) * (def ? this.skillPotency(def) : 1));
+    if (rv.stun || rv.freeze || def?.params?.freeze) this.applyStatus(e, 'stun', (rv.stun || rv.freeze || def.params.freeze) * (def ? this.skillPotency(def) : 1));
     if (def?.params?.slow) this.applyStatus(e, 'slow', clamp(def.params.slow * this.skillPotency(def), 0, 0.9), def.params.slowTime || 2);
     if (rv.knock) this.knockback(e, rv.knock, knockAngle);
     if (def?.params?.knock) this.knockback(e, def.params.knock * (1 + this.mods.knock), knockAngle);
@@ -1296,7 +1296,7 @@ export class Run {
     if (rv.execute && (e.hp / e.hpMax) < rv.execute && !e.boss) this.hitEnemy(e, e.hp + 1, { source: 'execute', silent: true });
   }
   knockback(enemy, force, knockAngle = null) {
-    if (enemy.boss) return;
+    if (enemy.boss || enemy.mini) return;
     const a = knockAngle ?? angle(this.player.x, this.player.y, enemy.x, enemy.y);
     enemy.knockX = (enemy.knockX || 0) + Math.cos(a) * force;
     enemy.knockY = (enemy.knockY || 0) + Math.sin(a) * force * 0.4;
@@ -1305,7 +1305,7 @@ export class Run {
 
   knockbackArea(x, y, radius, force) {
     for (const e of this.enemies) {
-      if (e.dead || e.boss) continue;
+      if (e.dead || e.boss || e.mini) continue;
       if (dist2(e.x, e.y, x, y) < radius * radius) {
         const a = angle(x, y, e.x, e.y);
         e.knockX = (e.knockX || 0) + Math.cos(a) * force;
@@ -1325,7 +1325,7 @@ export class Run {
       this.attackCounter++;
       if (this.mods.everyThird > 0 && this.attackCounter % 3 === 0) dmg *= 1 + this.mods.everyThird;
       if (this.mods.slowOnHit > 0) this.applyStatus(enemy, 'slow', this.mods.slowOnHit, 1.5);
-      if (this.mods.stunChance > 0 && this.rng.chance(this.mods.stunChance)) enemy.stun = Math.max(enemy.stun, 0.5);
+      if (this.mods.stunChance > 0 && this.rng.chance(this.mods.stunChance)) this.applyStatus(enemy, 'stun', 0.5);
       if (this.mods.moonPact > 0 && this.moonPactReady) { dmg *= 3; this.moonPactReady = false; this.moonPactTimer = this.mods.moonPact; }
       if (this.stats.lifesteal > 0) this.heal(dmg * this.stats.lifesteal, { silent: true });
     }
@@ -1351,7 +1351,20 @@ export class Run {
   applyStatus(enemy, type, power, time) {
     if (!enemy || enemy.dead) return;
     if (type === 'bleed') { enemy.bleed = Math.max(enemy.bleed, power); enemy.bleedTime = Math.max(enemy.bleedTime, time); }
-    else if (type === 'slow') { enemy.slow = Math.max(enemy.slow, power); enemy.slowTime = Math.max(enemy.slowTime, time); }
+    else if (type === 'slow') {
+      const cap = enemy.boss ? 0.35 : enemy.mini ? 0.45 : enemy.elite ? 0.6 : 0.9;
+      const duration = time * (enemy.boss ? 0.6 : enemy.mini ? 0.75 : enemy.elite ? 0.8 : 1);
+      enemy.slow = Math.max(enemy.slow, Math.min(power, cap));
+      enemy.slowTime = Math.max(enemy.slowTime, duration);
+    } else if (type === 'stun' || type === 'root') {
+      // Boss and warden hard control share a lockout; spamming separate skills
+      // cannot indefinitely suppress the attack loop. Root restricts movement,
+      // but unlike stun it does not interrupt attacks.
+      if ((enemy.boss || enemy.mini) && (enemy.controlImmuneUntil || 0) > this.time) return;
+      const duration = enemy.boss ? Math.min(power, 0.3) : enemy.mini ? Math.min(power, 0.45) : enemy.elite ? power * 0.65 : power;
+      enemy[type] = Math.max(enemy[type] || 0, duration);
+      if (enemy.boss || enemy.mini) enemy.controlImmuneUntil = this.time + (enemy.boss ? 2 : 1.5);
+    }
     else if (type === 'poison') { enemy.poison = Math.max(enemy.poison, power); enemy.poisonTime = Math.max(enemy.poisonTime, time); }
     else if (type === 'burn') { enemy.burn = Math.max(enemy.burn || 0, power); enemy.burnTime = Math.max(enemy.burnTime || 0, time); }
   }
@@ -1428,11 +1441,13 @@ export class Run {
         this.hitEnemy(e, e.burn * step, { source: 'burn', tick: true, silent: true });
         if (e.dead) continue;
       }
-      if (e.stun > 0) { e.stun -= dt; continue; }
       if (e.slowTime > 0) { e.slowTime -= dt; if (e.slowTime <= 0) e.slow = 0; }
       if (e.poisonTime > 0) { e.poisonTime -= dt; this.hitEnemy(e, e.poison * dt, { tick: true, silent: true }); if (e.dead) continue; }
       if (e.bleedTime > 0) { e.bleedTime -= dt; this.hitEnemy(e, e.bleed * dt, { tick: true, silent: true }); if (e.dead) continue; }
       if (e.markTime > 0) { e.markTime -= dt; if (e.markTime <= 0) e.mark = 0; }
+      // Bosses have a separate brain; their hard-control timers run there only.
+      if (e.boss || e.mini || e.behaviour === 'boss') continue;
+      if (e.stun > 0) { e.stun -= dt; continue; }
       if (e.root > 0) { e.root -= dt; continue; }
       e.spawnT += dt;
       if (e.behaviour === 'boss') continue; // bosses run their own state machine
@@ -1809,7 +1824,8 @@ export class Run {
     // regular enemies, but the boss never went through that path, so a "stun"
     // from a skill only drew an aura while the boss kept attacking.
     if (b.stun > 0) { b.stun -= dt; b.attackTimer = Math.max(b.attackTimer, 0.15); return; }
-    if (b.root > 0) { b.root -= dt; }
+    const rooted = b.root > 0;
+    if (rooted) b.root = Math.max(0, b.root - dt);
 
     // A phaseless miniboss runs on its base numbers; a boss runs on the phase
     // it is in. One shared line each, so neither kind can be silently skipped.
@@ -1835,7 +1851,7 @@ export class Run {
     // Now the intent is expressed as a target point, the step is clamped to the
     // playfield per-axis, and any distance lost to the clamp is made up by
     // sliding along the wall.
-    const step = b.speed * dt;
+    const step = (rooted ? 0 : b.speed * (1 - (b.slow || 0))) * dt;
     let tx = b.x;
     let ty = b.y;
     // ── Movement style changes the fight, not just the numbers.
@@ -1953,7 +1969,7 @@ export class Run {
       // standing on the player is the only outcome — that still needs rescuing.
       const wanted = b._wantedMove || 0;
       const immobile = b.speed < 1;
-      const asked = wanted > step * 0.5 || immobile;
+      const asked = !rooted && (wanted > step * 0.5 || immobile);
       if (asked && travelled < needTravel) b.stuckCount = (b.stuckCount || 0) + 1;
       else b.stuckCount = 0;
       b._stuckSample = { x: b._locoX ?? b.x, y: b._locoY ?? b.y, n: 0 };
@@ -2384,9 +2400,14 @@ export class Run {
       }
       if (pr.boomerang) {
         pr.phase += dt;
-        const back = pr.phase > 0.42;
+        const back = pr.phase * pr.speed >= pr.travel;
+        if (back && !pr.returning) {
+          pr.returning = true;
+          pr.hits.clear(); // one hit per target on each leg
+          pr.angle = Math.atan2((p.y - 20 - pr.y) / 0.72, p.x - pr.x);
+        }
         if (back) {
-          const want = angle(pr.x, pr.y, p.x, p.y);
+          const want = Math.atan2((p.y - 20 - pr.y) / 0.72, p.x - pr.x);
           let dA = want - pr.angle;
           dA = Math.atan2(Math.sin(dA), Math.cos(dA));
           pr.angle += clamp(dA, -6 * dt, 6 * dt);
@@ -2405,10 +2426,10 @@ export class Run {
           if (e.dead || pr.hits.has(e.uid)) continue;
           if (dist2(pr.x, pr.y, e.x, e.y - 12) < (pr.radius + e.radius) ** 2) {
             pr.hits.add(e.uid);
-            const res = computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), amp: e.mark || 0, targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
+            const res = computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
             this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
             if (pr.burnDps > 0) this.applyStatus(e, 'burn', pr.burnDps, 3);
-            if (pr.root) { e.root = Math.max(e.root, pr.root); }
+            if (pr.root) this.applyStatus(e, 'root', pr.root);
             if (pr.lifesteal) this.heal(res.damage * pr.lifesteal, { silent: true });
             if (pr.knock) this.knockback(e, pr.knock);
             if (pr.explode) { this.blast(pr); this.projectiles.splice(i, 1); break; }
@@ -2444,29 +2465,31 @@ export class Run {
       if (hz.t < hz.delay) continue;
       const age = hz.t - hz.delay;
       if (hz.kind === 'slam' || hz.kind === 'nova' || hz.kind === 'ring' || hz.kind === 'meteor' || hz.kind === 'star' || hz.kind === 'pounceTelegraph') {
-        if (age < 0.02) {
+        if (!hz.resolved) {
+          hz.resolved = true;
           this.emit('fx:impact', { x: hz.x, y: hz.y, radius: hz.radius, color: hz.tint || hz.color });
-          if (hz.source === 'enemy' || hz.kind === 'meteor' || hz.kind === 'star') {
-            if (dist(hz.x, hz.y, p.x, p.y) < hz.radius * 0.92) {
-              if (hz.source === 'enemy') this.damagePlayer(hz.damage, null);
-              else {
-                for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, hz.x, hz.y) < hz.radius) this.hitEnemy(e, hz.damage, { source: 'skill' });
-              }
-            } else {
-              for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, hz.x, hz.y) < hz.radius) this.hitEnemy(e, hz.damage, { source: 'skill' });
-            }
+          if (hz.source === 'enemy') {
+            if (dist(hz.x, hz.y, p.x, p.y) < hz.radius * 0.92) this.damagePlayer(hz.damage, null);
           } else {
             for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, hz.x, hz.y) < hz.radius) this.hitEnemy(e, hz.damage, { source: 'skill' });
           }
-          if (hz.stun) for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, hz.x, hz.y) < hz.radius) e.stun = Math.max(e.stun, hz.stun);
+          if (hz.stun && hz.source !== 'enemy') for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, hz.x, hz.y) < hz.radius) this.applyStatus(e, 'stun', hz.stun);
         }
         if (age > 0.5) this.hazards.splice(i, 1);
       } else if (hz.kind === 'beam') {
-        if (age < 0.16) {
+        if (!hz.resolved) {
+          hz.resolved = true;
           this.emit('fx:beam', { x: hz.x, y: hz.y, angle: hz.angle, length: hz.length, width: hz.width, color: hz.tint });
-          for (const e of this.enemies) {
-            if (e.dead) continue;
-            if (this.linesHit(hz, e.x, e.y - 12, hz.width * 0.6 + e.radius)) this.hitEnemy(e, hz.damage, { source: 'skill' });
+          if (hz.source === 'enemy') {
+            if (this.linesHit(hz, p.x, p.y - 20, hz.width * 0.6 + p.radius)) this.damagePlayer(hz.damage, null);
+          } else {
+            for (const e of this.enemies) {
+              if (e.dead) continue;
+              if (this.linesHit(hz, e.x, e.y - 12, hz.width * 0.6 + e.radius)) {
+                this.hitEnemy(e, hz.damage, { source: 'skill' });
+                if (hz.slow) this.applyStatus(e, 'slow', hz.slow, 2);
+              }
+            }
           }
         }
         if (age > 0.35) this.hazards.splice(i, 1);
@@ -2475,7 +2498,8 @@ export class Run {
         // one damage tick when the telegraph expires, then a short readable
         // aftermath. They used to fall through to the final `else` below, which
         // simply spliced them out — the telegraph drew, then nothing happened.
-        if (age < 0.02) {
+        if (!hz.resolved) {
+          hz.resolved = true;
           const px = p.x;
           const py = p.y;
           let hit = false;
@@ -2496,7 +2520,8 @@ export class Run {
         }
         if (age > 0.45) this.hazards.splice(i, 1);
       } else if (hz.kind === 'line') {
-        if (age < 0.14) {
+        if (!hz.resolved) {
+          hz.resolved = true;
           this.emit('fx:lineStrike', { x: hz.x, y: hz.y, x2: hz.x2, y2: hz.y2, width: hz.width, color: hz.tint || hz.color });
           if (this.linesHit({ x: hz.x, y: hz.y, angle: angle(hz.x, hz.y, hz.x2, hz.y2), length: dist(hz.x, hz.y, hz.x2, hz.y2) }, p.x, p.y - 20, hz.width * 0.5 + p.radius)) {
             if (hz.source === 'enemy') this.damagePlayer(hz.damage, null);
@@ -2523,7 +2548,7 @@ export class Run {
         for (const e of this.enemies) {
           if (e.dead) continue;
           const d = dist(e.x, e.y, z.x, z.y);
-          if (d < z.radius * 2.4 && d > 4) {
+          if (!e.boss && !e.mini && d < z.radius * 2.4 && d > 4) {
             const a = angle(e.x, e.y, z.x, z.y);
             const pull = 110 * (1 - d / (z.radius * 2.4));
             e.x += Math.cos(a) * pull * dt;
@@ -2533,7 +2558,7 @@ export class Run {
             this.hitEnemy(e, z.bomb || z.damagePerTick, { source: 'skill' });
           }
         }
-        if (z.slow) for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, z.x, z.y) < z.radius * 2.2) { e.slow = Math.max(e.slow, z.slow); e.slowTime = Math.max(e.slowTime, 1.4); }
+        if (z.slow) for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, z.x, z.y) < z.radius * 2.2) this.applyStatus(e, 'slow', z.slow, 1.4);
       } else if (z.kind === 'wall') {
         // Solid cover. Handled here (not in the damage paths below) because a
         // wall must not hurt anything — it only blocks movement, and it expires
@@ -2557,7 +2582,7 @@ export class Run {
           if (e.dead) continue;
           if (dist(e.x, e.y, z.x, z.y) < z.radius + e.radius * 0.4) {
             if (z.dps) this.hitEnemy(e, z.dps * dt, { tick: true, silent: true });
-            if (z.slow) { e.slow = Math.max(e.slow, z.slow); e.slowTime = Math.max(e.slowTime, 0.4); }
+            if (z.slow) this.applyStatus(e, 'slow', z.slow, 0.4);
           }
         }
       }
@@ -2576,7 +2601,7 @@ export class Run {
       for (const e of this.enemies) {
         if (e.dead) continue;
         if (dist(e.x, e.y, tr.x, tr.y) < tr.radius) {
-          e.root = Math.max(e.root, tr.root);
+          this.applyStatus(e, 'root', tr.root);
           if (tr.damage) this.hitEnemy(e, tr.damage, { source: 'trap' });
           this.emit('fx:trap', { x: tr.x, y: tr.y, color: tr.tint });
           this.traps.splice(i, 1);
@@ -2624,7 +2649,7 @@ export class Run {
           if (m.attackCd <= 0 && distT < (m.kind === 'lion' ? 170 : 46)) {
             m.attackCd = m.kind === 'kitten' ? 0.7 : m.kind === 'spirit' ? 1.0 : 1.6;
             if (m.kind === 'lion') {
-              this.arcDamage(m.x, m.y, 110, 110, 1, TAU, null, m.damage * 1.4, {}, true);
+              this.arcDamage(m.x, m.y, 110, 110, 1, TAU, null, m.damage * 1.4, {}, true, 'minion');
               this.emit('fx:impact', { x: m.x, y: m.y, radius: 110, color: '#ffc966' });
             } else {
               this.hitEnemy(tgt, m.damage, { source: 'minion' });
