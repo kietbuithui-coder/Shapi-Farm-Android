@@ -236,6 +236,24 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  thunder_purr: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.10, frontX: -3, frontY: 2, backX: -2, backY: 1 }],
+      [0.09, { crouch: 0.48, lean: -0.34, bodyRoll: -0.18, frontX: -22, frontY: 2, backX: -27, backY: -12, headTilt: -0.22 }],
+      [0.15, { crouch: 0.20, lean: 0.36, bodyRoll: 0.18, frontX: 33, frontY: -32, backX: 8, backY: 20, headTilt: 0.22 }],
+      [0.28, {}],
+    ],
+  },
+  hairball_cannon: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.08, frontX: -4, frontY: 1, backX: 0, backY: 2 }],
+      [0.09, { crouch: 0.65, lean: -0.48, bodyRoll: 0.16, frontX: 8, frontY: 15, backX: -26, backY: 6, headTilt: -0.32 }],
+      [0.15, { crouch: 0.30, lean: 0.50, bodyRoll: -0.14, frontX: 12, frontY: -22, backX: -30, backY: 17, headTilt: 0.28 }],
+      [0.28, {}],
+    ],
+  },
   brutal_bite: {
     startup: 0.10, active: 0.08, recovery: 0.11, windup: 0.10,
     frames: [

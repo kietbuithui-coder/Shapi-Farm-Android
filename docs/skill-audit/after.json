@@ -1308,53 +1308,53 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
-          "damage": 10.35,
-          "burst1s": 10.35,
-          "maxHit": 10.35,
-          "firstHit": 0,
+          "damage": 10.96,
+          "burst1s": 10.96,
+          "maxHit": 10.96,
+          "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 1.88
+          "normalizedDamagePerCooldown": 1.99
         },
         "group": {
           "cast": true,
-          "damage": 19.46,
-          "burst1s": 19.46,
-          "maxHit": 10.35,
-          "firstHit": 0,
-          "targetsHit": 2,
-          "normalizedDamagePerCooldown": 3.54
+          "damage": 27,
+          "burst1s": 27,
+          "maxHit": 10.01,
+          "firstHit": 0.12,
+          "targetsHit": 3,
+          "normalizedDamagePerCooldown": 4.91
         },
         "elite": {
           "cast": true,
-          "damage": 10.35,
-          "burst1s": 10.35,
-          "maxHit": 10.35,
-          "firstHit": 0,
+          "damage": 9.97,
+          "burst1s": 9.97,
+          "maxHit": 9.97,
+          "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 1.88
+          "normalizedDamagePerCooldown": 1.81
         },
         "boss": {
           "cast": true,
-          "damage": 10.35,
-          "burst1s": 10.35,
-          "maxHit": 10.35,
-          "firstHit": 0,
+          "damage": 10.96,
+          "burst1s": 10.96,
+          "maxHit": 10.96,
+          "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 1.88
+          "normalizedDamagePerCooldown": 1.99
         },
         "moving": {
           "cast": true,
-          "damage": 10.35,
-          "burst1s": 10.35,
-          "maxHit": 10.35,
-          "firstHit": 0,
+          "damage": 10.96,
+          "burst1s": 10.96,
+          "maxHit": 10.96,
+          "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 1.88
+          "normalizedDamagePerCooldown": 1.99
         }
       }
     },
@@ -1936,15 +1936,15 @@
         "knock": 120
       },
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 11.91,
           "burst1s": 11.91,
           "maxHit": 11.91,
-          "firstHit": 0.12,
+          "firstHit": 0.23,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 5.41
         },
@@ -1953,7 +1953,7 @@
           "damage": 10.88,
           "burst1s": 10.88,
           "maxHit": 10.88,
-          "firstHit": 0.13,
+          "firstHit": 0.25,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 4.95
         },
@@ -1962,7 +1962,7 @@
           "damage": 10.83,
           "burst1s": 10.83,
           "maxHit": 10.83,
-          "firstHit": 0.12,
+          "firstHit": 0.23,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 4.92
         },
@@ -1971,7 +1971,7 @@
           "damage": 11.91,
           "burst1s": 11.91,
           "maxHit": 11.91,
-          "firstHit": 0.12,
+          "firstHit": 0.23,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 5.41
         },
@@ -1980,7 +1980,7 @@
           "damage": 11.91,
           "burst1s": 11.91,
           "maxHit": 11.91,
-          "firstHit": 0.12,
+          "firstHit": 0.28,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 5.41
         }

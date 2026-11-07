@@ -956,15 +956,19 @@ export class Run {
       case 'chain': {
         emitCast();
         const jumps = rv.jumps || def.params.jumps || 2;
-        let current = target || this.nearestEnemy(p.x, p.y, def.range * area);
+        let current = this.nearestEnemy(p.x, p.y, values.range * area);
         const visited = new Set();
         const points = [{ x: p.x, y: p.y - 22 }];
-        for (let i = 0; i < jumps && current; i++) {
+        // Jumps are bounces after the first impact; never hit the same foe twice.
+        for (let i = 0; i <= jumps && current; i++) {
           visited.add(current.uid);
           points.push({ x: current.x, y: current.y - 18 });
-          this.hitEnemy(current, this.skillDamage(def, power * (1 - i * 0.12)), { source: 'skill', crit: this.rng.chance(this.stats.crit) });
-          if (rv.stun) this.applyStatus(current, 'stun', rv.stun);
-          current = this.enemies.find((e) => !e.dead && !visited.has(e.uid) && dist2(e.x, e.y, current.x, current.y) < 190 * 190);
+          const hit = computeDamage({ base: this.skillDamage(def, power * (1 - i * 0.12)), atk: 1,
+            crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(),
+            forceCrit: this.consumeForceCrit(), execute: this.mods.execute, targetHpFrac: current.hp / current.hpMax });
+          this.hitEnemy(current, hit.damage, { source: 'skill', crit: hit.isCrit });
+          if (rv.stun) this.applyStatus(current, 'stun', rv.stun * potency);
+          current = this.nearestEnemy(current.x, current.y, def.params.jumpRange || 180, (e) => !visited.has(e.uid));
         }
         this.emit('fx:chain', { points, color: def.icon.tint });
         break;

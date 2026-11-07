@@ -22,7 +22,7 @@ test('arcane paw rank five splashes neighbours without consuming its pierce', ()
 });
 
 test('hairball rank four bounces once and rank five spreads projectiles', () => {
-  const { r } = setup('hairball_cannon', 5); r.castSlot(0);
+  const { r } = setup('hairball_cannon', 5); r.castSlot(0); r.time += 0.11; r.updatePassiveEffects(0);
   const shots = r.projectiles; assert.equal(shots.length, 5);
   assert.ok(Math.abs(shots[4].angle - shots[0].angle) > 2.7, 'rank five uses the wide spread');
   const p = shots[0]; r.projectiles = [p]; r.enemies.length = 0;
@@ -96,7 +96,7 @@ test('rank five upgrades do not trigger splash or shots without a hit', () => {
 });
 
 test('hairball below rank four still disappears at a wall', () => {
-  const { r } = setup('hairball_cannon', 3); r.castSlot(0);
+  const { r } = setup('hairball_cannon', 3); r.castSlot(0); r.time += 0.11; r.updatePassiveEffects(0);
   const p = r.projectiles[0]; r.projectiles = [p]; r.enemies.length = 0;
   p.x = ARENA.w - 1; p.y = 380; p.angle = 0; r.updateProjectiles(0.05);
   assert.equal(r.projectiles.length, 0);
