@@ -349,10 +349,10 @@ export class Hud {
       ctx.fill();
     }
     // rank pips around the rim
-    const maxRank = slot.def.ranks?.length || 5;
+    const maxRank = Math.max(0, (slot.def.ranks?.length || 1) - 1);
     const used = Math.max(0, slot.rank - 1);
     for (let k = 0; k < maxRank; k++) {
-      const a = Math.PI * 0.62 + (k / (maxRank - 1)) * Math.PI * 0.76;
+      const a = Math.PI * 0.62 + (k / Math.max(1, maxRank - 1)) * Math.PI * 0.76;
       const px = cx + Math.cos(a) * (s / 2 - 8);
       const py = cy + Math.sin(a) * (s / 2 - 8);
       ctx.beginPath();

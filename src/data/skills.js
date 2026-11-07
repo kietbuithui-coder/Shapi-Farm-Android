@@ -28,15 +28,15 @@ export const SKILLS = [
   {
     id: 'claw_slash', category: 'physical', rarity: 'common', pattern: 'melee',
     name: { vi: 'Vuốt Sắc', en: 'Claw Slash' },
-    desc: { vi: 'Vuốt ba đường phía trước.', en: 'Three raking claws ahead.' },
-    cost: 0, cd: 0.34, range: 74, ranks: [R(1, 'Đòn cơ bản'), R(1, 'Sát thương +15%', { mult: 1.15 }), R(1, 'Xa hơn', { range: 88 }), R(1, 'Thêm một vuốt', { hits: 2 }), R(1, 'Chảy máu', { status: 'bleed' })],
+    desc: { vi: 'Vuốt một đường phía trước.', en: 'A single claw slash ahead.' },
+    cost: 0, cd: 0.34, range: 86, ranks: [R(1, 'Một đường vuốt'), R(1, 'Sát thương +15%', { mult: 1.15 }), R(1, 'Xa hơn', { range: 100 }), R(1, 'Sát thương +20%', { mult: 1.2 }), R(1, 'Chảy máu', { status: 'bleed' })],
     params: { arc: 1.5, hits: 1, facing: true }, icon: { glyph: 'claw', tint: '#ffb27a' }, starter: true,
   },
   {
     id: 'triple_scratch', category: 'physical', rarity: 'common', pattern: 'combo',
     name: { vi: 'Liên Vuốt', en: 'Triple Scratch' },
-    desc: { vi: 'Ba nhát liên tiếp vào mục tiêu gần nhất.', en: 'Three quick hits on the nearest target.' },
-    cost: 12, cd: 1.6, range: 96, ranks: [R(1, 'Ba nhát'), R(1, 'Sát thương +20%', { mult: 1.2 }), R(1, 'Nhát cuối đẩy lùi', { knock: 210 }), R(1, 'Bốn nhát', { count: 4 }), R(1, 'Mỗi nhát hồi năng lượng', { energyOnHit: 4 })],
+    desc: { vi: 'Ba nhát quét diện rộng quanh mèo, áp dụng hiệu ứng đòn đánh.', en: 'Three wide sweeps around the cat that apply on-hit effects.' },
+    cost: 12, cd: 4.1, range: 140, ranks: [R(1, 'Ba nhát'), R(1, 'Sát thương +20%', { mult: 1.2 }), R(1, 'Nhát cuối đẩy lùi', { knock: 210 }), R(1, 'Bốn nhát', { count: 4 }), R(1, 'Mỗi nhát hồi năng lượng', { energyOnHit: 4 })],
     params: { hits: 3, gap: 0.12, lastKnock: 0 }, icon: { glyph: 'claw3', tint: '#ffc08f' }, starter: true,
   },
   {
@@ -84,8 +84,8 @@ export const SKILLS = [
   {
     id: 'phantom_step', category: 'mobility', rarity: 'rare', pattern: 'blink',
     name: { vi: 'Bước Ma', en: 'Phantom Step' },
-    desc: { vi: 'Bỏ lại ảo ảnh và lướt tới.', en: 'Leave an afterimage and slip away.' },
-    cost: 18, cd: 5.5, range: 200, ranks: [R(1, 'Lướt tức thời'), R(1, 'Bỏ lại ảo ảnh gây sát thương', { decoy: 0.6 }), R(1, 'Khoảng trống ngắn hơn', { cdCut: 1 }), R(1, 'Bất tử thoáng chốc', { invuln: 0.8 }), R(1, 'Ảo ảnh nổ tung', { decoyBoom: true })],
+    desc: { vi: 'Tạo bóng ma tại điểm đến, dịch chuyển sau 1 giây.', en: 'Leave a ghost at the destination and blink there after 1 second.' },
+    cost: 18, cd: 5.5, range: 200, ranks: [R(1, 'Dịch chuyển sau 1 giây'), R(1, 'Bỏ lại ảo ảnh gây sát thương', { decoy: 0.6 }), R(1, 'Khoảng trống ngắn hơn', { cdCut: 1 }), R(1, 'Bất tử thoáng chốc', { invuln: 0.8 }), R(1, 'Ảo ảnh nổ tung', { decoyBoom: true })],
     params: { damage: 0.7, invuln: 0.28 }, icon: { glyph: 'foot', tint: '#7ce0c8' }, starter: true,
   },
 
@@ -100,7 +100,7 @@ export const SKILLS = [
   {
     id: 'fireball', category: 'magic', rarity: 'rare', pattern: 'projectile',
     name: { vi: 'Cầu Lửa', en: 'Fireball' },
-    desc: { vi: 'Cầu lửa phát nổ khi chạm.', en: 'A slow orb that bursts on contact.' },
+    desc: { vi: 'Cầu lửa phát nổ và gây cháy nhẹ trong 3 giây.', en: 'A fireball explodes and burns foes lightly for 3 seconds.' },
     cost: 26, cd: 3.2, range: 400, ranks: [R(1, 'Nổ và bắt lửa'), R(1, 'Bán kính nổ +15%', { blast: 1.15 }), R(1, 'Sát thương +25%', { mult: 1.25 }), R(1, 'Thêm một cầu lửa', { count: 2 }), R(1, 'Để lại vùng cháy', { burnZone: true })],
     branch: { rank: 3, options: [
       { id: 'explosive', name: { vi: 'Nổ Tung', en: 'Explosive' }, note: { vi: 'Bán kính nổ +40%', en: '+40% blast radius' }, mods: { blast: 1.4 } },

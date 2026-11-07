@@ -1154,7 +1154,7 @@ export function drawSkillScaling(ctx, { w, h, safe, t, lang, profile, hover }) {
     ['skillScaleDamage', t2(lang, 'Sát thương', 'Damage')],
   ];
   const x = safe.left + 34, width = Math.min(520, w - safe.left - safe.right - 68);
-  const pitch = Math.min(54, (h - safe.bottom - top - 48) / 4);
+  const pitch = Math.min(54, (h - safe.bottom - top - 90) / 4);
   rows.forEach(([id, label], i) => {
     const y = top + 35 + i * pitch, value = profile.settings[id] ?? 1;
     text(ctx, `${label} ${Math.round(value * 100)}%`, x, y + 4, { size: 12, weight: 600, color: '#f4ecd8' });
@@ -1164,6 +1164,8 @@ export function drawSkillScaling(ctx, { w, h, safe, t, lang, profile, hover }) {
     ctx.beginPath(); ctx.arc(bx + bw * value / 3, y, 7, 0, TAU); ctx.fillStyle = '#f4ecd8'; ctx.fill();
     rects.push({ id, x: bx, y: y - 14, w: bw, h: 28, slider: true });
   });
+  const grant = button(ctx, { x, y: h - safe.bottom - 48, w: Math.min(width, 220), h: 34, label: t2(lang, '+1.000 tro than', '+1,000 embers'), icon: 'ember', hover: hover === 'devEmbers', font: '12px' });
+  rects.push({ id: 'devEmbers', ...grant });
   iconButton(ctx, { x: safe.left + 26, y: safe.top + 26, r: 19, icon: 'back', hover: hover === 'back' });
   rects.push({ id: 'back', x: safe.left + 7, y: safe.top + 7, w: 38, h: 38 });
   return rects;
@@ -1260,12 +1262,17 @@ function drawOfferCard(ctx, { x, y, w, h, offer, hover, t, lang }) {
   text(ctx, name, cx, y + h * 0.52, { size: 15, weight: 700, align: 'center', color: '#f6efdd' });
   // rank pips for skill upgrades
   if (isSkill) {
-    for (let k = 0; k < 5; k++) {
+    const upgradeCount = Math.max(0, (SKILL_BY_ID[offer.skillId].ranks?.length || 1) - 1);
+    for (let k = 0; k < upgradeCount; k++) {
       ctx.beginPath();
-      ctx.arc(cx - 20 + k * 10, y + h * 0.56, 2.4, 0, TAU);
+      ctx.arc(cx - (upgradeCount - 1) * 5 + k * 10, y + h * 0.56, 2.4, 0, TAU);
       ctx.fillStyle = k < offer.rank - 1 ? accent : 'rgba(255,255,255,0.14)';
       ctx.fill();
     }
+  }
+  if (isSkill) {
+    const max = Math.max(0, (SKILL_BY_ID[offer.skillId].ranks?.length || 1) - 1);
+    text(ctx, `${offer.rank - 2} → ${offer.rank - 1}/${max}`, cx, y + h - 36, { size: 10, weight: 600, align: 'center', color: 'rgba(200,210,232,0.7)' });
   }
   // effect line: one sentence that matters
   const desc = isSkill
@@ -1274,7 +1281,7 @@ function drawOfferCard(ctx, { x, y, w, h, offer, hover, t, lang }) {
   wrapText(ctx, desc, x + 18, y + h * 0.66, w - 36, 17, { size: 12, color: 'rgba(214,222,240,0.86)', weight: 500 });
   // stack indicator for repeatable run upgrades
   if (!isSkill && offer.max) {
-    text(ctx, `${offer.level || 0}/${offer.max}`, cx, y + h - 36, { size: 10, weight: 600, align: 'center', color: 'rgba(200,210,232,0.5)' });
+    text(ctx, `${offer.level || 0} → ${(offer.level || 0) + 1}/${offer.max}`, cx, y + h - 36, { size: 10, weight: 600, align: 'center', color: 'rgba(200,210,232,0.5)' });
   }
   // rarity label
   ctx.save();

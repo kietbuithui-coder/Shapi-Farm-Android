@@ -302,6 +302,10 @@ export class TouchControls {
         ctx.lineWidth = 1.8;
         ctx.stroke();
       }
+      if (slot && slot.maxCharges > 1) {
+        ctx.save(); ctx.fillStyle = '#ffe8a8'; ctx.font = `700 ${Math.max(10, Math.round(r * 0.35))}px ${FONT.ui}`;
+        ctx.textAlign = 'center'; ctx.fillText(`${slot.charges}/${slot.maxCharges}`, cx, cy + r * 0.76); ctx.restore();
+      }
       // slot number, tiny, top-left of each button — they are keyboard-mapped too
       if (prof.labels) {
         ctx.save();

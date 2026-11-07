@@ -19,7 +19,7 @@ export function playerPose(run, t) {
   return {
     t,
     gait: moving ? gait : 0,
-    lean: moving ? clamp(p.vx / 320, -0.6, 0.6) : 0,
+    lean: p.dashTime > 0 ? p.facing * 0.6 : moving ? clamp(p.vx / 320, -0.6, 0.6) : 0,
     squash: 1 - hurt * 0.08 + (p.dashTime > 0 ? -0.05 : 0),
     headTilt: p.aim ? clamp(Math.sin(p.aim) * 0.12, -0.2, 0.2) : 0,
     tail: (t * 0.4) % 1,
@@ -166,6 +166,13 @@ export function drawEnemyActor(ctx, e, t, opts = {}) {
     ctx.restore();
   }
 
+  if (e.knockT > 0 && !e.boss) {
+    const amount = clamp(e.knockT / 0.24, 0, 1);
+    ctx.translate(e.x, e.y);
+    ctx.rotate(clamp((e.knockX || 0) / 300, -0.55, 0.55) * amount);
+    ctx.translate(0, -10 * Math.sin(amount * Math.PI));
+    ctx.translate(-e.x, -e.y);
+  }
   const pose = {
     t: t + e.uid * 0.7,
     crouchOut: e.attackCd > 1.9 ? clamp((e.attackCd - 1.9) * 2, 0, 1) : 0,
@@ -223,6 +230,7 @@ export function drawEnemyActor(ctx, e, t, opts = {}) {
 function drawStatusPips(ctx, e, t) {
   const pips = [];
   if (e.bleedTime > 0) pips.push('#b3202f');
+  if (e.burnTime > 0) pips.push('#ff8f4d');
   if (e.poisonTime > 0) pips.push('#9ad14b');
   if (e.slowTime > 0) pips.push('#7fb6ff');
   if (e.markTime > 0) pips.push('#b48bff');

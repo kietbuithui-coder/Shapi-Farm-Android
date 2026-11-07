@@ -185,6 +185,16 @@ export class Renderer {
 
     // sorted actor pass
     const actors = [];
+    if (run.phantomStep) {
+      const ghost = run.phantomStep;
+      const progress = clamp(ghost.t / ghost.delay, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = 0.25 + 0.25 * progress;
+      ctx.beginPath(); ctx.ellipse(ghost.x, ghost.y, 32 + progress * 8, 12, 0, 0, TAU);
+      ctx.strokeStyle = '#b7a0ff'; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+      drawPlayerActor(ctx, { ...run, player: { ...run.player, x: ghost.x, y: ghost.y, vx: 0, vy: 0, hurtFlash: 0, shield: 0, invuln: 0 } }, t);
+      ctx.restore();
+    }
     for (const e of run.enemies) actors.push({ y: e.y, draw: () => drawEnemyActor(ctx, e, t) });
     for (const m of run.minions) if (m.kind !== 'orb') actors.push({ y: m.y + 2, draw: () => drawMinion(ctx, m, t) });
     actors.push({ y: run.player.y, draw: () => drawPlayerActor(ctx, run, t) });
@@ -404,7 +414,7 @@ export class Renderer {
     for (const f of pres.fx) {
       const p = clamp(f.t / f.life, 0, 1);
       switch (f.kind) {
-        case 'slash': drawSlashArc(ctx, f.x, f.y, f.radius, f.angle, f.spread, f.color, p); break;
+        case 'slash': drawSlashArc(ctx, f.x, f.y, f.radius, f.angle, f.spread, f.color, p, { strokes: f.strokes }); break;
         case 'ring': drawRing(ctx, f.x, f.y, f.radius, f.color, p, { fill: f.fill, width: f.kind === 'ring' ? 7 : 5 }); break;
         case 'telegraph': break; // hazards render their own
         case 'impact': drawImpact(ctx, f.x, f.y, f.radius, f.color, p); break;

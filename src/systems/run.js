@@ -136,7 +136,7 @@ export class Run {
     return {
       def, index, id: def.id, rank: 1, cd: 0, charges: Math.max(1, def.params?.charges || 1),
       maxCharges: Math.max(1, def.params?.charges || 1),
-      branch: null,
+      branch: null, recharge: 0, rechargeDuration: 0,
     };
   }
 
@@ -196,6 +196,7 @@ export class Run {
       for (const slot of this.slots) {
         if (!slot) continue;
         const defensive = slot.def.category === 'defense' || slot.def.category === 'heal' || slot.def.category === 'mobility';
+        slot.recharge = defensive ? 0 : slot.recharge * 0.5;
         slot.cd = defensive ? 0 : slot.cd * 0.5;
         if (defensive) slot.charges = slot.maxCharges;
       }
@@ -431,6 +432,7 @@ export class Run {
     this.updatePlayer(dt, input);
     this.resolveWallCollisions();
     this.updateDash(dt);
+    this.updatePhantomStep(dt);
     this.updateSkillCooldowns(dt);
     this.updateEnemies(dt);
     this.updateBosses(dt);
@@ -506,6 +508,7 @@ export class Run {
 
   updatePlayer(dt, input) {
     const p = this.player;
+    p.dashTime = Math.max(0, (p.dashTime || 0) - dt);
     if (!p.alive) return;
     const moving = !!(input && (input.moveX || input.moveY));
     const mvx = input?.moveX || 0;
@@ -586,7 +589,7 @@ export class Run {
     return this.state !== RUN_STATE.FIGHT && this.state !== RUN_STATE.INTRO;
   }
 
-  dashTo(p, dx, dy, targetX, targetY) {
+  dashTo(p, dx, dy, targetX, targetY, impact = null) {
     // Move the player along a straight line over a few fixed sub-steps so a dash
     // can never tunnel through an enemy or the arena bounds.
     this.dashQueue = this.dashQueue || [];
@@ -594,8 +597,10 @@ export class Run {
       fromX: p.x, fromY: p.y,
       toX: clamp(targetX, PLAY.left, PLAY.right),
       toY: clamp(targetY, PLAY.top, PLAY.bottom),
-      t: 0, duration: 0.14,
+      t: 0, duration: impact?.duration || 0.14, impact, hitIds: new Set(), trailTimer: 0,
     });
+    p.dashTime = Math.max(p.dashTime, impact?.duration || 0.14);
+    p.facing = dx >= 0 ? 1 : -1;
   }
 
   updateDash(dt) {
@@ -603,13 +608,46 @@ export class Run {
     const p = this.player;
     for (let i = this.dashQueue.length - 1; i >= 0; i--) {
       const d = this.dashQueue[i];
+      const oldX = p.x, oldY = p.y;
       d.t += dt;
       const k = Math.min(1, d.t / d.duration);
       const ease = 1 - Math.pow(1 - k, 3);
       p.x = d.fromX + (d.toX - d.fromX) * ease;
       p.y = d.fromY + (d.toY - d.fromY) * ease;
+      if (d.impact) {
+        const vx = p.x - oldX, vy = p.y - oldY;
+        const len2 = vx * vx + vy * vy;
+        for (const e of this.enemies) {
+          if (e.dead || d.hitIds.has(e.uid)) continue;
+          const u = len2 ? clamp(((e.x - oldX) * vx + (e.y - oldY) * vy) / len2, 0, 1) : 0;
+          const ex = oldX + vx * u, ey = oldY + vy * u;
+          if (dist2(ex, ey, e.x, e.y) > (d.impact.radius + e.radius) ** 2) continue;
+          d.hitIds.add(e.uid);
+          this.skillHit(e, d.impact.def, d.impact.power, d.impact.rv, Math.atan2(d.toY - d.fromY, d.toX - d.fromX));
+          this.emit('fx:impact', { x: e.x, y: e.y, radius: 28, color: d.impact.def.icon.tint });
+        }
+        d.trailTimer -= dt;
+        if (d.trailTimer <= 0) { d.trailTimer = 0.045; this.emit('fx:dashTrail', { x: p.x, y: p.y, color: d.impact.def.icon.tint }); }
+      }
       if (k >= 1) this.dashQueue.splice(i, 1);
     }
+  }
+
+  updatePhantomStep(dt) {
+    const ghost = this.phantomStep;
+    if (!ghost) return;
+    ghost.t += dt;
+    if (ghost.t + 1e-9 < ghost.delay) return;
+    const p = this.player;
+    this.phantomStep = null;
+    this.emit('fx:blink', { x: p.x, y: p.y, x2: ghost.x, y2: ghost.y, color: ghost.def.icon.tint });
+    if (ghost.rv.decoy || ghost.rv.decoyBoom) {
+      this.arcDamage(ghost.originX, ghost.originY, 74, 74, p.facing, TAU, ghost.def,
+        ghost.power * (ghost.rv.decoyBoom ? 1 : ghost.rv.decoy), {}, true);
+      this.emit('fx:nova', { x: ghost.originX, y: ghost.originY, radius: 74, color: ghost.def.icon.tint });
+    }
+    p.x = ghost.x; p.y = ghost.y;
+    p.invuln = Math.max(p.invuln, ghost.rv.invuln || ghost.def.params.invuln || 0.2);
   }
 
   dashPlayer() {
@@ -673,28 +711,23 @@ export class Run {
   updateSkillCooldowns(dt) {
     for (const slot of this.slots) {
       if (!slot) continue;
-      const cdrMul = 1 - this.stats.cdr;
-      if (slot.cd > 0) {
-        slot.cd = Math.max(0, slot.cd - dt);
-        if (slot.cd === 0) {
-          // Single-charge skills must become visibly ready again after cooldown.
-          if (slot.maxCharges === 1) slot.charges = 1;
+      if (slot.charges < slot.maxCharges && slot.recharge > 0) {
+        slot.recharge -= dt;
+        while (slot.recharge <= 0 && slot.charges < slot.maxCharges) {
+          slot.charges++;
           this.emit('skill:ready', { slot: slot.index, id: slot.id });
+          if (slot.charges < slot.maxCharges) slot.recharge += slot.rechargeDuration;
+          else slot.recharge = 0;
         }
       }
-      if (slot.recharge > 0) {
-        slot.recharge -= dt * cdrMul;
-        if (slot.recharge <= 0) { slot.recharge = 0; slot.charges = Math.min(slot.maxCharges, slot.charges + 1); }
-      }
-      void cdrMul;
+      slot.cd = slot.charges > 0 ? 0 : Math.max(0, slot.recharge);
     }
   }
 
   canCast(slot) {
     if (!slot || this.state !== RUN_STATE.FIGHT) return false;
     const def = slot.def;
-    if (slot.charges <= 0 && slot.cd > 0) return false;
-    if (slot.cd > 0) return false;
+    if (slot.charges <= 0 || slot.cd > 0) return false;
     if (this.energy < def.cost) return false;
     if (def.params?.facing && !this.nearestEnemy(this.player.x, this.player.y, 999)) return false;
     return true;
@@ -723,9 +756,10 @@ export class Run {
         (this.slotsTimeouts ||= []).push({ at: this.time + windup, fn: () => this.executeSkill(slot, values, i) });
       } else this.executeSkill(slot, values, i);
     }
-    slot.cd = Math.max(0.1, values.cd * (1 - this.stats.cdr) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed'))));
+    const cooldown = Math.max(0.1, values.cd * (1 - this.stats.cdr) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed'))));
     slot.charges = Math.max(0, slot.charges - 1);
-    if (slot.maxCharges > 1 && slot.charges < slot.maxCharges && slot.recharge <= 0) slot.recharge = values.cd;
+    if (slot.recharge <= 0) { slot.recharge = cooldown; slot.rechargeDuration = cooldown; }
+    slot.cd = slot.charges > 0 ? 0 : slot.recharge;
     this.statsTotals.casts++;
     if (this.cat.passive.id === 'starlit') this.energy = Math.min(this.stats.energyMax, this.energy + 8);
     if (this.cat.passive.id === 'scheme') {
@@ -762,11 +796,12 @@ export class Run {
       case 'melee': {
         emitCast();
         const facing = target ? (target.x >= p.x ? 1 : -1) : p.facing;
+        p.facing = facing; p.attackAnim = 1;
         const arcR = values.range * area;
         const hits = rv.hits || def.params.hits || 1;
         for (let h = 0; h < hits; h++) {
-          const swingDir = facing * (h % 2 ? -0.55 : 0.35);
-          this.emit('fx:slash', { x: p.x, y: p.y - 24, facing: Math.sign(swingDir), crit: false, skill: true, angle: swingDir, radius: arcR });
+          const swingDir = facing > 0 ? 0 : Math.PI;
+          this.emit('fx:slash', { x: p.x, y: p.y - 24, facing, crit: false, skill: true, angle: swingDir, radius: arcR, strokes: def.id === 'claw_slash' ? 1 : 3 });
           this.arcDamage(p.x, p.y, arcR, arcR, facing, def.params.arc || 1.2, def, power, rv);
         }
         break;
@@ -774,15 +809,16 @@ export class Run {
       case 'combo': {
         emitCast();
         const count = rv.count || def.params.hits || 3;
+        const radius = values.range * area;
         for (let i = 0; i < count; i++) {
-          const t = this.slotsTimeouts = this.slotsTimeouts || [];
-          t.push({ at: this.time + i * (def.params.gap || 0.12), fn: () => {
-            const tgt = this.nearestEnemy(p.x, p.y, 150);
-            if (!tgt) return;
-            this.hitEnemy(tgt, this.skillDamage(def, power), { source: 'skill', crit: this.rng.chance(this.stats.crit) });
-            this.emit('fx:slash', { x: tgt.x, y: tgt.y - 18, facing: tgt.x > p.x ? 1 : -1, skill: true, radius: 150 * SKILL_HITBOX });
-            if (i === count - 1 && rv.knock) this.knockback(tgt, rv.knock);
-            if (rv.energyOnHit) this.energy = Math.min(this.stats.energyMax, this.energy + rv.energyOnHit);
+          (this.slotsTimeouts ||= []).push({ at: this.time + i * (def.params.gap || 0.12), fn: () => {
+            p.attackAnim = 1;
+            const hit = this.arcDamage(p.x, p.y, radius, radius, p.facing, TAU, def, power,
+              { ...rv, knock: i === count - 1 ? rv.knock : 0 }, true);
+            this.emit('fx:nova', { x: p.x, y: p.y, radius, color: def.icon.tint });
+            this.emit('fx:slash', { x: p.x, y: p.y - 24, facing: p.facing, skill: true,
+              angle: (p.facing > 0 ? 0 : Math.PI) + (i - 1) * 0.4, radius, strokes: 1 });
+            if (hit && rv.energyOnHit) this.energy = Math.min(this.stats.energyMax, this.energy + rv.energyOnHit);
           } });
         }
         break;
@@ -793,8 +829,9 @@ export class Run {
         const dx = target ? Math.cos(dir) : p.facing;
         const dy = target ? Math.sin(dir) * 0.4 : 0;
         p.invuln = Math.max(p.invuln, def.params.invuln ? 0.35 : 0.1);
-        this.dashTo(p, dx, dy, p.x + dx * values.range * area * potency, p.y + dy * values.range * area * potency);
-        this.arcDamage(p.x, p.y, 78 * area, 78 * area, p.facing, TAU, def, power, rv, true);
+        const impact = def.id === 'pounce' ? { def, power, rv, radius: 30 * area, duration: def.params.duration } : null;
+        this.dashTo(p, dx, dy, p.x + dx * values.range * area * potency, p.y + dy * values.range * area * potency, impact);
+        if (!impact) this.arcDamage(p.x, p.y, 78 * area, 78 * area, p.facing, TAU, def, power, rv, true);
         this.emit('fx:dashTrail', { x: p.x, y: p.y, color: def.icon.tint });
         break;
       }
@@ -805,6 +842,11 @@ export class Run {
         const len = Math.hypot(dx, dy) || 1;
         const nx = clamp(p.x + (dx / len) * values.range * area * potency, PLAY.left, PLAY.right);
         const ny = clamp(p.y + (dy / len) * values.range * area * potency * 0.6, PLAY.top, PLAY.bottom);
+        if (def.id === 'phantom_step') {
+          this.phantomStep = { x: nx, y: ny, originX: p.x, originY: p.y, t: 0, delay: 1, def, power, rv };
+          this.emit('fx:phantom', { x: nx, y: ny, color: def.icon.tint });
+          break;
+        }
         this.emit('fx:blink', { x: p.x, y: p.y, x2: nx, y2: ny, color: def.icon.tint });
         p.x = nx; p.y = ny;
         p.invuln = Math.max(p.invuln, def.params.invuln || 0.2);
@@ -824,7 +866,8 @@ export class Run {
             radius: def.params.explode ? 9 : 6,
             pierce: (rv.pierce || def.params.pierce || 0) + this.mods.skillPierce,
             homing: def.params.homing || 0,
-            explode: def.params.explode ? def.params.explode * (rv.blast || 1) * area : 0,
+            explode: def.params.explode ? (def.params.blast || def.params.explode) * (rv.blast || 1) * area : 0,
+            burnDps: def.id === 'fireball' ? this.skillDamage(def, power) * 0.12 : 0,
             burn: !!rv.burnZone, tint: def.icon.tint, shape: def.icon.glyph,
             source: 'skill', owner: 'player', life: 2.6, knock: def.pattern === 'fish' ? 220 : 0,
           });
@@ -935,7 +978,7 @@ export class Run {
         const dmg = this.skillDamage(def, power) * (frac <= threshold ? 6 : 1);
         this.hitEnemy(tgt, dmg, { source: 'skill', crit: true });
         this.emit('fx:execute', { x: tgt.x, y: tgt.y - 20, kill: frac <= threshold });
-        if (frac <= threshold && rv.resetKill) { slot.cd = 0; }
+        if (frac <= threshold && rv.resetKill && tgt.dead) { slot.cd = 0; slot.charges = slot.maxCharges; slot.recharge = 0; }
         break;
       }
       case 'mark': {
@@ -1229,29 +1272,32 @@ export class Run {
         if (Math.abs(a) > arc / 2) continue;
       }
       hitAny = true;
-      const res = computeDamage({
-        base: def ? this.skillDamage(def, power) : power, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg,
-        roll: this.rng.float(), forceCrit: this.consumeForceCrit(),
-        execute: this.mods.execute, amp: e.mark || 0,
-        targetHpFrac: e.hp / e.hpMax,
-      });
-      this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
-      if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, 3);
-      if (rv.stun || def?.params?.freeze) e.stun = Math.max(e.stun, (rv.stun || def.params.freeze) * (def ? this.skillPotency(def) : 1));
-      if (def?.params?.slow) this.applyStatus(e, 'slow', clamp(def.params.slow * this.skillPotency(def), 0, 0.9), def.params.slowTime || 2);
-      if (rv.knock) this.knockback(e, rv.knock);
-      if (def?.params?.knock) this.knockback(e, def.params.knock * (1 + this.mods.knock));
-      const leech = rv.lifesteal || def?.params?.lifesteal || 0;
-      if (leech) this.heal(res.damage * leech, { silent: true });
-      if (rv.execute && (e.hp / e.hpMax) < rv.execute && !e.boss) this.hitEnemy(e, e.hp + 1, { source: 'execute', silent: true });
+      this.skillHit(e, def, power, rv);
     }
     if (!hitAny) this.emit('fx:whiff', { x, y });
     return hitAny;
   }
 
-  knockback(enemy, force) {
+  skillHit(e, def, power, rv = {}, knockAngle = null) {
+    const res = computeDamage({
+      base: def ? this.skillDamage(def, power) : power, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg,
+      roll: this.rng.float(), forceCrit: this.consumeForceCrit(),
+      execute: this.mods.execute, amp: e.mark || 0,
+      targetHpFrac: e.hp / e.hpMax,
+    });
+    this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
+    if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, 3);
+    if (rv.stun || def?.params?.freeze) e.stun = Math.max(e.stun, (rv.stun || def.params.freeze) * (def ? this.skillPotency(def) : 1));
+    if (def?.params?.slow) this.applyStatus(e, 'slow', clamp(def.params.slow * this.skillPotency(def), 0, 0.9), def.params.slowTime || 2);
+    if (rv.knock) this.knockback(e, rv.knock, knockAngle);
+    if (def?.params?.knock) this.knockback(e, def.params.knock * (1 + this.mods.knock), knockAngle);
+    const leech = rv.lifesteal || def?.params?.lifesteal || 0;
+    if (leech) this.heal(res.damage * leech, { silent: true });
+    if (rv.execute && (e.hp / e.hpMax) < rv.execute && !e.boss) this.hitEnemy(e, e.hp + 1, { source: 'execute', silent: true });
+  }
+  knockback(enemy, force, knockAngle = null) {
     if (enemy.boss) return;
-    const a = angle(this.player.x, this.player.y, enemy.x, enemy.y);
+    const a = knockAngle ?? angle(this.player.x, this.player.y, enemy.x, enemy.y);
     enemy.knockX = (enemy.knockX || 0) + Math.cos(a) * force;
     enemy.knockY = (enemy.knockY || 0) + Math.sin(a) * force * 0.4;
     enemy.knockT = 0.24;
@@ -1307,6 +1353,7 @@ export class Run {
     if (type === 'bleed') { enemy.bleed = Math.max(enemy.bleed, power); enemy.bleedTime = Math.max(enemy.bleedTime, time); }
     else if (type === 'slow') { enemy.slow = Math.max(enemy.slow, power); enemy.slowTime = Math.max(enemy.slowTime, time); }
     else if (type === 'poison') { enemy.poison = Math.max(enemy.poison, power); enemy.poisonTime = Math.max(enemy.poisonTime, time); }
+    else if (type === 'burn') { enemy.burn = Math.max(enemy.burn || 0, power); enemy.burnTime = Math.max(enemy.burnTime || 0, time); }
   }
 
   killEnemy(enemy, opts = {}) {
@@ -1351,7 +1398,7 @@ export class Run {
     if (this.pendingRefund === enemy.uid) {
       this.pendingRefund = null;
       const slot = this.slots.find((s) => s) ;
-      if (slot) slot.cd = 0;
+      if (slot) { slot.cd = 0; slot.charges = slot.maxCharges; slot.recharge = 0; }
     }
   }
 
@@ -1368,6 +1415,19 @@ export class Run {
     for (const e of this.enemies) {
       if (e.dead) { e.deathT += dt; continue; }
       e.hurt = Math.max(0, e.hurt - dt * 4);
+      if (e.knockT > 0) {
+        const step = Math.min(dt, e.knockT);
+        e.knockT = Math.max(0, e.knockT - dt);
+        e.x = clamp(e.x + (e.knockX || 0) * step, PLAY.left, PLAY.right);
+        e.y = clamp(e.y + (e.knockY || 0) * step, PLAY.top, PLAY.bottom);
+        if (e.knockT === 0) { e.knockX = 0; e.knockY = 0; }
+      }
+      if (e.burnTime > 0) {
+        const step = Math.min(dt, e.burnTime);
+        e.burnTime = Math.max(0, e.burnTime - dt);
+        this.hitEnemy(e, e.burn * step, { source: 'burn', tick: true, silent: true });
+        if (e.dead) continue;
+      }
       if (e.stun > 0) { e.stun -= dt; continue; }
       if (e.slowTime > 0) { e.slowTime -= dt; if (e.slowTime <= 0) e.slow = 0; }
       if (e.poisonTime > 0) { e.poisonTime -= dt; this.hitEnemy(e, e.poison * dt, { tick: true, silent: true }); if (e.dead) continue; }
@@ -1515,11 +1575,6 @@ export class Run {
           wantX = Math.cos(dirToPlayer); wantY = Math.sin(dirToPlayer) * 0.6;
       }
 
-      if (e.knockT > 0) {
-        e.knockT -= dt;
-        e.x += (e.knockX || 0) * dt;
-        e.y += (e.knockY || 0) * dt;
-      }
       const sp = e.speed * speedMul;
       const prevX = e.x;
       const prevY = e.y;
@@ -2305,7 +2360,7 @@ export class Run {
       shape: opt.shape || 'orb', homing: opt.homing || 0, explode: opt.explode || 0,
       boomerang: !!opt.boomerang, travel: opt.travel || 0, phase: 0,
       root: opt.root || 0, lifesteal: opt.lifesteal || 0, wide: !!opt.wide,
-      knock: opt.knock || 0, burn: !!opt.burn, alive: true,
+      knock: opt.knock || 0, burn: !!opt.burn, burnDps: opt.burnDps || 0, alive: true,
     };
     this.projectiles.push(p);
     return p;
@@ -2352,6 +2407,7 @@ export class Run {
             pr.hits.add(e.uid);
             const res = computeDamage({ base: pr.damage, atk: 1, crit: this.stats.crit, critDmg: this.stats.critDmg, roll: this.rng.float(), amp: e.mark || 0, targetHpFrac: e.hp / e.hpMax, forceCrit: this.consumeForceCrit(), execute: this.mods.execute });
             this.hitEnemy(e, res.damage, { source: pr.source, crit: res.isCrit });
+            if (pr.burnDps > 0) this.applyStatus(e, 'burn', pr.burnDps, 3);
             if (pr.root) { e.root = Math.max(e.root, pr.root); }
             if (pr.lifesteal) this.heal(res.damage * pr.lifesteal, { silent: true });
             if (pr.knock) this.knockback(e, pr.knock);
@@ -2374,6 +2430,7 @@ export class Run {
       if (e.dead) continue;
       if (dist2(pr.x, pr.y, e.x, e.y - 12) < (pr.explode + e.radius) ** 2) {
         this.hitEnemy(e, pr.damage * 0.7, { source: 'blast' });
+        if (pr.burnDps > 0) this.applyStatus(e, 'burn', pr.burnDps, 3);
       }
     }
     if (pr.burn) this.zones.push({ kind: 'fire', x: pr.x, y: pr.y, radius: pr.explode * 0.8, time: 2.6, t: 0, dps: pr.damage * 0.5, tint: '#ff8f4d' });
@@ -2669,7 +2726,7 @@ export class Run {
     for (const up of UPGRADES) {
       const have = this.upgradeLevel(up.id);
       if (have >= up.max) continue;
-      pool.push(up);
+      pool.push({ ...up, level: have });
     }
     // rank-ups for equipped skills are the strongest kind of pick
     const skillUps = this.slots.filter((s) => s && s.rank < (s.def.ranks?.length || 1));
@@ -2718,7 +2775,12 @@ export class Run {
     this.discover('world:levelup');
     if (offer.type === 'skillup') {
       const slot = this.slots[offer.slot];
-      if (slot) slot.rank = offer.rank;
+      if (!slot || slot.id !== offer.skillId || offer.rank !== slot.rank + 1 || offer.rank > (slot.def.ranks?.length || 1)) return false;
+      slot.rank = offer.rank;
+      const maxCharges = Math.max(1, slot.def.params?.charges || 1, skillValues(slot.def, slot.rank).rankValues.charges || 1);
+      if (maxCharges > slot.maxCharges) slot.charges += maxCharges - slot.maxCharges;
+      slot.maxCharges = maxCharges;
+      if (slot.charges > 0) slot.cd = 0;
     } else {
       this.applyUpgrade(offer);
       this.upgradeLevels = this.upgradeLevels || {};

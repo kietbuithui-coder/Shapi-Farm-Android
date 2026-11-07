@@ -669,6 +669,12 @@ export class Game {
         if (id === 'back') return this.go('home');
         break;
       case 'skillScaling':
+        if (id === 'devEmbers') {
+          P.embers = Math.min(1e9, (P.embers || 0) + 1000);
+          this.store.saveNow();
+          audio.levelUp?.();
+          return;
+        }
         if (id === 'back') return this.go('settings', { return: this.settingsReturn });
         if (SCALE_SETTINGS.includes(id)) {
           this.sliderGrabbed = id;
