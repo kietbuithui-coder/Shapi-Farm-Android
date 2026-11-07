@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createCanvas } from '@napi-rs/canvas';
 import { Run, RUN_STATE } from '../src/systems/run.js';
 import { SKILL_ACTIONS, skillActionPose, actionDuration } from '../src/systems/skill-animation.js';
+import { SKILLS } from '../src/data/skills.js';
 import { drawCat } from '../src/art/catart.js';
 import { playerPose } from '../src/art/actors.js';
 import { addTrainingDummy } from './harness.mjs';
@@ -25,6 +26,10 @@ function silhouette(run, id, elapsed, facing = 1) {
   return Uint8Array.from({ length: d.length / 4 }, (_, i) => d[i * 4 + 3] > 100 ? 1 : 0);
 }
 function diff(a, b) { let n = 0; for (let i=0; i<a.length; i++) if (a[i] !== b[i]) n++; return n; }
+
+test('every shipped skill has an authored body action', () => {
+  assert.deepEqual(Object.keys(SKILL_ACTIONS).sort(), SKILLS.map(s => s.id).sort());
+});
 
 test('committed skills animate distinct cat silhouettes through all phases in both directions without VFX', () => {
   const run = runWith(['meteor_paw']);
@@ -60,7 +65,7 @@ test('buffered skills reserve resources and execute FIFO after recovery', () => 
   assert.equal(run.castSlot(2).ok, false, 'the same reserved charge cannot be spent twice');
   tick(run, 0.15); assert.deepEqual(casts, ['meteor_paw']);
   // Even if all remaining energy is spent, accepted inputs keep their reservation.
-  run.energy = 0; tick(run, 0.6);
+  run.energy = 0; tick(run, 0.75);
   assert.deepEqual(casts, ['meteor_paw', 'claw_slash', 'pounce', 'flying_fish']);
   assert.equal(run.skillQueue.length, 0); assert.equal(run.slots[2].reserved, 0);
   assert.ok(run.slots[2].recharge > 0 && energyAfterReservations >= 0);

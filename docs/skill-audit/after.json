@@ -51,7 +51,7 @@
         },
         {
           "dmg": 1,
-          "note": "Chảy máu",
+          "note": "Chảy máu 3 giây theo sát thương",
           "status": "bleed"
         }
       ],
@@ -63,8 +63,8 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.025s, active 0.035s, recovery 0.04s",
+      "recovery": "0.04s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -485,48 +485,48 @@
       "trials": {
         "single": {
           "cast": true,
-          "damage": 37.32,
+          "damage": 37.2,
           "burst1s": 22.27,
           "maxHit": 16.2,
           "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 10.98
+          "normalizedDamagePerCooldown": 10.94
         },
         "group": {
           "cast": true,
-          "damage": 108.88,
+          "damage": 108.53,
           "burst1s": 63.73,
           "maxHit": 16.13,
           "firstHit": 0.12,
           "targetsHit": 3,
-          "normalizedDamagePerCooldown": 32.02
+          "normalizedDamagePerCooldown": 31.92
         },
         "elite": {
           "cast": true,
-          "damage": 35.85,
+          "damage": 35.73,
           "burst1s": 20.8,
           "maxHit": 14.73,
           "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 10.54
+          "normalizedDamagePerCooldown": 10.51
         },
         "boss": {
           "cast": true,
-          "damage": 37.32,
+          "damage": 37.2,
           "burst1s": 22.27,
           "maxHit": 16.2,
           "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 10.98
+          "normalizedDamagePerCooldown": 10.94
         },
         "moving": {
           "cast": true,
-          "damage": 37.32,
+          "damage": 37.2,
           "burst1s": 22.27,
           "maxHit": 16.2,
           "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 10.98
+          "normalizedDamagePerCooldown": 10.94
         }
       }
     },
@@ -4118,16 +4118,16 @@
       "trials": {
         "single": {
           "cast": true,
-          "damage": 24.04,
+          "damage": 24.01,
           "burst1s": 15.7,
           "maxHit": 14.29,
           "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 4.81
+          "normalizedDamagePerCooldown": 4.8
         },
         "group": {
           "cast": true,
-          "damage": 22.8,
+          "damage": 22.78,
           "burst1s": 14.46,
           "maxHit": 13.06,
           "firstHit": 0.12,
@@ -4136,21 +4136,21 @@
         },
         "elite": {
           "cast": true,
-          "damage": 22.75,
+          "damage": 22.72,
           "burst1s": 14.4,
           "maxHit": 13,
           "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 4.55
+          "normalizedDamagePerCooldown": 4.54
         },
         "boss": {
           "cast": true,
-          "damage": 24.04,
+          "damage": 24.01,
           "burst1s": 15.7,
           "maxHit": 14.29,
           "firstHit": 0.12,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 4.81
+          "normalizedDamagePerCooldown": 4.8
         },
         "moving": {
           "cast": true,
@@ -5158,25 +5158,25 @@
       "trials": {
         "single": {
           "cast": true,
-          "damage": 23.86,
+          "damage": 23.84,
           "burst1s": 20.85,
           "maxHit": 10.48,
           "firstHit": 0.28,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 1.33
+          "normalizedDamagePerCooldown": 1.32
         },
         "group": {
           "cast": true,
-          "damage": 117.17,
+          "damage": 117.07,
           "burst1s": 102.12,
           "maxHit": 10.44,
           "firstHit": 0.28,
           "targetsHit": 5,
-          "normalizedDamagePerCooldown": 6.51
+          "normalizedDamagePerCooldown": 6.5
         },
         "elite": {
           "cast": true,
-          "damage": 23.73,
+          "damage": 23.71,
           "burst1s": 20.72,
           "maxHit": 10.35,
           "firstHit": 0.28,
@@ -5185,16 +5185,16 @@
         },
         "boss": {
           "cast": true,
-          "damage": 23.86,
+          "damage": 23.84,
           "burst1s": 20.85,
           "maxHit": 10.48,
           "firstHit": 0.28,
           "targetsHit": 1,
-          "normalizedDamagePerCooldown": 1.33
+          "normalizedDamagePerCooldown": 1.32
         },
         "moving": {
           "cast": true,
-          "damage": 14.07,
+          "damage": 14.05,
           "burst1s": 11.31,
           "maxHit": 10.48,
           "firstHit": 0.28,

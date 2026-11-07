@@ -79,7 +79,7 @@ test('mana cooldown bonus only applies to casts made during the buff, cannot sta
   const r=setup(['mana_snack','claw_slash','pounce'],[3,1,1]);r.mods.echo=1;foe(r);r.castSlot(0);release(r);
   assert.equal(r.player.buffs.filter(b=>b.cdr).length,2);near(r.buffValue('cdr'),.12);
   r.player.skillAction=null;r.castSlot(1);near(r.slots[1].rechargeDuration,.34*.88/Math.sqrt(r.stats.atkSpeed));
-  r.updateBuffs(8.01);r.castSlot(2);near(r.slots[2].rechargeDuration,4.5/Math.sqrt(r.stats.atkSpeed));
+  r.updateBuffs(8.01);r.updateSkillAction(.11);r.castSlot(2);near(r.slots[2].rechargeDuration,4.5/Math.sqrt(r.stats.atkSpeed));
   const capped=setup(['mana_snack','claw_slash'],[3,1]);capped.stats.cdr=.58;foe(capped);capped.castSlot(0);release(capped);
   capped.player.skillAction=null;capped.castSlot(1);near(capped.slots[1].rechargeDuration,.34*.4/Math.sqrt(capped.stats.atkSpeed));
 });

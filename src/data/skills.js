@@ -28,7 +28,7 @@ export const SKILLS = [
     id: 'claw_slash', category: 'physical', rarity: 'common', pattern: 'melee',
     name: { vi: 'Vuốt Sắc', en: 'Claw Slash' },
     desc: { vi: 'Vuốt một đường phía trước.', en: 'A single claw slash ahead.' },
-    cost: 0, cd: 0.34, range: 86, ranks: [R(1, 'Một đường vuốt'), R(1, 'Sát thương +15%', { mult: 1.15 }), R(1, 'Xa hơn', { range: 100 }), R(1, 'Sát thương +20%', { mult: 1.2 }), R(1, 'Chảy máu', { status: 'bleed' })],
+    cost: 0, cd: 0.34, range: 86, ranks: [R(1, 'Một đường vuốt'), R(1, 'Sát thương +15%', { mult: 1.15 }), R(1, 'Xa hơn', { range: 100 }), R(1, 'Sát thương +20%', { mult: 1.2 }), R(1, 'Chảy máu 3 giây theo sát thương', { status: 'bleed' })],
     params: { arc: 1.5, hits: 1, facing: true }, icon: { glyph: 'claw', tint: '#ffb27a' }, starter: true,
   },
   {

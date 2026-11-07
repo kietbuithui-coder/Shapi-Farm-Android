@@ -877,14 +877,19 @@ export class Run {
     switch (def.pattern) {
       case 'melee': {
         emitCast();
-        const facing = target ? (target.x >= p.x ? 1 : -1) : p.facing;
-        p.facing = facing; p.attackAnim = 1;
         const arcR = values.range * area;
+        // Extended claw reach can exceed the generic targeting assist. Prefer a
+        // reachable foe so an area upgrade never makes hits land behind the cat.
+        const meleeTarget = def.id === 'claw_slash'
+          ? this.nearestEnemy(p.x, p.y, Infinity, e => Math.hypot((e.x - p.x) * 0.9, e.y - p.y) <= arcR + e.radius) || target
+          : target;
+        const facing = meleeTarget ? (meleeTarget.x >= p.x ? 1 : -1) : p.facing;
+        p.facing = facing; p.attackAnim = 1;
         const hits = rv.hits || def.params.hits || 1;
         for (let h = 0; h < hits; h++) {
           const swingDir = facing > 0 ? 0 : Math.PI;
           this.emit('fx:slash', { x: p.x, y: p.y - 24, facing, crit: false, skill: true, angle: swingDir, radius: arcR, strokes: def.id === 'claw_slash' ? 1 : 3 });
-          this.arcDamage(p.x, p.y, arcR, arcR, facing, def.params.arc || 1.2, def, power, rv);
+          this.arcDamage(p.x, p.y, arcR, arcR, facing, def.params.arc || 1.2, def, power, rv, false, 'skill', def.id === 'claw_slash');
         }
         break;
       }
@@ -1545,8 +1550,9 @@ export class Run {
   }
 
   /* ── attacks ───────────────────────────────────────────────────────────── */
-  arcDamage(x, y, rx, ry, facing, arc, def, power, rv = {}, radial = false, source = 'skill') {
-    const reach = 1 + this.mods.skillArea;
+  arcDamage(x, y, rx, ry, facing, arc, def, power, rv = {}, radial = false, source = 'skill', areaScaled = false) {
+    // Some callers have already applied the skill-area upgrade to rx.
+    const reach = areaScaled ? 1 : 1 + this.mods.skillArea;
     const list = this.enemies.filter((e) => !e.dead);
     let hitAny = false;
     for (const e of list) {
@@ -1575,7 +1581,12 @@ export class Run {
     });
     const hpBefore = e.hp;
     const dealt = this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
-    if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, rv.bleedTime || 3);
+    if (rv.status === 'bleed' || def?.params?.status === 'bleed') {
+      // Claw's rank-five bleed scales with the same damage stat and coefficient
+      // as its hit, but does not roll a second crit or on-hit effect.
+      const bleed = def?.id === 'claw_slash' ? this.skillDamage(def, power) * 0.55 : 7;
+      if (bleed > 0) this.applyStatus(e, 'bleed', bleed, rv.bleedTime || 3);
+    }
     if (def?.params?.bleed === true) this.applyStatus(e, 'bleed', this.skillDamage(def, power) * 0.12, 3);
     if (def?.id === 'blood_fang' && !e.dead) {
       e.bloodFangStacks = Math.min(3, (e.bloodFangStackTime > 0 ? e.bloodFangStacks || 0 : 0) + 1);
@@ -1751,7 +1762,12 @@ export class Run {
       if (e.slowTime > 0) { e.slowTime -= dt; if (e.slowTime <= 0) e.slow = 0; }
       if (e.revealTime > 0) e.revealTime = Math.max(0, e.revealTime - dt);
       if (e.poisonTime > 0) { e.poisonTime -= dt; this.hitEnemy(e, e.poison * dt, { tick: true, silent: true }); if (e.dead) continue; }
-      if (e.bleedTime > 0) { e.bleedTime -= dt; this.hitEnemy(e, e.bleed * dt, { tick: true, silent: true }); if (e.dead) continue; }
+      if (e.bleedTime > 0) {
+        const elapsed = Math.min(dt, e.bleedTime);
+        e.bleedTime = Math.max(0, e.bleedTime - dt);
+        this.hitEnemy(e, e.bleed * elapsed, { tick: true, silent: true });
+        if (e.dead) continue;
+      }
       if (e.bloodFangStackTime > 0) { e.bloodFangStackTime -= dt; if (e.bloodFangStackTime <= 0) e.bloodFangStacks = 0; }
       if (e.markTime > 0) {
         const elapsed = Math.min(dt, e.markTime);

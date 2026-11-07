@@ -259,6 +259,16 @@ export const SKILL_ACTIONS = {
       [0.26, {}],
     ],
   },
+  claw_slash: {
+    // This starter fires immediately; the whole pose fits the minimum cooldown.
+    startup: 0.025, active: 0.035, recovery: 0.04, windup: 0,
+    frames: [
+      [0,     { crouch: 0.10, lean: -0.12, frontX: -4, frontY: 2, backX: -2, backY: 2 }],
+      [0.023, { crouch: 0.62, lean: -0.43, bodyRoll: -0.24, frontX: -23, frontY: -19, backX: -19, backY: 15, headTilt: -0.25 }],
+      [0.049, { crouch: 0.64, lean: 0.55, bodyRoll: 0.30, frontX: 35, frontY: 14, backX: -28, backY: -23, headTilt: 0.25 }],
+      [0.10, {}],
+    ],
+  },
   hex_brand: {
     // Utility mark resolves immediately; the pose is a quick casting flourish.
     startup: 0.07, active: 0.08, recovery: 0.08, windup: 0,
