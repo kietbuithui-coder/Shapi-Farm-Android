@@ -19,7 +19,7 @@ export function poseDefaults(p = {}) {
   return {
     t: 0, gait: 0, lean: 0, squash: 1, headTilt: 0, tail: 0, ears: 0, blink: 0,
     mouth: 0, crouch: 0, hurt: 0, dead: 0, attack: 0, cast: 0, dash: 0,
-    airborne: 0, range: 0, charge: 0, ...p,
+    airborne: 0, range: 0, charge: 0, frontX: 0, frontY: 0, backX: 0, backY: 0, bodyRoll: 0, ...p,
   };
 }
 
@@ -563,7 +563,7 @@ export function drawCat(ctx, cat, poseIn = {}, opts = {}) {
   ctx.fill();
   ctx.restore();
 
-  ctx.rotate(pose.hurt * 0.12 - pose.dead * 0.9 + (pose.airborne ? -0.1 : 0));
+  ctx.rotate(pose.hurt * 0.12 - pose.dead * 0.9 + (pose.airborne ? -0.1 : 0) + pose.bodyRoll);
 
   // ── tail (behind)
   drawTail(ctx, cat, pose, -4, hipY - 6, 1);
@@ -574,8 +574,8 @@ export function drawCat(ctx, cat, poseIn = {}, opts = {}) {
   paw(ctx, -11 + farLegSwing * 0.6, -1.5, 5.4, rgbCss(shade(base, -0.34)), 1.7);
 
   const farArmSwing = -step * 5 * gait;
-  limb(ctx, 4, shoulderY + 3, 6 + farArmSwing * 0.6 - pose.cast * 6, shoulderY + 14 + farArmSwing, 4.8, 3.8, { x: 4, y: 2 }, rgbCss(shade(base, -0.26)));
-  paw(ctx, 6 + farArmSwing * 0.6 - pose.cast * 6, shoulderY + 15.2 + farArmSwing, 4.1, rgbCss(shade(base, -0.3)), 1.6);
+  limb(ctx, 4, shoulderY + 3, 6 + farArmSwing * 0.6 - pose.cast * 6 + pose.backX, shoulderY + 14 + farArmSwing + pose.backY, 4.8, 3.8, { x: 4, y: 2 }, rgbCss(shade(base, -0.26)));
+  paw(ctx, 6 + farArmSwing * 0.6 - pose.cast * 6 + pose.backX, shoulderY + 15.2 + farArmSwing + pose.backY, 4.1, rgbCss(shade(base, -0.3)), 1.6);
 
   // ── near hind leg with haunch
   ctx.beginPath();
@@ -670,14 +670,14 @@ export function drawCat(ctx, cat, poseIn = {}, opts = {}) {
   const armX = tw * 0.42 + 3;
   limb(
     ctx, armX * 0.4, shoulderY + 4,
-    armX + reach * 0.9 + armSwing * 0.5,
-    shoulderY + 15 - reach * 0.6 + armSwing - pose.attack * 5,
+    armX + reach * 0.9 + armSwing * 0.5 + pose.frontX,
+    shoulderY + 15 - reach * 0.6 + armSwing - pose.attack * 5 + pose.frontY,
     5.6, 4.4,
     { x: 3.6 + pose.attack * 3, y: 1.4 },
     rgbCss(shade(base, 0.02)),
   );
   paw(
-    ctx, armX + reach * 0.9 + armSwing * 0.5, shoulderY + 16.4 - reach * 0.6 + armSwing - pose.attack * 5,
+    ctx, armX + reach * 0.9 + armSwing * 0.5 + pose.frontX, shoulderY + 16.4 - reach * 0.6 + armSwing - pose.attack * 5 + pose.frontY,
     4.7, rgbCss(shade(base, 0.08)), 1.9,
   );
 

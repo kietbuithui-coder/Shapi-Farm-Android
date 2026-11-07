@@ -1,13 +1,13 @@
 # Kiểm kê và chỉnh skill — kết quả từng phần
 
-**Trạng thái:** đã kiểm kê 54/54 skill rank 1 và xử lý các lỗi được nêu dưới đây. Đây **không phải** bản hoàn thành toàn bộ rework: animation thân mèo riêng cho từng skill, đánh giá toàn bộ rank/tổ hợp, cân bằng endgame và playtest người thật vẫn chưa hoàn thành. Không xóa skill.
+**Trạng thái:** đã kiểm kê 54/54 skill rank 1 và xử lý các lỗi được nêu dưới đây. Đây **không phải** bản hoàn thành toàn bộ rework: animation thân mèo riêng cho 50 skill còn lại, đánh giá toàn bộ rank/tổ hợp, cân bằng endgame và playtest người thật vẫn chưa hoàn thành. Không xóa skill.
 
 ## Phương pháp và giới hạn
 
 - Trước chỉnh: mã commit `71fdd3a`; sau chỉnh: mã trong nhánh hiện tại. Chạy `node tools/skill-audit.mjs <đường-dẫn.json>`. Hai tệp [before.json](before.json) và [after.json](after.json) ghi cả 54 skill, params, rank, mô tả, cost, cooldown, range, damage, lần chạm đầu, sát thương trong 1 giây và cả 12 giây, số đích bị gây sát thương, cùng kịch bản đơn/nhóm/elite giả/boss giả/di chuyển.
 - Tabby, rank 1, seed 73, crit = 0, bước 1/60 giây; một lần bấm, 12 giây; bia bất tử cách 70px. Nhóm gồm 5 bia quanh người chơi (có bia ở phía sau); chọn mục tiêu và va chạm thật trong engine, có đẩy/kéo. Con số bao gồm DoT và summon phát sinh trong 12 giây nhưng không bao gồm giá trị thủ/khiên/hồi máu/di chuyển. Cùng một seed không thay thế phân bố nhiều seed.
 - Cột nhóm = **tổng của các bia**, không phải sát thương trên mỗi bia; số mục tiêu chỉ đếm bia mất máu, không đếm khống chế. Số 0 của skill utility không có nghĩa là vô dụng. Bia có cờ elite/boss không chạy AI boss; thử boss thật trong ma trận riêng, không dùng số bia để kết luận cân bằng boss. Di chuyển là input trái sau khi cast; engine chuẩn hóa input thành chạy hết tốc độ.
-- `damage/cd` là tỷ số lý thuyết một cast trên cooldown ghi trong data, không phải DPS vòng đánh, không tính hồi năng lượng, tốc đánh, hit/miss hoặc uptime. Lần chạm đầu là thời gian đo ở bố trí đó; dấu — là không gây damage, không phải thời gian animation. Windup/độ trễ trong bảng là giá trị định nghĩa, không phải clip animation được đo. Chưa có hợp đồng startup/active/recovery riêng cho từng thân mèo.
+- `damage/cd` là tỷ số lý thuyết một cast trên cooldown ghi trong data, không phải DPS vòng đánh, không tính hồi năng lượng, tốc đánh, hit/miss hoặc uptime. Lần chạm đầu là thời gian đo ở bố trí đó; dấu — là không gây damage, không phải thời gian animation. Windup/độ trễ trong bảng là giá trị định nghĩa, không phải clip animation được đo. Có startup/active/recovery riêng cho bốn skill ghi dưới đây; các skill khác chưa có hợp đồng animation thân riêng.
 
 ## Cách dùng ngân sách
 
@@ -23,20 +23,20 @@ Sát thương ghi **trước → sau**. `CĐ` là cooldown giây; `NL` là năng
 | Liên Vuốt `triple_scratch` | physical; AoE sustained | 4.1 / 12 / 140 | 0 / 0.02 | 27.61 → 27.61 | 133.07 → 133.07 / 5 | Ba nhát quét diện rộng quanh mèo, áp dụng hiệu ứng đòn đánh. | Giữ tạm; cần đánh giá tiếp. |
 | Vồ Mồi `pounce` | mobility; mobility / hybrid | 4.5 / 20 / 170 | 0 / 0.02 | 10.96 → 10.96 | 10.01 → 10.01 / 1 | Lao tới, húc văng kẻ địch trên đường. (knock:180) | Giữ tạm; cần đánh giá tiếp. |
 | Vuốt Xoáy `whirling_claws` | aoe; AoE / control | 5 / 28 / 118 | 0 / 0.02 | 12.39 → 12.39 | 57.43 → 57.43 / 5 | Xoay người, chém mọi thứ quanh mình. (knock:150) | Giữ tạm; cần đánh giá tiếp. |
-| Cắn Tàn Bạo `brutal_bite` | physical; single / frontal | 3.4 / 22 / 84 | 0 / 0 | 37.32 → 37.32 | 108.88 → 108.88 / 3 | Cú cắn nặng khiến mục tiêu chảy máu. | Giữ tạm; cần đánh giá tiếp. |
+| Cắn Tàn Bạo `brutal_bite` | physical; single / frontal | 3.4 / 22 / 84 | 0 / 0 | 37.32 → 37.32 | 108.88 → 108.88 / 3 | Cú cắn nặng khiến mục tiêu chảy máu. | Rank 3 kéo dài chảy máu như mô tả. |
 | Đâm Bóng `shadow_strike` | physical; reposition / single | 6 / 26 / 260 | 0 / 0 | 18 → 18 | 18 → 18 / 1 | Lướt sau lưng mục tiêu và đâm hiểm. | Giữ tạm; cần đánh giá tiếp. |
 | Sóng Vuốt `rending_wave` | physical; line projectile | 6.5 / 30 / 300 | 0.25 / 0.33 | 15.25 → 15.25 | 13.93 → 13.93 / 1 | Một nhát chém phóng ra thành sóng xung kích. | Giữ tạm; cần đánh giá tiếp. |
-| Đao Phủ `executioner` | physical; single / execute | 9 / 34 / 92 | 0.25 / 0.27 | 21.6 → 21.6 | 21.6 → 21.6 / 1 | Xử tử mục tiêu máu thấp, nếu không thì chém mạnh. | Giữ tạm; cần đánh giá tiếp. |
+| Đao Phủ `executioner` | physical; single / execute | 9 / 34 / 92 | 0.25 / 0.27 | 21.6 → 21.6 | 21.6 → 21.6 / 1 | Xử tử mục tiêu máu thấp, nếu không thì chém mạnh. | Có animation thân riêng và hồi động tác ngắn. |
 | Bước Ma `phantom_step` | mobility; mobility | 5.5 / 18 / 200 | 1 / — | 0 → 0 | 0 → 0 / 0 | Tạo bóng ma tại điểm đến, dịch chuyển sau 1 giây. | Giữ tạm; cần đánh giá tiếp. |
 | Vuốt Ảo Ảnh `arcane_paw` | magic; single / projectile | 0.52 / 0 / 420 | 0 / 0.1 | 9.53 → 9.53 | 0 → 0 / 0 | Bắn một dấu chân phép hướng về mục tiêu. | Giữ tạm; cần đánh giá tiếp. |
 | Cầu Lửa `fireball` | magic; single / projectile | 3.2 / 26 / 400 | 0 / 0.13 | 34.32 → 34.32 | 67.18 → 67.18 / 3 | Cầu lửa phát nổ và gây cháy nhẹ trong 3 giây. | Giữ tạm; cần đánh giá tiếp. |
 | Băng Tân `frost_nova` | control; AoE / control | 7 / 30 / 150 | 0 / 0.02 | 7.39 → 7.39 | 34.26 → 34.26 / 5 | Sóng băng làm chậm và đóng băng kẻ địch. (slow:0.45, slowTime:2.6, freeze:0.6) | Rank 3 dùng thời lượng đóng băng mới; CC theo loại địch. |
 | Sấm Gừ Gừ `thunder_purr` | magic; chain / multi | 5.5 / 28 / 300 | 0 / 0 | 10.35 → 10.35 | 19.46 → 19.46 / 2 | Tia sét nhảy giữa các mục tiêu gần nhau. | Giữ tạm; cần đánh giá tiếp. |
-| Thiên Thạch Mèo `meteor_paw` | aoe; delayed burst / AoE | 10 / 40 / 340 | 0.7 / 0.7 | 54 → 36 | 54 → 36 / 1 | Gọi một thiên thạch rơi xuống điểm chỉ định. | Sửa sát thương lặp theo frame; multiplier 3→4 để bù sau khi chỉ nổ một lần. |
-| Tia Trăng `lunar_beam` | magic; line burst | 9 / 38 / 420 | 0.18 / 0.18 | 198 → 28.8 | 198 → 28.8 / 1 | Chùm sáng trăng xuyên thẳng hàng địch. | Sửa sát thương lặp theo frame; multiplier 2.2→3.2; rank 4 làm chậm. |
-| Miệng Hố Đen `void_maw` | magic; AoE / pull | 14 / 52 / 320 | 0.25 / 1.27 | 32.76 → 32.76 | 163.8 → 163.8 / 5 | Mở hố đen hút kẻ địch vào rồi nuốt chửng. (pullTime:1) | Boss và miniboss miễn kéo; vẫn chịu vụ nổ nếu ở trong vùng. |
+| Thiên Thạch Mèo `meteor_paw` | aoe; delayed burst / AoE | 10 / 40 / 340 | 0.7 / 0.7 | 54 → 36 | 54 → 36 / 1 | Gọi một thiên thạch rơi xuống điểm chỉ định. | Sửa sát thương lặp frame; multiplier 3→4; animation thân riêng. |
+| Tia Trăng `lunar_beam` | magic; line burst | 9 / 38 / 420 | 0.18 / 0.18 | 198 → 28.8 | 198 → 28.8 / 1 | Chùm sáng trăng xuyên thẳng hàng địch. | Sửa sát thương lặp frame; multiplier 2.2→3.2; rank 4 làm chậm; animation thân riêng. |
+| Miệng Hố Đen `void_maw` | magic; AoE / pull | 14 / 52 / 320 | 0.25 / 1.27 | 32.76 → 32.76 | 163.8 → 163.8 / 5 | Mở hố đen hút kẻ địch vào rồi nuốt chửng. (pullTime:1) | Boss và miniboss miễn kéo; thêm animation thân riêng và hồi động tác ngắn. |
 | Ấn Nguyền `hex_brand` | utility; utility / synergy | 8 / 20 / 360 | 0 / — | 0 → 0 | 0 → 0 / 0 | Đóng ấn lên mục tiêu: nó nhận thêm sát thương. | Không còn nhân sát thương đòn cận chiến/đạn hai lần. |
-| Giếng Trọng Lực `gravity_well` | control; sustained / control | 9 / 32 / 320 | 0.25 / — | 0 → 0 | 0 → 0 / 0 | Vùng không gian níu chân mọi kẻ địch bên trong. (slow:0.6) | Giữ tạm; cần đánh giá tiếp. |
+| Giếng Trọng Lực `gravity_well` | control; sustained / control | 9 / 32 / 320 | 0.25 / — | 0 → 0 | 0 → 0 / 0 | Vùng không gian níu chân mọi kẻ địch bên trong. (slow:0.6) | Rank 3 kéo quái thường/elite; boss và miniboss không bị kéo. |
 | Đại Bác Búi Lông `hairball_cannon` | projectile; single / projectile | 2.2 / 16 / 340 | 0 / 0.12 | 11.91 → 11.91 | 10.88 → 10.88 / 1 | Phun loạt búi lông nặng. (knock:120) | Đạn áp dụng lực đẩy đã khai báo. |
 | Cuộn Len Phép `magic_yarn` | projectile; projectile / hybrid | 4.4 / 22 / 300 | 0 / 0.12 | 12.39 → 23.65 | 11.32 → 22.48 / 1 | Cuộn len bay đi rồi quay lại, trói kẻ địch. | Trúng một lần mỗi lượt đi/về; dùng quãng bay khai báo. |
 | Vuốt Hồi Lực `paw_boomerang` | projectile; projectile / hybrid | 4.8 / 24 / 330 | 0 / 0.12 | 13.82 → 26.38 | 12.62 → 25.08 / 1 | Chiếc vuốt phép xoay về phía bạn, cắt cả đường về. | Trúng một lần mỗi lượt đi/về; dùng quãng bay khai báo. |
@@ -56,18 +56,18 @@ Sát thương ghi **trước → sau**. `CĐ` là cooldown giây; `NL` là năng
 | Vuốt Phản Chiến `reflective_claws` | defense; utility / defensive | 13 / 26 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Mỗi đòn nhận vào bị đáp trả gấp đôi. | Giữ tạm; cần đánh giá tiếp. |
 | Hào Quang Hộ Vệ `guardian_aura` | defense; defensive / sustain | 16 / 32 / 110 | 0.25 / — | 0 → 0 | 0 → 0 / 0 | Vùng ấm áp quanh bạn giảm sát thương và hồi máu. | Giữ tạm; cần đánh giá tiếp. |
 | Thế Đá `stone_stance` | defense; utility / defensive | 14 / 22 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Đứng vững như tượng: miễn đẩy lùi, giảm sát thương. (root:True) | Giữ tạm; cần đánh giá tiếp. |
-| Gừ Chữa Lành `healing_purr` | heal; healing / utility | 9 / 26 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Tiếng gừ hồi máu tức thời và thêm theo thời gian. | Giữ tạm; cần đánh giá tiếp. |
+| Gừ Chữa Lành `healing_purr` | heal; healing / utility | 9 / 26 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Tiếng gừ hồi máu tức thời và thêm theo thời gian. | Rank 5 xóa làm chậm cho người chơi. |
 | Hút Sinh Lực `life_drain` | heal; single / healing | 8 / 24 / 220 | 0 / 0 | 16.99 → 16.99 | 16.99 → 16.99 / 1 | Rút máu mục tiêu chuyển thành của bạn. | Giữ tạm; cần đánh giá tiếp. |
 | Nanh Máu `blood_fang` | physical; single / frontal | 5 / 20 / 80 | 0 / 0 | 14.29 → 14.29 | 13.06 → 13.06 / 1 | Nhát cắn hút máu và cộng dồn chảy máu. | Giữ tạm; cần đánh giá tiếp. |
 | Chân May Mắn `lucky_paw` | utility; utility / defensive | 15 / 18 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Vận may tăng chí mạng và may mắn rơi đồ. | Giữ tạm; cần đánh giá tiếp. |
 | Bánh Năng Lượng `mana_snack` | utility; healing / utility | 16 / 0 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Ăn một miếng, hồi ngay năng lượng. | Giữ tạm; cần đánh giá tiếp. |
 | Lông Thời Gian `time_fur` | control; crowd control | 20 / 48 / 220 | 0.25 / — | 0 → 0 | 0 → 0 / 0 | Bẻ cong thời gian: kẻ địch gần như đứng hình. (slow:0.5) | Giữ tạm; cần đánh giá tiếp. |
 | Màn Đêm `night_veil` | utility; utility / defensive | 13 / 22 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Kẻ địch mất dấu bạn; đòn kế tiếp chí mạng. | Giữ tạm; cần đánh giá tiếp. |
-| Vuốt Gương `mirror_paw` | defense; defensive | 12 / 28 / 0 | 0.25 / — | 0 → 0 | 0 → 0 / 0 | Lá chắn gương phản lại đòn tấn công tầm xa. | Giữ tạm; cần đánh giá tiếp. |
+| Vuốt Gương `mirror_paw` | defense; defensive | 12 / 28 / 0 | 0.25 / — | 0 → 0 | 0 → 0 / 0 | Lá chắn gương phản lại đòn tấn công tầm xa. | Khiên phản đạn; đòn hợp lệ tiêu hao khiên, khung bất tử vẫn được giữ. |
 | Chạy Gió `wind_sprint` | mobility; utility / defensive | 7 / 14 / 0 | 0 / — | 0 → 0 | 0 → 0 / 0 | Bứt tốc và lướt qua đòn đánh. | Giữ tạm; cần đánh giá tiếp. |
-| Vuốt Dịch Chuyển `blink_paw` | mobility; mobility | 6 / 16 / 230 | 0 / — | 0 → 0 | 0 → 0 / 0 | Búng tay, đổi chỗ với ảo ảnh ban nãy. | Giữ tạm; cần đánh giá tiếp. |
-| Nhảy Đôi `double_leap` | mobility; mobility / hybrid | 6 / 18 / 150 | 0 / 0 | 8.58 → 8.58 | 24.11 → 24.11 / 3 | Hai cú nhảy dài, cắt ngang đội hình địch. (knock:90) | Giữ tạm; cần đánh giá tiếp. |
-| Bước Sấm `thunder_step` | mobility; mobility / hybrid | 8 / 30 / 210 | 0.25 / 0.27 | 14.29 → 14.29 | 40.18 → 40.18 / 3 | Lao đi trong tia điện, đốt cháy kẻ trên đường. (knock:60) | Giữ tạm; cần đánh giá tiếp. |
+| Vuốt Dịch Chuyển `blink_paw` | mobility; mobility | 6 / 16 / 230 | 0 / — | 0 → 0 | 0 → 0 / 0 | Búng tay, đổi chỗ với ảo ảnh ban nãy. | Rank 5 dùng thời lượng miễn thương 0.6 giây. |
+| Nhảy Đôi `double_leap` | mobility; mobility / hybrid | 6 / 18 / 150 | 0 / 0.02 | 8.58 → 8.58 | 24.11 → 24.11 / 3 | Hai cú nhảy dài, cắt ngang đội hình địch. (knock:90) | Đánh một lần mỗi mục tiêu dọc đường lướt. |
+| Bước Sấm `thunder_step` | mobility; mobility / hybrid | 8 / 30 / 210 | 0.25 / 0.28 | 14.29 → 16.45 | 40.18 → 46.66 / 3 | Lao đi trong tia điện, đốt cháy kẻ trên đường. (knock:60) | Đánh dọc đường lướt, gây cháy nhẹ 2 giây. |
 | Trăng Máu `blood_moon` | aoe; AoE / control | 18 / 46 / 200 | 0.25 / 0.28 | 18.11 → 18.11 | 83.93 → 83.93 / 5 | Mặt trăng máu mọc lên: kẻ địch xung quanh mất máu. (knock:120) | Giữ tạm; cần đánh giá tiếp. |
 | Hút Linh Hồn `soul_siphon` | summon; execute / sustain | 11 / 28 / 260 | 0 / 0 | 23.36 → 23.36 | 23.36 → 23.36 / 1 | Diệt một mục tiêu yếu để hồi máu và cộng dồn sức mạnh. | Giữ tạm; cần đánh giá tiếp. |
 | Lửa Quỹ Đạo `blaze_orbit` | aoe; sustained / summon | 10 / 34 / 100 | 0.25 / 0.28 | 57.6 → 57.6 | 158.4 → 158.4 / 3 | Ba quả cầu lửa quay quanh, đốt mọi thứ. | Giữ tạm; cần đánh giá tiếp. |
@@ -78,17 +78,21 @@ Sát thương ghi **trước → sau**. `CĐ` là cooldown giây; `NL` là năng
 
 - Thiên Thạch, mỗi sao và các loại telegraph chỉ xử lý một lần ngay khi hết delay, không lệ thuộc frame; tia địch đánh người chơi, không gây friendly fire lên quái. Test cả timestep 1/60 và 0.08 giây.
 - Ấn được tính một lần trên hit cận chiến và đạn. Sư tử gây damage như summon, không kích hoạt sai nâng cấp on-hit; đám mèo giảm riêng, không giảm đồng loạt summon.
-- Đường đi/về của Cuộn Len và Vuốt Hồi Lực có thể trúng mỗi mục tiêu một lần mỗi lượt, dùng quãng bay khai báo. Đại Bác Búi Lông đẩy lùi; Băng Tân rank 3 kéo dài đóng băng; Tia Trăng rank 4 làm chậm. Đây là sửa đúng hành vi mô tả, chưa phải animation độc lập.
+- Đường đi/về của Cuộn Len và Vuốt Hồi Lực có thể trúng mỗi mục tiêu một lần mỗi lượt, dùng quãng bay khai báo. Đại Bác Búi Lông đẩy lùi; Băng Tân rank 3 kéo dài đóng băng; Tia Trăng rank 4 làm chậm. Các sửa cơ chế này không mặc nhiên là animation độc lập.
 - Thường giữ thời lượng CC; elite: stun/trói 65% và slow tối đa 60%; miniboss: hard CC tối đa 0.45s, lockout chung 1.5s, slow tối đa 45%; boss: hard CC tối đa 0.30s, lockout chung 2s, slow tối đa 35%. Slow còn giảm thời lượng trên elite/miniboss/boss. Root ngăn di chuyển boss nhưng không ngắt tấn công; stun ngắt ngắn. Boss/miniboss miễn hất/kéo Miệng Hố Đen. Boss tiếp tục xử lý trạng thái và có thể tấn công sau khi bị spam CC. Chưa có giao diện báo miễn nhiễm chuyên biệt.
+
+## Bốn động tác thân và hàng đợi thao tác
+
+Thiên Thạch Mèo, Tia Trăng, Đao Phủ và Miệng Hố Đen có keyframe thân/tay riêng, gồm startup, active và recovery 0.12–0.14 giây; test vẽ trực tiếp silhouette không dùng VFX. Trong thời gian này chỉ khóa **thi triển skill**, không khóa di chuyển hay né. Tối đa 4 thao tác hợp lệ được xếp FIFO, giữ trước năng lượng và charge để không bị tiêu mất bởi hành động khác; khi chuyển màn thưởng/kết thúc, các thao tác chưa thực thi được hoàn lại. Tạm dừng cũng tạm dừng hàng đợi. Đây là bước đầu, không phải 54 animation hoàn chỉnh; kết quả silhouette tự động không thay thế quan sát và playtest trên thiết bị.
 
 ## Trùng lặp và tồn đọng cần rework
 
 - Vuốt Xoáy/Băng Tân/Trăng Máu cùng dùng nova tròn; phân biệt bằng CC/damage hiện có nhưng hình thể động tác và nhịp chưa riêng. Trăng Máu khai báo hai vòng/chảy máu ở rank đầu nhưng nhánh nova chưa thực hiện đủ các mô tả đó.
 - Cuộn Len/Vuốt Hồi Lực đều là đạn hồi; sửa đúng hai lượt nhưng vẫn cần quyết định bản sắc khác biệt hơn, nhất là ở rank 1. Nhóm đạn phép, búi lông, cầu lửa và cá dùng chung cơ sở bắn; có công dụng đẩy/cháy nhưng animation thân mèo vẫn dùng chung.
-- Hai nhánh lướt Nhảy Đôi/Bước Sấm chưa có swept hitbox như Vồ Mồi: damage đang xảy ra tại điểm đầu, chưa thực sự đánh dọc đường đi. Các dòng mô tả đường lướt cần rework và test trước khi coi là hoàn tất.
-- Vuốt Gương khai báo phản đạn nhưng cờ `reflectProjectiles` chưa được xử lý; Giếng Trọng Lực rank 3 lưu lực kéo mà zone thường chưa áp dụng; Linh Miêu rank 4 lưu `ranged` và Sư Tử rank 3 lưu `taunt` nhưng AI summon chưa dùng. Phải triển khai và test riêng, không đánh dấu đã xong.
-- Một số mô tả nâng cấp còn chưa có đường thực thi rõ: ví dụ Băng Tân rank 5 mảnh băng, Búi Lông rank 4 nảy tường, Cuộn Len rank 5 vệt nổ, Thiết Giáp rank 5 hồi khi trúng đòn, Hồi Máu rank 5 giải hiệu ứng. Đây là ví dụ đã rà mã, không phải danh sách đầy đủ hay xác nhận mọi rank còn lại hoạt động.
-- Cần audit và kiểm thử tất cả rank 2–5, nhánh nâng cấp, charge/echo, build/full run, mục tiêu di chuyển, mọi boss và elite, utility/khả năng sống sót và tất cả combo. Các skill được ghi giữ tạm không phải kết luận cân bằng; chưa có test tương tác hai skill theo mọi cặp. Không có playtest tay/đo cảm giác, không có animation riêng khi tắt VFX; cần thiết kế silhouette/startup/active/recovery và đánh giá trên thiết bị trước khi tuyên bố hoàn thành.
+- Nhảy Đôi/Bước Sấm nay có swept hitbox, đánh một lần trên mỗi mục tiêu dọc đường đi. Bước Sấm gây cháy nhẹ trong 2 giây; rank 5 Vuốt Dịch Chuyển áp dụng đúng miễn thương 0.6 giây. Các rank còn lại vẫn cần đánh giá.
+- Vuốt Gương nay phản đạn khi còn khiên; đạn có thể tiêu hao khiên theo quy tắc bất tử sẵn có; Giếng Trọng Lực rank 3 kéo quái thường/elite, không kéo boss/miniboss. Linh Miêu rank 4 lưu `ranged` và Sư Tử rank 3 lưu `taunt` nhưng AI summon chưa dùng; vẫn phải triển khai và test riêng.
+- Một số mô tả nâng cấp còn chưa có đường thực thi rõ: ví dụ Băng Tân rank 5 mảnh băng, Búi Lông rank 4 nảy tường, Cuộn Len rank 5 vệt nổ, Thiết Giáp rank 5 hồi khi trúng đòn. Đây là ví dụ đã rà mã, không phải danh sách đầy đủ hay xác nhận mọi rank còn lại hoạt động.
+- Cần audit và kiểm thử tất cả rank 2–5, nhánh nâng cấp, charge/echo, build/full run, mục tiêu di chuyển, mọi boss và elite, utility/khả năng sống sót và tất cả combo. Các skill được ghi giữ tạm không phải kết luận cân bằng; chưa có test tương tác hai skill theo mọi cặp. Không có playtest tay/đo cảm giác; 50 skill còn lại chưa có animation thân riêng khi tắt VFX. Cần thiết kế silhouette/startup/active/recovery và đánh giá trên thiết bị trước khi tuyên bố hoàn thành.
 
 ## Tham khảo thiết kế, không sao chép
 
@@ -98,5 +102,5 @@ Sát thương ghi **trước → sau**. `CĐ` là cooldown giây; `NL` là năng
 ## Kiểm thử
 
 - Ma trận tự động 54 skill × 7 kịch bản: một bia, 5 bia, elite dùng enemy thật, boss Moon Devourer thật, di chuyển, cast lại sau hồi tự nhiên, và ghép một skill khác. Đây là smoke/invariant (cast được, state và tọa độ hữu hạn), không khẳng định từng hiệu ứng/độ hiệu quả đúng.
-- Test tập trung cho sát thương frame-independent, ấn, kháng summon, đạn hai lượt, knockback, rank frost/lunar, CC thường/elite/boss, boss thật bị spam CC và tia boss. Test hồi quy boss/skill hiện có tiếp tục chạy.
-- `npm run build:web`: thành công, tạo index.html self-contained 597 KB. `npm run verify`: đạt. `npm test`: 245/245 đạt. `git diff --check`: đạt. Không có playtest thủ công.
+- Test vẽ silhouette bốn skill qua từng pha khi không có VFX; test FIFO, đặt trước năng lượng/charge, tạm dừng, hoàn tài nguyên và swept dash/khống chế; test tập trung cho sát thương frame-independent, ấn, kháng summon, đạn hai lượt, knockback, rank frost/lunar, CC thường/elite/boss, boss thật bị spam CC và tia boss. Test hồi quy boss/skill hiện có tiếp tục chạy.
+- `npm run build:web`: thành công, tạo index.html self-contained 600 KB. `npm run verify`: đạt. `npm test`: 255/255 đạt. `git diff --check`: đạt. Không có playtest thủ công.

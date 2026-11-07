@@ -4,6 +4,7 @@
 // autoplay bot all observe it through the `on` event map.
 
 import { Rng } from '../core/rng.js';
+import { SKILL_ACTIONS, actionDuration } from './skill-animation.js';
 import { Emitter } from '../core/events.js';
 import { clamp, dist, dist2, angle, TAU, lerp, damp, weightedIndex, mulberry32 } from '../core/math.js';
 
@@ -91,6 +92,7 @@ export class Run {
       buffs: [], moveSpeedMul: 1,
     };
 
+    this.skillQueue = [];
     this.slots = [0, 1, 2, 3].map((i) => {
       const id = skills[i];
       const def = id ? SKILL_BY_ID[id] : null;
@@ -136,7 +138,7 @@ export class Run {
     return {
       def, index, id: def.id, rank: 1, cd: 0, charges: Math.max(1, def.params?.charges || 1),
       maxCharges: Math.max(1, def.params?.charges || 1),
-      branch: null, recharge: 0, rechargeDuration: 0,
+      branch: null, recharge: 0, rechargeDuration: 0, reserved: 0,
     };
   }
 
@@ -160,6 +162,7 @@ export class Run {
 
   setState(next) {
     if (this.state === next) return;
+    if ([RUN_STATE.INTRO, RUN_STATE.REWARD, RUN_STATE.DEAD, RUN_STATE.VICTORY].includes(next)) this.cancelSkillQueue();
     this.state = next;
     this.emit('state', { state: next, previous: this.state });
   }
@@ -198,7 +201,7 @@ export class Run {
         const defensive = slot.def.category === 'defense' || slot.def.category === 'heal' || slot.def.category === 'mobility';
         slot.recharge = defensive ? 0 : slot.recharge * 0.5;
         slot.cd = defensive ? 0 : slot.cd * 0.5;
-        if (defensive) slot.charges = slot.maxCharges;
+        if (defensive) slot.charges = Math.max(0, slot.maxCharges - (slot.reserved || 0));
       }
     }
     const plan = wavePlan(this.night, wave);
@@ -444,6 +447,7 @@ export class Run {
     this.updateEffects(dt);
     this.updateSpawns(dt);
     this.updatePassiveEffects(dt);
+    this.updateSkillAction(dt);
     this.updateBuffs(dt);
 
     if (this.comboTimer > 0) {
@@ -624,6 +628,9 @@ export class Run {
           if (dist2(ex, ey, e.x, e.y) > (d.impact.radius + e.radius) ** 2) continue;
           d.hitIds.add(e.uid);
           this.skillHit(e, d.impact.def, d.impact.power, d.impact.rv, Math.atan2(d.toY - d.fromY, d.toX - d.fromX));
+          if (d.impact.def.id === 'thunder_step') {
+            this.applyStatus(e, 'burn', this.skillDamage(d.impact.def, d.impact.power) * 0.08, 2);
+          }
           this.emit('fx:impact', { x: e.x, y: e.y, radius: 28, color: d.impact.def.icon.tint });
         }
         d.trailTimer -= dt;
@@ -711,12 +718,13 @@ export class Run {
   updateSkillCooldowns(dt) {
     for (const slot of this.slots) {
       if (!slot) continue;
-      if (slot.charges < slot.maxCharges && slot.recharge > 0) {
+      const availableCap = slot.maxCharges - (slot.reserved || 0);
+      if (slot.charges < availableCap && slot.recharge > 0) {
         slot.recharge -= dt;
-        while (slot.recharge <= 0 && slot.charges < slot.maxCharges) {
+        while (slot.recharge <= 0 && slot.charges < availableCap) {
           slot.charges++;
           this.emit('skill:ready', { slot: slot.index, id: slot.id });
-          if (slot.charges < slot.maxCharges) slot.recharge += slot.rechargeDuration;
+          if (slot.charges < availableCap) slot.recharge += slot.rechargeDuration;
           else slot.recharge = 0;
         }
       }
@@ -733,17 +741,62 @@ export class Run {
     return true;
   }
 
-  castSlot(index) {
+  // Reservations keep an accepted buffered input valid even if the player
+  // dodges or spends energy before recovery ends. A short bounded FIFO prevents
+  // unbounded tap spam while preserving the order of real inputs.
+  cancelSkillQueue() {
+    for (const queued of this.skillQueue) {
+      const slot = this.slots[queued.index];
+      if (!slot) continue;
+      slot.reserved = Math.max(0, slot.reserved - 1);
+      slot.charges = Math.min(slot.maxCharges - slot.reserved, slot.charges + 1);
+      if (slot.charges === slot.maxCharges) slot.recharge = 0;
+      slot.cd = slot.charges > 0 ? 0 : Math.max(0, slot.recharge);
+      this.energy = Math.min(this.stats.energyMax, this.energy + queued.cost);
+    }
+    this.skillQueue.length = 0;
+    this.player.skillAction = null;
+  }
+
+  updateSkillAction(dt) {
+    const action = this.player.skillAction;
+    if (action) {
+      action.elapsed += dt;
+      if (action.elapsed < action.duration) return;
+      this.player.skillAction = null;
+    }
+    if (this.skillQueue.length && !this.player.skillAction && this.state === RUN_STATE.FIGHT) {
+      const queued = this.skillQueue.shift();
+      this.castSlot(queued.index, { reserved: true });
+    }
+  }
+
+  castSlot(index, options = {}) {
     const slot = this.slots[index];
     if (!slot) return { ok: false, reason: 'empty' };
-    if (!this.canCast(slot)) {
+    if (!options.reserved && !this.canCast(slot)) {
       const reason = this.energy < slot.def.cost ? 'energy' : 'cooldown';
       this.emit('skill:denied', { slot: index, reason });
       return { ok: false, reason };
     }
     const def = slot.def;
+    if (!options.reserved && this.player.skillAction) {
+      if (this.skillQueue.length >= 4) {
+        this.emit('skill:denied', { slot: index, reason: 'queue' });
+        return { ok: false, reason: 'queue' };
+      }
+      this.energy -= def.cost;
+      slot.charges--;
+      slot.reserved++;
+      this.skillQueue.push({ index, cost: def.cost });
+      this.emit('skill:queued', { slot: index, id: slot.id });
+      return { ok: true, queued: true };
+    }
     const values = skillValues(def, slot.rank, slot.branch ? this.branchMods(slot) : {});
-    this.energy -= def.cost;
+    if (options.reserved) slot.reserved = Math.max(0, slot.reserved - 1);
+    else this.energy -= def.cost;
+    const animation = SKILL_ACTIONS[def.id];
+    if (animation) this.player.skillAction = { id: def.id, elapsed: 0, duration: actionDuration(animation) };
     const casts = this.rng.chance(this.mods.echo) ? 2 : 1;
     // Powerful instant skills wind up briefly. Skills with their own impact
     // telegraph (meteor, beam, volley) already have a longer built-in delay.
@@ -757,7 +810,7 @@ export class Run {
       } else this.executeSkill(slot, values, i);
     }
     const cooldown = Math.max(0.1, values.cd * (1 - this.stats.cdr) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed'))));
-    slot.charges = Math.max(0, slot.charges - 1);
+    if (!options.reserved) slot.charges = Math.max(0, slot.charges - 1);
     if (slot.recharge <= 0) { slot.recharge = cooldown; slot.rechargeDuration = cooldown; }
     slot.cd = slot.charges > 0 ? 0 : slot.recharge;
     this.statsTotals.casts++;
@@ -829,9 +882,8 @@ export class Run {
         const dx = target ? Math.cos(dir) : p.facing;
         const dy = target ? Math.sin(dir) * 0.4 : 0;
         p.invuln = Math.max(p.invuln, def.params.invuln ? 0.35 : 0.1);
-        const impact = def.id === 'pounce' ? { def, power, rv, radius: 30 * area, duration: def.params.duration } : null;
+        const impact = { def, power, rv, radius: (def.id === 'pounce' ? 30 : 78) * area, duration: def.params.duration };
         this.dashTo(p, dx, dy, p.x + dx * values.range * area * potency, p.y + dy * values.range * area * potency, impact);
-        if (!impact) this.arcDamage(p.x, p.y, 78 * area, 78 * area, p.facing, TAU, def, power, rv, true);
         this.emit('fx:dashTrail', { x: p.x, y: p.y, color: def.icon.tint });
         break;
       }
@@ -849,7 +901,7 @@ export class Run {
         }
         this.emit('fx:blink', { x: p.x, y: p.y, x2: nx, y2: ny, color: def.icon.tint });
         p.x = nx; p.y = ny;
-        p.invuln = Math.max(p.invuln, def.params.invuln || 0.2);
+        p.invuln = Math.max(p.invuln, rv.invuln || def.params.invuln || 0.2);
         if (rv.damage || rv.decoyBoom) this.arcDamage(p.x, p.y, 86 * area, 86 * area, p.facing, TAU, def, power, rv, true);
         break;
       }
@@ -1084,7 +1136,8 @@ export class Run {
       case 'shield': {
         emitCast({ buff: true });
         const amount = this.stats.hpMax * (def.params.shield || 0.3) * (rv.shield || 1) * potency;
-        this.applyShield(amount, def.params.time || 7);
+        this.applyShield(amount, rv.time || def.params.time || 7);
+        if (def.params.reflectProjectiles) this.addBuff({ id: def.id, time: rv.time || def.params.time || 7, reflectProjectiles: true });
         if (def.params.reviveWard) { this.reviveWard = true; this.reviveWardTime = def.params.time || 8; }
         this.emit('fx:shield', { x: p.x, y: p.y, color: def.icon.tint });
         break;
@@ -1093,6 +1146,7 @@ export class Run {
         emitCast({ buff: true });
         const amount = this.stats.hpMax * (rv.heal ?? def.params.heal ?? 0.2) * this.skillCoefficient(def);
         this.heal(amount);
+        if (rv.cleanse) this.playerSlow = null;
         this.energy = Math.min(this.stats.energyMax, this.energy + ((rv.energy ?? def.params.energy) || 0) * potency);
         if (rv.overTime) this.addBuff({ id: def.id + '_hot', time: 5, regen: amount / 5, tint: def.icon.tint });
         if (rv.cdr) this.stats.cdr = Math.min(0.6, this.stats.cdr + rv.cdr);
@@ -1286,7 +1340,7 @@ export class Run {
       targetHpFrac: e.hp / e.hpMax,
     });
     this.hitEnemy(e, res.damage, { source: 'skill', crit: res.isCrit, silent: false });
-    if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, 3);
+    if (rv.status === 'bleed' || def?.params?.status === 'bleed') this.applyStatus(e, 'bleed', 7, rv.bleedTime || 3);
     if (rv.stun || rv.freeze || def?.params?.freeze) this.applyStatus(e, 'stun', (rv.stun || rv.freeze || def.params.freeze) * (def ? this.skillPotency(def) : 1));
     if (def?.params?.slow) this.applyStatus(e, 'slow', clamp(def.params.slow * this.skillPotency(def), 0, 0.9), def.params.slowTime || 2);
     if (rv.knock) this.knockback(e, rv.knock, knockAngle);
@@ -2438,8 +2492,18 @@ export class Run {
         }
       } else {
         if (dist2(pr.x, pr.y, p.x, p.y - 20) < (pr.radius + p.radius) ** 2) {
-          this.damagePlayer(pr.damage, null, pr);
-          this.projectiles.splice(i, 1);
+          if (p.shield > 0 && this.buffValue('reflectProjectiles')) {
+            // A reflected projectile still consumes the shield as an incoming
+            // hit; it is then redirected rather than duplicated.
+            this.damagePlayer(pr.damage, null, pr);
+            const target = this.nearestEnemy(pr.x, pr.y, 520);
+            pr.owner = 'player'; pr.source = 'reflect'; pr.homing = 0;
+            pr.angle = target ? Math.atan2((target.y - 12 - pr.y) / 0.72, target.x - pr.x) : pr.angle + Math.PI;
+            pr.life = Math.max(pr.life, 1.5); pr.hits.clear();
+          } else {
+            this.damagePlayer(pr.damage, null, pr);
+            this.projectiles.splice(i, 1);
+          }
         }
       }
     }
@@ -2581,6 +2645,11 @@ export class Run {
         for (const e of this.enemies) {
           if (e.dead) continue;
           if (dist(e.x, e.y, z.x, z.y) < z.radius + e.radius * 0.4) {
+            if (z.pull && !e.boss && !e.mini) {
+              const a = angle(e.x, e.y, z.x, z.y);
+              e.x += Math.cos(a) * z.pull * dt;
+              e.y += Math.sin(a) * z.pull * dt * 0.6;
+            }
             if (z.dps) this.hitEnemy(e, z.dps * dt, { tick: true, silent: true });
             if (z.slow) this.applyStatus(e, 'slow', z.slow, 0.4);
           }

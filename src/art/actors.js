@@ -4,6 +4,7 @@
 
 import { clamp, lerp, smooth, TAU, hash01 } from '../core/math.js';
 import { drawCat, drawCatFace } from './catart.js';
+import { skillActionPose } from '../systems/skill-animation.js';
 import { drawCreature, drawCreatureShadow } from './creatureart.js';
 
 /** Build a pose for the player cat from simulation state. */
@@ -16,6 +17,7 @@ export function playerPose(run, t) {
   const hurt = clamp(p.hurtFlash || 0, 0, 1);
   const crouch = p.crouch || 0;
   const dead = p.alive ? 0 : 1;
+  const actionPose = skillActionPose(p.skillAction);
   return {
     t,
     gait: moving ? gait : 0,
@@ -32,6 +34,7 @@ export function playerPose(run, t) {
     cast: attack > 0.3 ? attack * 0.6 : 0,
     dash: p.dashTime > 0 ? 1 : 0,
     dead,
+    ...(actionPose || {}),
   };
 }
 

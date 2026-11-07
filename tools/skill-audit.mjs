@@ -5,6 +5,8 @@
 import { writeFileSync } from 'node:fs';
 import { SKILLS, skillScaling } from '../src/data/skills.js';
 import { Run, RUN_STATE } from '../src/systems/run.js';
+// Older baselines predate body-animation definitions.
+const { SKILL_ACTIONS } = await import('../src/systems/skill-animation.js').catch(() => ({ SKILL_ACTIONS: {} }));
 
 const out = process.argv[2];
 if (!out) throw new Error('Specify an output JSON path');
@@ -61,7 +63,8 @@ const report = {
     scaling: skillScaling(s), count: s.params.count ?? s.params.hits ?? 1, declaredEffects: s.desc,
     control: Object.fromEntries(Object.entries(s.params).filter(([k]) => controlKeys.includes(k))),
     declaredDelay: s.id === 'phantom_step' ? 1 : (['meteor', 'volley', 'beam'].includes(s.pattern) ? s.params.delay : ['epic', 'mythic'].includes(s.rarity) ? 0.25 : 0),
-    animation: 'shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract', recovery: 'not implemented as an explicit lock',
+    animation: SKILL_ACTIONS[s.id] ? `authored body pose: startup ${SKILL_ACTIONS[s.id].startup}s, active ${SKILL_ACTIONS[s.id].active}s, recovery ${SKILL_ACTIONS[s.id].recovery}s` : 'shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract',
+    recovery: SKILL_ACTIONS[s.id] ? `${SKILL_ACTIONS[s.id].recovery}s with buffered skill input` : 'not implemented as an explicit lock',
     trials: Object.fromEntries(['single', 'group', 'elite', 'boss', 'moving'].map(scenario => [scenario, trial(s, scenario)])),
   }))
 };
