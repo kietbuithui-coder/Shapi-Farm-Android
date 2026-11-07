@@ -208,6 +208,20 @@ export function drawEnemyActor(ctx, e, t, opts = {}) {
     }
   }
 
+  // Moonlit Trap tracks its target with a distinct reticle, including stealthy
+  // enemies; unlike a transient burst, it follows for the full reveal duration.
+  if (e.revealTime > 0) {
+    const r = (e.radius || 16) * 1.45;
+    const cy = e.y - (e.radius || 16) * 1.4;
+    ctx.save(); ctx.strokeStyle = '#d7f4ff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(e.x, cy, r, 0, TAU); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.x - r - 6, cy); ctx.lineTo(e.x - r - 2, cy);
+    ctx.moveTo(e.x + r + 2, cy); ctx.lineTo(e.x + r + 6, cy);
+    ctx.moveTo(e.x, cy - r - 6); ctx.lineTo(e.x, cy - r - 2);
+    ctx.moveTo(e.x, cy + r + 2); ctx.lineTo(e.x, cy + r + 6);
+    ctx.stroke(); ctx.restore();
+  }
   // status pips under the body (no text, readable at a glance)
   drawStatusPips(ctx, e, t);
 

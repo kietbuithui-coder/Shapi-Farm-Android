@@ -2975,51 +2975,51 @@
         "slow": 0
       },
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.12s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 29.86,
-          "burst1s": 9.73,
+          "burst1s": 8.41,
           "maxHit": 0.17,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 3.73
         },
         "group": {
           "cast": true,
           "damage": 29.86,
-          "burst1s": 9.73,
+          "burst1s": 8.41,
           "maxHit": 0.17,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 3.73
         },
         "elite": {
           "cast": true,
           "damage": 29.86,
-          "burst1s": 9.73,
+          "burst1s": 8.41,
           "maxHit": 0.17,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 3.73
         },
         "boss": {
           "cast": true,
           "damage": 29.86,
-          "burst1s": 9.73,
+          "burst1s": 8.41,
           "maxHit": 0.17,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 3.73
         },
         "moving": {
           "cast": true,
           "damage": 29.86,
-          "burst1s": 9.73,
+          "burst1s": 8.41,
           "maxHit": 0.17,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 3.73
         }
@@ -3186,8 +3186,8 @@
         "root": 1.2
       },
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,

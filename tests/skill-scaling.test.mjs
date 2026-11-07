@@ -95,13 +95,14 @@ test('hidden settings open on seven taps, save and reach the live run', async ()
 
 test('zone damage, trap upgrades, and skill-on-hit upgrades are functional', () => {
   const run = make(['rending_ground', 'moonlit_trap', 'claw_slash']);
-  addTrainingDummy(run, 50);
-  run.castSlot(0);
+  const dummy = addTrainingDummy(run, 50);
+  run.castSlot(0); advance(run, 0.32);
   assert.ok(run.zones[0].dps > 0);
-  run.slots[1].rank = 2; run.castSlot(1);
+  dummy.x = run.player.x + 400;
+  run.slots[1].rank = 2; run.castSlot(1); advance(run, 0.15);
   assert.ok(run.traps[0].damage > 0);
   run.mods.slowOnHit = 0.3;
-  const dummy = run.enemies[0]; run.castSlot(2);
+  dummy.x = run.player.x + 50; run.castSlot(2); advance(run, 0.2);
   assert.equal(dummy.slow, 0.3);
 });
 

@@ -1073,7 +1073,7 @@ export class Run {
         const zy = target ? target.y : p.y;
         this.zones.push({
           kind: 'zone', x: zx, y: zy, radius, time: rv.time || def.params.time, t: 0,
-          slow: clamp((rv.pull ? 0.8 : rv.slow || def.params.slow || 0) * potency, 0, 0.9), dps: this.skillDamage(def, power * ((def.params.dps || 0) + (rv.dps || 0))), pull: rv.pull || 0,
+          slow: clamp((rv.slow ?? def.params.slow ?? 0) * potency, 0, 0.9), dps: this.skillDamage(def, power * ((def.params.dps || 0) + (rv.dps || 0))), pull: rv.pull || 0,
           tint: def.icon.tint, def, damagePerTick: this.skillDamage(def, power),
         });
         break;
@@ -1091,9 +1091,15 @@ export class Run {
       case 'trap': {
         emitCast();
         const count = rv.count || 1;
+        const radius = def.params.radius * area * (rv.radius || 1);
+        const aim = p.moving ? p.aim : target ? angle(p.x, p.y, target.x, target.y) : p.aim;
         for (let i = 0; i < count; i++) {
-          const tx = p.x + this.rng.range(-140, 140);
-          this.traps.push({ x: tx, y: clamp(p.y + this.rng.range(-50, 50), PLAY.top, PLAY.bottom), radius: def.params.radius * area * (rv.radius || 1), root: (rv.root || def.params.root) * potency, time: def.params.time, t: 0, damage: rv.damage ? this.skillDamage(def, values.dmg) : 0, tint: def.icon.tint });
+          const side = (i - (count - 1) / 2) * (radius * 2 + 16);
+          const tx = clamp(p.x + Math.cos(aim) * 110 * area - Math.sin(aim) * side, PLAY.left, PLAY.right);
+          const ty = clamp(p.y + Math.sin(aim) * 110 * area + Math.cos(aim) * side, PLAY.top, PLAY.bottom);
+          this.traps.push({ x: tx, y: ty, radius, root: (rv.root || def.params.root) * potency,
+            time: def.params.time, t: 0, damage: rv.damage ? this.skillDamage(def, values.dmg) : 0,
+            tint: def.icon.tint, revealTime: 3 });
         }
         break;
       }
@@ -1560,6 +1566,7 @@ export class Run {
         if (e.dead) continue;
       }
       if (e.slowTime > 0) { e.slowTime -= dt; if (e.slowTime <= 0) e.slow = 0; }
+      if (e.revealTime > 0) e.revealTime = Math.max(0, e.revealTime - dt);
       if (e.poisonTime > 0) { e.poisonTime -= dt; this.hitEnemy(e, e.poison * dt, { tick: true, silent: true }); if (e.dead) continue; }
       if (e.bleedTime > 0) { e.bleedTime -= dt; this.hitEnemy(e, e.bleed * dt, { tick: true, silent: true }); if (e.dead) continue; }
       if (e.bloodFangStackTime > 0) { e.bloodFangStackTime -= dt; if (e.bloodFangStackTime <= 0) e.bloodFangStacks = 0; }
@@ -2784,17 +2791,18 @@ export class Run {
     for (let i = this.traps.length - 1; i >= 0; i--) {
       const tr = this.traps[i];
       tr.t += dt;
+      if (tr.t >= tr.time) { this.traps.splice(i, 1); continue; }
       for (const e of this.enemies) {
         if (e.dead) continue;
         if (dist(e.x, e.y, tr.x, tr.y) < tr.radius) {
-          this.applyStatus(e, 'root', tr.root);
+          this.applyStatus(e, tr.banana ? 'stun' : 'root', tr.root);
+          if (tr.revealTime) e.revealTime = Math.max(e.revealTime || 0, tr.revealTime);
           if (tr.damage) this.hitEnemy(e, tr.damage, { source: 'trap' });
           this.emit('fx:trap', { x: tr.x, y: tr.y, color: tr.tint });
           this.traps.splice(i, 1);
           break;
         }
       }
-      if (tr.t > tr.time) this.traps.splice(i, 1);
     }
   }
 

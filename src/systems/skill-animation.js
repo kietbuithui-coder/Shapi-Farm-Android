@@ -236,6 +236,24 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  moonlit_trap: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.08, frontX: -3, frontY: 2, backX: 0, backY: 1 }],
+      [0.09, { crouch: 0.30, lean: -0.26, bodyRoll: 0.25, frontX: -16, frontY: -18, backX: -24, backY: 7, headTilt: -0.20 }],
+      [0.15, { crouch: 0.78, lean: 0.35, bodyRoll: -0.18, frontX: 29, frontY: 23, backX: -28, backY: -11, headTilt: 0.20 }],
+      [0.28, {}],
+    ],
+  },
+  rending_ground: {
+    startup: 0.12, active: 0.08, recovery: 0.10, windup: 0.12,
+    frames: [
+      [0,    { crouch: 0.08, lean: -0.08, frontX: -4, frontY: 1, backX: 0, backY: 2 }],
+      [0.11, { crouch: 0.38, lean: -0.38, bodyRoll: -0.22, frontX: 15, frontY: -31, backX: -29, backY: -20, headTilt: -0.25 }],
+      [0.17, { crouch: 0.82, lean: 0.50, bodyRoll: 0.28, frontX: 29, frontY: 20, backX: -24, backY: 18, headTilt: 0.25 }],
+      [0.30, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [
