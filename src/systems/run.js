@@ -803,12 +803,12 @@ export class Run {
     const casts = this.rng.chance(this.mods.echo) ? 2 : 1;
     // Powerful instant skills wind up briefly. Skills with their own impact
     // telegraph (meteor, beam, volley) already have a longer built-in delay.
-    const windup = (def.rarity === 'epic' || def.rarity === 'mythic') &&
-      !['meteor', 'beam', 'volley'].includes(def.pattern) ? 0.25 : 0;
+    const windup = animation?.windup ?? ((def.rarity === 'epic' || def.rarity === 'mythic') &&
+      !['meteor', 'beam', 'volley'].includes(def.pattern) ? 0.25 : 0);
     for (let i = 0; i < casts; i++) {
       if (windup) {
         this.emit('fx:skill', { id: def.id, pattern: def.pattern, glyph: def.icon.glyph,
-          tint: def.icon.tint, x: this.player.x, y: this.player.y - 22, ultimate: true });
+          tint: def.icon.tint, x: this.player.x, y: this.player.y - 22, ultimate: def.rarity === 'epic' || def.rarity === 'mythic' });
         (this.slotsTimeouts ||= []).push({ at: this.time + windup, fn: () => this.executeSkill(slot, values, i) });
       } else this.executeSkill(slot, values, i);
     }
@@ -1051,12 +1051,12 @@ export class Run {
         if (!tgt) break;
         tgt.mark = (rv.amp || def.params.amp) * potency;
         tgt.markTime = def.params.time;
-        tgt.markTick = !!rv.tick;
+        tgt.markDps = rv.tick ? this.skillDamage(def, power * 0.25) : 0;
         this.emit('fx:mark', { x: tgt.x, y: tgt.y - 24, color: def.icon.tint });
         if (rv.spread) {
           for (const e of this.enemies) {
             if (!e.dead && e !== tgt && dist2(e.x, e.y, tgt.x, tgt.y) < rv.spread * rv.spread) {
-              e.mark = tgt.mark; e.markTime = tgt.markTime;
+              e.mark = tgt.mark; e.markTime = tgt.markTime; e.markDps = tgt.markDps;
             }
           }
         }
@@ -1203,7 +1203,11 @@ export class Run {
           if (e.dead) continue;
           if (dist2(e.x, e.y, p.x, p.y) < radius * radius) {
             this.applyStatus(e, 'slow', clamp((rv.slow || def.params.slow) * potency, 0, 0.9), rv.time || def.params.time);
-            if (rv.amp) e.mark = Math.max(e.mark || 0, rv.amp), e.markTime = Math.max(e.markTime || 0, rv.time || 3);
+            if (rv.amp) {
+              const duration = (rv.time || def.params.time) * (e.boss ? 0.6 : e.mini ? 0.75 : e.elite ? 0.8 : 1);
+              e.timeAmp = Math.max(e.timeAmp || 0, rv.amp);
+              e.timeAmpTime = Math.max(e.timeAmpTime || 0, duration);
+            }
           }
         }
         this.emit('fx:timeSlow', { x: p.x, y: p.y, radius, color: def.icon.tint });
@@ -1411,7 +1415,7 @@ export class Run {
       if (this.mods.moonPact > 0 && this.moonPactReady) { dmg *= 3; this.moonPactReady = false; this.moonPactTimer = this.mods.moonPact; }
       if (this.stats.lifesteal > 0) this.heal(dmg * this.stats.lifesteal, { silent: true });
     }
-    if (enemy.mark) dmg *= 1 + enemy.mark;
+    if (enemy.mark || enemy.timeAmp) dmg *= 1 + (enemy.mark || 0) + (enemy.timeAmp || 0);
     if (enemy.mini || enemy.boss) dmg *= 1;
     // Bosses and wardens take reduced damage from summons so a passive build
     // cannot out-tick the encounter's scripted pressure.
@@ -1425,7 +1429,6 @@ export class Run {
       this.emit('damage', { amount: dmg, crit: !!opts.crit, x: enemy.x, y: enemy.y - (enemy.def.radius || 14) - 12, target: 'enemy' });
     }
     if (opts.crit) this.player.attackAnim = 1;
-    if (enemy.markTick && !opts.tick) this.applyStatus(enemy, 'poison', dmg * 0.14, 4);
     if (enemy.hp <= 0) this.killEnemy(enemy, opts);
     return dmg;
   }
@@ -1526,7 +1529,14 @@ export class Run {
       if (e.slowTime > 0) { e.slowTime -= dt; if (e.slowTime <= 0) e.slow = 0; }
       if (e.poisonTime > 0) { e.poisonTime -= dt; this.hitEnemy(e, e.poison * dt, { tick: true, silent: true }); if (e.dead) continue; }
       if (e.bleedTime > 0) { e.bleedTime -= dt; this.hitEnemy(e, e.bleed * dt, { tick: true, silent: true }); if (e.dead) continue; }
-      if (e.markTime > 0) { e.markTime -= dt; if (e.markTime <= 0) e.mark = 0; }
+      if (e.markTime > 0) {
+        const elapsed = Math.min(dt, e.markTime);
+        if (e.markDps) this.hitEnemy(e, e.markDps * elapsed, { source: 'mark', tick: true, silent: true });
+        e.markTime -= dt;
+        if (e.markTime <= 0) { e.mark = 0; e.markDps = 0; }
+        if (e.dead) continue;
+      }
+      if (e.timeAmpTime > 0) { e.timeAmpTime -= dt; if (e.timeAmpTime <= 0) e.timeAmp = 0; }
       // Bosses have a separate brain; their hard-control timers run there only.
       if (e.boss || e.mini || e.behaviour === 'boss') continue;
       if (e.stun > 0) { e.stun -= dt; continue; }
@@ -2685,10 +2695,12 @@ export class Run {
             e.y += Math.sin(a) * pull * dt * 0.6;
           }
           if (d < z.radius && z.t > z.time) {
-            this.hitEnemy(e, z.bomb || z.damagePerTick, { source: 'skill' });
+            const hpBefore = e.hp;
+            const dealt = this.hitEnemy(e, z.bomb || z.damagePerTick, { source: 'skill' });
+            if (z.lifesteal) this.heal(Math.min(hpBefore, dealt) * z.lifesteal);
+            if (z.slow && !e.dead) this.applyStatus(e, 'slow', z.slow, 1.4);
           }
         }
-        if (z.slow) for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, z.x, z.y) < z.radius * 2.2) this.applyStatus(e, 'slow', z.slow, 1.4);
       } else if (z.kind === 'wall') {
         // Solid cover. Handled here (not in the damage paths below) because a
         // wall must not hurt anything — it only blocks movement, and it expires

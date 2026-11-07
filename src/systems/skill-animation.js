@@ -146,6 +146,33 @@ export const SKILL_ACTIONS = {
       [0.48, {}],
     ],
   },
+  thunder_step: {
+    startup: 0.25, active: 0.10, recovery: 0.12,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.08, frontX: -4, frontY: 1, backX: 0, backY: 3 }],
+      [0.24, { crouch: 0.76, lean: -0.38, bodyRoll: -0.18, frontX: -20, frontY: 10, backX: -27, backY: 12, headTilt: -0.14 }],
+      [0.30, { crouch: 0.18, lean: 0.55, bodyRoll: 0.26, frontX: 34, frontY: 4, backX: -25, backY: 20, headTilt: 0.20 }],
+      [0.47, {}],
+    ],
+  },
+  frost_nova: {
+    startup: 0.12, active: 0.08, recovery: 0.10, windup: 0.12,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.10, frontX: -3, frontY: 2, backX: 1, backY: 2 }],
+      [0.11, { crouch: 0.58, lean: -0.18, bodyRoll: 0.18, frontX: -15, frontY: -16, backX: 8, backY: -10, headTilt: -0.14 }],
+      [0.17, { crouch: 0.40, lean: 0.12, bodyRoll: -0.12, frontX: 28, frontY: 18, backX: -30, backY: 16, headTilt: 0.16 }],
+      [0.30, {}],
+    ],
+  },
+  whirling_claws: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.08, frontX: -4, frontY: 2, backX: 0, backY: 2 }],
+      [0.09, { crouch: 0.48, lean: -0.40, bodyRoll: -0.27, frontX: -22, frontY: 3, backX: -18, backY: -6, headTilt: -0.18 }],
+      [0.15, { crouch: 0.30, lean: 0.48, bodyRoll: 0.32, frontX: 32, frontY: 7, backX: -31, backY: -12, headTilt: 0.22 }],
+      [0.28, {}],
+    ],
+  },
   void_maw: {
     startup: 0.25, active: 0.10, recovery: 0.14,
     frames: [

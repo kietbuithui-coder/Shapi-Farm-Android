@@ -55,7 +55,8 @@ test('hairball knocks back and rank 3 frost extends freeze', () => {
   for (let i = 0; i < 20; i++) a.run.step(1/60, {});
   assert.ok(a.e.x > a.run.player.x + 70, 'hairball pushes its target');
   const b = setup('frost_nova'); b.run.slots[0].rank = 3; b.run.castSlot(0);
-  b.run.step(1/60, {}); assert.ok(b.e.stun > 1, `rank 3 freeze: ${b.e.stun}`);
+  for (let i = 0; i < 10; i++) b.run.step(1/60, {});
+  assert.ok(b.e.stun > 1, `rank 3 freeze: ${b.e.stun}`);
 });
 
 test('control duration and slow are differentiated and boss lockout prevents chaining', () => {

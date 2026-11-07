@@ -155,3 +155,15 @@ test('a queued committed cast completes before the next buffered action', () => 
   tick(run, 0.6); assert.deepEqual(casts, ['rending_wave', 'starfall_volley']);
   tick(run, 0.6); assert.deepEqual(casts, ['rending_wave', 'starfall_volley', 'claw_slash']);
 });
+
+test('frost and whirling have short visible windups, allow movement, and buffer the next cast', () => {
+  for (const id of ['frost_nova', 'whirling_claws']) {
+    const run = runWith([id, 'claw_slash']); const e = run.enemies[0]; const start = run.player.x;
+    const casts = []; run.on('skill:cast', event => casts.push(event.id));
+    assert.ok(run.castSlot(0).ok); assert.deepEqual(run.castSlot(1), { ok: true, queued: true });
+    for (let i = 0; i < 3; i++) run.step(1/60, { moveX: 1 });
+    assert.ok(run.player.x > start); assert.equal(e.hp, e.hpMax, 'impact waits for startup');
+    tick(run, 0.5); assert.ok(e.hp < e.hpMax); assert.deepEqual(casts, [id, 'claw_slash']);
+    assert.equal(run.skillQueue.length, 0);
+  }
+});

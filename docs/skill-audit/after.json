@@ -376,15 +376,15 @@
         "knock": 150
       },
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 12.39,
           "burst1s": 12.39,
           "maxHit": 12.39,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.48
         },
@@ -393,7 +393,7 @@
           "damage": 57.43,
           "burst1s": 57.43,
           "maxHit": 12.34,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 5,
           "normalizedDamagePerCooldown": 11.49
         },
@@ -402,7 +402,7 @@
           "damage": 11.27,
           "burst1s": 11.27,
           "maxHit": 11.27,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.25
         },
@@ -411,7 +411,7 @@
           "damage": 12.39,
           "burst1s": 12.39,
           "maxHit": 12.39,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.48
         },
@@ -420,7 +420,7 @@
           "damage": 12.39,
           "burst1s": 12.39,
           "maxHit": 12.39,
-          "firstHit": 0.02,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.48
         }
@@ -1205,15 +1205,15 @@
         "freeze": 0.6
       },
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.12s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 7.39,
           "burst1s": 7.39,
           "maxHit": 7.39,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 1.06
         },
@@ -1222,7 +1222,7 @@
           "damage": 34.26,
           "burst1s": 34.26,
           "maxHit": 7.36,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 5,
           "normalizedDamagePerCooldown": 4.89
         },
@@ -1231,7 +1231,7 @@
           "damage": 6.72,
           "burst1s": 6.72,
           "maxHit": 6.72,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 0.96
         },
@@ -1240,7 +1240,7 @@
           "damage": 7.39,
           "burst1s": 7.39,
           "maxHit": 7.39,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 1.06
         },
@@ -1249,7 +1249,7 @@
           "damage": 7.39,
           "burst1s": 7.39,
           "maxHit": 7.39,
-          "firstHit": 0.02,
+          "firstHit": 0.15,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 1.06
         }
@@ -5050,8 +5050,8 @@
         "knock": 60
       },
       "declaredDelay": 0.25,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.25s, active 0.1s, recovery 0.12s",
+      "recovery": "0.12s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,

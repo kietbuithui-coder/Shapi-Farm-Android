@@ -78,6 +78,7 @@ test('holding the dash button does not repeat-dash', async () => {
 test('every skill slot can be cast from the pad', async () => {
   const { step, run, pad: p } = await inFight();
   const bindings = [[2, 'slot 1'], [1, 'slot 2'], [3, 'slot 3'], [5, 'slot 4']];
+  const castSlots = []; run.on('skill:cast', ({ slot }) => castSlots.push(slot));
   for (const [btn, label] of bindings) {
     p.releaseAll();
     // Wait for the slot to be genuinely castable instead of guessing.
@@ -98,11 +99,17 @@ test('every skill slot can be cast from the pad', async () => {
     };
     for (let i = 0; i < 60 * 26 && !castable(); i++) step(1);
     assert.ok(castable(), `${label} never became castable within 26s`);
-    const before = run.statsTotals.casts;
+    const before = castSlots.length;
     p.press(btn);
     step(1);
-    assert.ok(run.statsTotals.casts > before, `${label} casts from button ${btn}`);
     p.release(btn);
+    // A previous authored action can reserve this input until recovery ends.
+    // It must be accepted immediately and then actually execute in order.
+    const slotIndex = SLOT_OF_BUTTON[btn];
+    const castRequestedSlot = () => castSlots.slice(before).includes(slotIndex);
+    assert.ok(castRequestedSlot() || run.skillQueue.some(q => q.index === slotIndex), `${label} input accepted from button ${btn}`);
+    for (let i = 0; i < 60 && !castRequestedSlot(); i++) step(1);
+    assert.ok(castRequestedSlot(), `${label} casts from button ${btn}`);
   }
 });
 

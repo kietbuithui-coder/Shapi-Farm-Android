@@ -34,7 +34,7 @@ test('hairball rank four bounces once and rank five spreads projectiles', () => 
 
 test('frost nova rank five releases six damaging shards and retains freeze', () => {
   const { r, e } = setup('frost_nova', 5); e.x = r.player.x + 125;
-  r.castSlot(0); step(r, 1/60);
+  r.castSlot(0); step(r, 0.15);
   const shards = r.projectiles.filter(p => p.shape === 'shard');
   assert.equal(shards.length, 6); assert.ok(shards.every(p => p.damage > 0));
   assert.ok(e.stun > 1); const hp = e.hp; step(r, 0.4);
