@@ -236,6 +236,24 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  brutal_bite: {
+    startup: 0.10, active: 0.08, recovery: 0.11, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.12, lean: -0.10, frontX: -4, frontY: 3, backX: 0, backY: 1 }],
+      [0.09, { crouch: 0.64, lean: -0.45, bodyRoll: -0.16, frontX: -19, frontY: 13, backX: 3, backY: 8, headTilt: -0.28 }],
+      [0.15, { crouch: 0.72, lean: 0.54, bodyRoll: 0.20, frontX: 23, frontY: 15, backX: -11, backY: -16, headTilt: 0.32 }],
+      [0.29, {}],
+    ],
+  },
+  soul_siphon: {
+    startup: 0.12, active: 0.08, recovery: 0.11, windup: 0.12,
+    frames: [
+      [0,    { crouch: 0.08, lean: 0.10, frontX: 3, frontY: 3, backX: -4, backY: 2 }],
+      [0.11, { crouch: 0.18, lean: 0.42, bodyRoll: 0.20, frontX: 30, frontY: -22, backX: -20, backY: 10, headTilt: 0.18 }],
+      [0.17, { crouch: 0.50, lean: -0.42, bodyRoll: -0.24, frontX: -14, frontY: -15, backX: -30, backY: -25, headTilt: -0.24 }],
+      [0.31, {}],
+    ],
+  },
   moonlit_trap: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [

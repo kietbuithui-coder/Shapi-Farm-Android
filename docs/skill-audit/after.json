@@ -468,7 +468,7 @@
         },
         {
           "dmg": 1,
-          "note": "Hạ gục mục tiêu yếu",
+          "note": "Hạ gục địch yếu (trừ boss)",
           "execute": 0.18
         }
       ],
@@ -480,51 +480,51 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.11s",
+      "recovery": "0.11s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 37.32,
-          "burst1s": 23.08,
+          "burst1s": 22.27,
           "maxHit": 16.2,
-          "firstHit": 0,
+          "firstHit": 0.12,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.98
         },
         "group": {
           "cast": true,
           "damage": 108.88,
-          "burst1s": 66.18,
+          "burst1s": 63.73,
           "maxHit": 16.13,
-          "firstHit": 0,
+          "firstHit": 0.12,
           "targetsHit": 3,
           "normalizedDamagePerCooldown": 32.02
         },
         "elite": {
           "cast": true,
           "damage": 35.85,
-          "burst1s": 21.62,
+          "burst1s": 20.8,
           "maxHit": 14.73,
-          "firstHit": 0,
+          "firstHit": 0.12,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.54
         },
         "boss": {
           "cast": true,
           "damage": 37.32,
-          "burst1s": 23.08,
+          "burst1s": 22.27,
           "maxHit": 16.2,
-          "firstHit": 0,
+          "firstHit": 0.12,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.98
         },
         "moving": {
           "cast": true,
           "damage": 37.32,
-          "burst1s": 23.08,
+          "burst1s": 22.27,
           "maxHit": 16.2,
-          "firstHit": 0,
+          "firstHit": 0.12,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 10.98
         }
@@ -781,8 +781,8 @@
       "scaling": "damage",
       "count": 1,
       "declaredEffects": {
-        "vi": "Xử tử mục tiêu máu thấp, nếu không thì chém mạnh.",
-        "en": "Execute a weakened target; otherwise hit hard."
+        "vi": "Xử tử địch thường ít máu; boss chịu đòn mạnh thay thế.",
+        "en": "Execute weakened regular foes; bosses take a heavy hit instead."
       },
       "control": {},
       "declaredDelay": 0.25,
@@ -5224,7 +5224,6 @@
       "parameters": {
         "threshold": 0.25,
         "heal": 0.08,
-        "stack": 0.04,
         "dmg": 2.2
       },
       "ranks": [
@@ -5256,20 +5255,20 @@
       "scaling": "health",
       "count": 1,
       "declaredEffects": {
-        "vi": "Diệt một mục tiêu yếu để hồi máu và cộng dồn sức mạnh.",
-        "en": "Slay a weak foe to heal and grow stronger."
+        "vi": "Diệt địch yếu để hồi máu; nâng cấp cộng dồn sát thương. Boss không bị xử tử.",
+        "en": "Slay weak foes to heal; upgrade to stack damage. Bosses cannot be executed."
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.12s, active 0.08s, recovery 0.11s",
+      "recovery": "0.11s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
           "damage": 23.36,
           "burst1s": 23.36,
           "maxHit": 23.36,
-          "firstHit": 0,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.12
         },
@@ -5278,7 +5277,7 @@
           "damage": 23.36,
           "burst1s": 23.36,
           "maxHit": 23.36,
-          "firstHit": 0,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.12
         },
@@ -5287,7 +5286,7 @@
           "damage": 23.36,
           "burst1s": 23.36,
           "maxHit": 23.36,
-          "firstHit": 0,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.12
         },
@@ -5296,7 +5295,7 @@
           "damage": 23.36,
           "burst1s": 23.36,
           "maxHit": 23.36,
-          "firstHit": 0,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.12
         },
@@ -5305,7 +5304,7 @@
           "damage": 23.36,
           "burst1s": 23.36,
           "maxHit": 23.36,
-          "firstHit": 0,
+          "firstHit": 0.13,
           "targetsHit": 1,
           "normalizedDamagePerCooldown": 2.12
         }

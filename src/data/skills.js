@@ -56,7 +56,7 @@ export const SKILLS = [
     id: 'brutal_bite', category: 'physical', rarity: 'rare', pattern: 'melee',
     name: { vi: 'Cắn Tàn Bạo', en: 'Brutal Bite' },
     desc: { vi: 'Cú cắn nặng khiến mục tiêu chảy máu.', en: 'A heavy bite that leaves the target bleeding.' },
-    cost: 22, cd: 3.4, range: 84, ranks: [R(1, 'Gây chảy máu'), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Chảy máu lâu hơn', { bleedTime: 4.5 }), R(1, 'Hút máu', { lifesteal: 0.25 }), R(1, 'Hạ gục mục tiêu yếu', { execute: 0.18 })],
+    cost: 22, cd: 3.4, range: 84, ranks: [R(1, 'Gây chảy máu'), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Chảy máu lâu hơn', { bleedTime: 4.5 }), R(1, 'Hút máu', { lifesteal: 0.25 }), R(1, 'Hạ gục địch yếu (trừ boss)', { execute: 0.18 })],
     params: { arc: 1.2, damage: 1.7, status: 'bleed', lifesteal: 0.12 }, icon: { glyph: 'fang', tint: '#ff9b7a' },
   },
   {
@@ -76,7 +76,7 @@ export const SKILLS = [
   {
     id: 'executioner', category: 'physical', rarity: 'epic', pattern: 'execute',
     name: { vi: 'Đao Phủ', en: 'Executioner' },
-    desc: { vi: 'Xử tử mục tiêu máu thấp, nếu không thì chém mạnh.', en: 'Execute a weakened target; otherwise hit hard.' },
+    desc: { vi: 'Xử tử địch thường ít máu; boss chịu đòn mạnh thay thế.', en: 'Execute weakened regular foes; bosses take a heavy hit instead.' },
     cost: 34, cd: 9, range: 92, ranks: [R(1, 'Hạ gục dưới 20% máu'), R(1, 'Ngưỡng 25%', { threshold: 0.25 }), R(1, 'Sát thương +30%', { mult: 1.3 }), R(1, 'Dùng lại ngay khi hạ gục', { resetKill: true }), R(1, 'Ngưỡng 35%', { threshold: 0.35 })],
     params: { damage: 2.4, threshold: 0.2 }, icon: { glyph: 'skull', tint: '#ff8f9b' },
   },
@@ -389,9 +389,9 @@ export const SKILLS = [
   {
     id: 'soul_siphon', category: 'summon', rarity: 'rare', pattern: 'soul',
     name: { vi: 'Hút Linh Hồn', en: 'Soul Siphon' },
-    desc: { vi: 'Diệt một mục tiêu yếu để hồi máu và cộng dồn sức mạnh.', en: 'Slay a weak foe to heal and grow stronger.' },
+    desc: { vi: 'Diệt địch yếu để hồi máu; nâng cấp cộng dồn sát thương. Boss không bị xử tử.', en: 'Slay weak foes to heal; upgrade to stack damage. Bosses cannot be executed.' },
     cost: 28, cd: 11, range: 260, ranks: [R(1, 'Kết liễu hồi 8% máu'), R(1, 'Hồi 12%', { heal: 0.12 }), R(1, 'Cộng dồn +4% sát thương', { stack: 0.04 }), R(1, 'Ngưỡng máu cao hơn', { threshold: 0.35 }), R(1, 'Cộng dồn +7%', { stack: 0.07 })],
-    params: { threshold: 0.25, heal: 0.08, stack: 0.04, dmg: 2.2 }, icon: { glyph: 'soul', tint: '#b48bff' },
+    params: { threshold: 0.25, heal: 0.08, dmg: 2.2 }, icon: { glyph: 'soul', tint: '#b48bff' },
   },
   {
     id: 'blaze_orbit', category: 'aoe', rarity: 'epic', pattern: 'orbit',

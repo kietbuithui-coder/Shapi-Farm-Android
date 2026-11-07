@@ -132,6 +132,7 @@ test('gravity well rank three pulls normal enemies, not bosses', () => {
 
 test('brutal bite rank three extends bleed and healing purr removes slow at rank five', () => {
   const a = runWith(['brutal_bite']); a.slots[0].rank = 3; a.castSlot(0);
+  a.time += 0.11; a.updatePassiveEffects(0);
   assert.equal(a.enemies[0].bleedTime, 4.5);
   const b = runWith(['healing_purr']); b.slots[0].rank = 5;
   b.playerSlow = { amount: 0.5, time: 4 }; b.castSlot(0);

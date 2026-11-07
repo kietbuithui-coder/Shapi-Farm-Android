@@ -127,6 +127,7 @@ export class Run {
     this.stormTimer = 0;
     this.moonPactTimer = 0;
     this.attackCounter = 0;
+    this.soulDamageBonus = 0; // additive damage earned by Soul Siphon during this run
     this.hitCounter = 0;
     this.comboWindow = 2.4;
     this.shrineUsed = 0;
@@ -1043,10 +1044,15 @@ export class Run {
         if (!tgt) break;
         const threshold = rv.threshold || def.params.threshold;
         const frac = tgt.hp / tgt.hpMax;
-        const dmg = this.skillDamage(def, power) * (frac <= threshold ? 6 : 1);
-        this.hitEnemy(tgt, dmg, { source: 'skill', crit: true });
-        this.emit('fx:execute', { x: tgt.x, y: tgt.y - 20, kill: frac <= threshold });
-        if (frac <= threshold && rv.resetKill && tgt.dead) { slot.cd = 0; slot.charges = slot.maxCharges; slot.recharge = 0; }
+        const baseDamage = this.skillDamage(def, power);
+        const weakened = frac <= threshold;
+        // Bosses and minibosses cannot be deleted as a fraction of their HP.
+        // They instead take the existing sixfold finisher hit at the threshold.
+        const execute = weakened && !tgt.boss && !tgt.mini && baseDamage > 0;
+        const dmg = execute ? tgt.hp : baseDamage * (weakened ? 6 : 1);
+        this.hitEnemy(tgt, dmg, { source: 'skill', crit: true, execute });
+        this.emit('fx:execute', { x: tgt.x, y: tgt.y - 20, kill: tgt.dead });
+        if (rv.resetKill && tgt.dead) { slot.cd = 0; slot.charges = slot.maxCharges; slot.recharge = 0; }
         break;
       }
       case 'mark': {
@@ -1256,11 +1262,13 @@ export class Run {
         const tgt = this.nearestEnemy(p.x, p.y, values.range * area);
         if (!tgt) break;
         const frac = tgt.hp / tgt.hpMax;
-        const killed = frac <= clamp((rv.threshold || def.params.threshold) * potency, 0, 0.8);
-        this.hitEnemy(tgt, killed ? tgt.hp + 1 : this.skillDamage(def, power), { source: 'skill', crit: true });
-        if (killed) {
+        const baseDamage = this.skillDamage(def, power);
+        const execute = !tgt.boss && !tgt.mini && baseDamage > 0 &&
+          frac <= clamp(rv.threshold || def.params.threshold, 0, 0.8);
+        this.hitEnemy(tgt, execute ? tgt.hp : baseDamage, { source: 'skill', crit: true, execute });
+        if (tgt.dead) {
           this.heal(this.stats.hpMax * (rv.heal || def.params.heal || 0.08) * this.skillCoefficient(def));
-          this.mods.atk += (rv.stack || def.params.stack || 0.04);
+          this.soulDamageBonus += rv.stack || 0;
           this.emit('fx:soul', { x: tgt.x, y: tgt.y - 20, color: def.icon.tint });
         }
         break;
@@ -1422,8 +1430,8 @@ export class Run {
     if (rv.knock) this.knockback(e, rv.knock, knockAngle);
     if (def?.params?.knock) this.knockback(e, def.params.knock * (1 + this.mods.knock), knockAngle);
     const leech = rv.lifesteal || def?.params?.lifesteal || 0;
-    if (leech) this.heal((def?.id === 'blood_fang' ? Math.min(hpBefore, dealt) : res.damage) * leech, { silent: true });
-    if (rv.execute && (e.hp / e.hpMax) < rv.execute && !e.boss) this.hitEnemy(e, e.hp + 1, { source: 'execute', silent: true });
+    if (leech) this.heal(Math.min(hpBefore, dealt) * leech, { silent: true });
+    if (rv.execute && (e.hp / e.hpMax) < rv.execute && !e.boss && !e.mini) this.hitEnemy(e, e.hp + 1, { source: 'execute', silent: true });
   }
   knockback(enemy, force, knockAngle = null) {
     if (enemy.boss || enemy.mini) return;
@@ -1448,7 +1456,7 @@ export class Run {
   /** Single damage funnel. Returns the damage actually dealt. */
   hitEnemy(enemy, amount, opts = {}) {
     if (!enemy || enemy.dead || !(amount > 0)) return 0;
-    let dmg = amount;
+    let dmg = amount * (1 + this.soulDamageBonus);
     // On-hit upgrades used to trigger only from the removed auto attack.
     // Keep them useful on deliberate skill hits instead.
     if (opts.source === 'skill' && !opts.tick) {
@@ -1460,6 +1468,7 @@ export class Run {
       if (this.stats.lifesteal > 0) this.heal(dmg * this.stats.lifesteal, { silent: true });
     }
     if (enemy.mark || enemy.timeAmp) dmg *= 1 + (enemy.mark || 0) + (enemy.timeAmp || 0);
+    if (opts.execute) dmg = enemy.hp;
     if (enemy.mini || enemy.boss) dmg *= 1;
     // Bosses and wardens take reduced damage from summons so a passive build
     // cannot out-tick the encounter's scripted pressure.
