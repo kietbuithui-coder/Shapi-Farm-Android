@@ -638,7 +638,13 @@ export class Run {
           this.emit('fx:impact', { x: e.x, y: e.y, radius: 28, color: d.impact.def.icon.tint });
         }
         d.trailTimer -= dt;
-        if (d.trailTimer <= 0) { d.trailTimer = 0.045; this.emit('fx:dashTrail', { x: p.x, y: p.y, color: d.impact.def.icon.tint }); }
+        if (d.trailTimer <= 0) {
+          d.trailTimer = 0.045;
+          this.emit('fx:dashTrail', { x: p.x, y: p.y, color: d.impact.def.icon.tint });
+          if (d.impact.rv.trail) this.zones.push({ kind: 'fire', x: p.x, y: p.y, radius: 20,
+            time: 0.8, t: 0, dps: this.skillDamage(d.impact.def, d.impact.power * 0.25),
+            source: 'dashTrail', tint: '#ff8f4d' });
+        }
       }
       if (k >= 1) this.dashQueue.splice(i, 1);
     }
@@ -1163,6 +1169,8 @@ export class Run {
           drawback: rv.noDrawback ? 0 : def.params.drawback || 0,
           forceCrit: !!rv.forceCrit,
           trail: !!rv.trail,
+          trailDamage: rv.trail ? this.skillDamage(def, power * 0.25) : 0,
+          trailCooldown: 0, trailX: p.x, trailY: p.y,
           noKnockback: true,
           tint: def.icon.tint,
         });
@@ -1374,10 +1382,24 @@ export class Run {
 
   updateBuffs(dt) {
     const p = this.player;
+    let emittedSprintTrail = false;
     for (let i = p.buffs.length - 1; i >= 0; i--) {
       const b = p.buffs[i];
       b.time -= dt;
       if (b.regen || b.heal) this.heal(((b.regen || 0) + (b.heal || 0)) * dt, { silent: true });
+      if (b.trail) {
+        b.trailCooldown = Math.max(0, b.trailCooldown - dt);
+        const moved = Math.hypot(p.x - b.trailX, p.y - b.trailY) > 0.01;
+        if (b.time > 0 && p.moving && moved && b.trailCooldown <= 0) {
+          if (!emittedSprintTrail) {
+            this.zones.push({ kind: 'fire', x: p.x, y: p.y, radius: 20, time: 0.8, t: 0,
+              dps: b.trailDamage, source: 'sprintTrail', tint: '#ff8f4d' });
+            emittedSprintTrail = true;
+          }
+          b.trailCooldown = 0.25;
+        }
+        b.trailX = p.x; b.trailY = p.y;
+      }
       if (b.burn) {
         for (const e of this.enemies) if (!e.dead && dist2(e.x, e.y, p.x, p.y) < (b.radius || 100) ** 2) this.hitEnemy(e, b.burn * dt, { source: 'aura', silent: true, tick: true });
       }
@@ -2787,7 +2809,11 @@ export class Run {
               e.x += Math.cos(a) * z.pull * dt;
               e.y += Math.sin(a) * z.pull * dt * 0.6;
             }
-            if (z.dps) this.hitEnemy(e, z.dps * dt, { source: z.source, tick: true, silent: true });
+            // New movement trails only deal damage for the part of this step
+            // during which they are alive, even at coarse frame rates.
+            const trail = z.source === 'dashTrail' || z.source === 'sprintTrail';
+            const activeDt = trail ? Math.max(0, Math.min(dt, z.time - (z.t - dt))) : dt;
+            if (z.dps && activeDt > 0) this.hitEnemy(e, z.dps * activeDt, { source: z.source, tick: true, silent: true });
             if (z.slow) this.applyStatus(e, 'slow', z.slow, 0.4);
           }
         }

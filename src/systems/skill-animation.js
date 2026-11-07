@@ -236,6 +236,25 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  wind_sprint: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.10, frontX: -2, frontY: 1, backX: -2, backY: 1 }],
+      [0.09, { crouch: 0.56, lean: -0.36, bodyRoll: 0.18, frontX: -13, frontY: 18, backX: -30, backY: -9, headTilt: -0.18 }],
+      [0.15, { crouch: 0.38, lean: 0.52, bodyRoll: -0.20, frontX: 34, frontY: 6, backX: -33, backY: 14, headTilt: 0.22 }],
+      [0.28, {}],
+    ],
+  },
+  double_leap: {
+    // A movement skill starts travelling immediately; the pose follows the leap.
+    startup: 0.08, active: 0.10, recovery: 0.10, windup: 0,
+    frames: [
+      [0,    { crouch: 0.15, lean: 0.08, frontX: 4, frontY: 2, backX: -3, backY: 2 }],
+      [0.07, { crouch: 0.48, lean: 0.36, bodyRoll: 0.14, frontX: 23, frontY: -13, backX: -18, backY: 18, headTilt: 0.16 }],
+      [0.15, { crouch: 0.10, lean: 0.48, bodyRoll: -0.28, frontX: 33, frontY: -33, backX: -25, backY: 20, headTilt: -0.20 }],
+      [0.28, {}],
+    ],
+  },
   thunder_purr: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [
