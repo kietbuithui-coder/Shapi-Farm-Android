@@ -236,6 +236,29 @@ export const SKILL_ACTIONS = {
       [0.28, {}],
     ],
   },
+  triple_scratch: {
+    // The first swipe lands immediately; the following poses follow the
+    // scheduled 0.12-second combo beats, including the fourth-rank swipe.
+    startup: 0.06, active: 0.30, recovery: 0.10, windup: 0,
+    frames: [
+      [0,    { crouch: 0.16, lean: -0.20, bodyRoll: -0.25, frontX: -13, frontY: -20, backX: -20, backY: 3 }],
+      [0.06, { crouch: 0.44, lean: 0.40, bodyRoll: 0.28, frontX: 34, frontY: 7, backX: -24, backY: -20, headTilt: 0.22 }],
+      [0.12, { crouch: 0.27, lean: -0.42, bodyRoll: -0.30, frontX: -20, frontY: 8, backX: -30, backY: -25, headTilt: -0.22 }],
+      [0.24, { crouch: 0.53, lean: 0.44, bodyRoll: 0.32, frontX: 32, frontY: -24, backX: -20, backY: 19, headTilt: 0.20 }],
+      [0.36, { crouch: 0.68, lean: -0.25, bodyRoll: -0.31, frontX: -12, frontY: 21, backX: -32, backY: -25, headTilt: -0.24 }],
+      [0.46, {}],
+    ],
+  },
+  pounce: {
+    // The lunge starts immediately; this pose plays during the actual dash.
+    startup: 0.06, active: 0.12, recovery: 0.08, windup: 0,
+    frames: [
+      [0,    { crouch: 0.22, lean: -0.16, frontX: -8, frontY: 5, backX: -3, backY: 4 }],
+      [0.06, { crouch: 0.55, lean: -0.44, bodyRoll: -0.20, frontX: -17, frontY: -10, backX: -28, backY: 14, headTilt: -0.20 }],
+      [0.14, { crouch: 0.05, lean: 0.58, bodyRoll: 0.28, frontX: 35, frontY: -19, backX: -30, backY: 18, headTilt: 0.22, airborne: 0.7 }],
+      [0.26, {}],
+    ],
+  },
   stone_stance: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [

@@ -85,7 +85,8 @@ test('reserved multi-charge input does not regenerate before it is executed', ()
   run.castSlot(0); run.castSlot(1); run.castSlot(1);
   assert.equal(run.slots[1].reserved, 2); assert.equal(run.slots[1].charges, 0);
   tick(run, 0.15); assert.equal(run.slots[1].charges, 0);
-  tick(run, 0.5); assert.equal(run.slots[1].reserved, 0);
+  tick(run, 0.5); assert.equal(run.slots[1].reserved, 1);
+  tick(run, 0.1); assert.equal(run.slots[1].reserved, 0);
   assert.equal(run.slots[1].charges, 0); assert.ok(run.slots[1].recharge > 0);
 });
 

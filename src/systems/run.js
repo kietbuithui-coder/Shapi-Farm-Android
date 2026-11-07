@@ -859,7 +859,7 @@ export class Run {
   executeSkill(slot, values, castIndex = 0) {
     const def = slot.def;
     const p = this.player;
-    const target = this.pickSkillTarget(def);
+    const target = this.pickSkillTarget(def, values);
     const emitCast = (extra = {}) => this.emit('fx:skill', {
       id: def.id, pattern: def.pattern, glyph: def.icon.glyph, tint: def.icon.tint,
       x: p.x, y: p.y - 22, target, values, castIndex, ...extra,
@@ -1363,9 +1363,9 @@ export class Run {
     return (i - (count - 1) / 2) * span;
   }
 
-  pickSkillTarget(def) {
+  pickSkillTarget(def, values = null) {
     const p = this.player;
-    const range = (def.range || 200) * 1.4;
+    const range = (values?.range || def.range || 200) * 1.4;
     return this.nearestEnemy(p.x, p.y, range) || null;
   }
 
