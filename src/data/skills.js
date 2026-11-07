@@ -277,7 +277,7 @@ export const SKILLS = [
   {
     id: 'reflective_claws', category: 'defense', rarity: 'rare', pattern: 'buff',
     name: { vi: 'Vuốt Phản Chiến', en: 'Reflective Claws' },
-    desc: { vi: 'Mỗi đòn nhận vào bị đáp trả gấp đôi.', en: 'Every blow taken is answered twice over.' },
+    desc: { vi: 'Phản một phần sát thương sau giảm trừ về kẻ tấn công.', en: 'Reflect part of mitigated damage back to the attacker.' },
     cost: 26, cd: 13, range: 0, ranks: [R(1, 'Phản 40% sát thương'), R(1, 'Phản 55%', { reflect: 0.55 }), R(1, 'Lâu hơn', { time: 6 }), R(1, 'Giảm sát thương nhận 20%', { armor: 0.2 }), R(1, 'Phản đòn lan ra xung quanh', { splash: true })],
     params: { time: 4, reflect: 0.4, armor: 0 }, icon: { glyph: 'spikes', tint: '#ffb27a' },
   },

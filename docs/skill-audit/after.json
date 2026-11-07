@@ -3392,8 +3392,8 @@
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,
@@ -3592,13 +3592,13 @@
       "scaling": "armor",
       "count": 1,
       "declaredEffects": {
-        "vi": "Mỗi đòn nhận vào bị đáp trả gấp đôi.",
-        "en": "Every blow taken is answered twice over."
+        "vi": "Phản một phần sát thương sau giảm trừ về kẻ tấn công.",
+        "en": "Reflect part of mitigated damage back to the attacker."
       },
       "control": {},
       "declaredDelay": 0,
-      "animation": "shared cast glyph/ring and pattern FX; no per-skill body-animation timing contract",
-      "recovery": "not implemented as an explicit lock",
+      "animation": "authored body pose: startup 0.1s, active 0.08s, recovery 0.1s",
+      "recovery": "0.1s with buffered skill input",
       "trials": {
         "single": {
           "cast": true,

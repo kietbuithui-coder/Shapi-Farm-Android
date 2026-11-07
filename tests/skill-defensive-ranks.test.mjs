@@ -36,14 +36,14 @@ test('both boomerangs turn at arena edge instead of disappearing', () => {
 });
 
 test('iron fur rank five heals only on valid nonlethal hits, including shielded hits', () => {
-  const r = setup('iron_fur', 5); r.hp = 40; r.castSlot(0);
+  const r = setup('iron_fur', 5); r.hp = 40; r.castSlot(0); release(r);
   const b = r.player.buffs.find(b => b.id === 'iron_fur');
   r.player.shield = 50; r.player.invuln = 0; r.damagePlayer(10, null);
   assert.ok(Math.abs(r.hp - (40 + b.onHitHeal)) < 1e-6);
   const hp = r.hp; r.damagePlayer(10, null); assert.equal(r.hp, hp, 'invulnerable hits do not heal');
   r.player.invuln = 0; r.player.shield = 0; r.hp = 1; r.damagePlayer(999, null);
   assert.equal(r.player.alive, false); assert.equal(r.hp, 0, 'heal cannot reverse lethal damage');
-  const low = setup('iron_fur', 4); low.hp = 40; low.castSlot(0); low.player.shield = 50;
+  const low = setup('iron_fur', 4); low.hp = 40; low.castSlot(0); release(low); low.player.shield = 50;
   low.damagePlayer(10, null); assert.equal(low.hp, 40);
 });
 
@@ -60,7 +60,7 @@ test('catnip rank four restores energy rather than health, rank five removes dra
 test('reflective claws only splashes at rank five without doubling the attacker hit', () => {
   for (const rank of [4, 5]) {
     const r = setup('reflective_claws', rank); const attacker = enemy(r, 40), neighbour = enemy(r, -40);
-    r.castSlot(0); r.damagePlayer(20, attacker);
+    r.castSlot(0); release(r); r.damagePlayer(20, attacker);
     assert.ok(attacker.hp < attacker.hpMax); assert.equal(neighbour.hp < neighbour.hpMax, rank === 5);
     assert.equal(r.attackCounter, 0, 'reflection cannot trigger player on-hit upgrades');
     if (rank === 5) assert.ok(Math.abs((attacker.hpMax - attacker.hp) - 2 * (neighbour.hpMax - neighbour.hp)) < 1e-6);

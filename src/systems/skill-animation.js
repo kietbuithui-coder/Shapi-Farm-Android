@@ -259,6 +259,24 @@ export const SKILL_ACTIONS = {
       [0.26, {}],
     ],
   },
+  iron_fur: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.14, lean: -0.08, frontX: -4, frontY: 2, backX: -1, backY: 2 }],
+      [0.09, { crouch: 0.57, lean: -0.34, bodyRoll: -0.18, frontX: -18, frontY: -18, backX: -28, backY: 15, headTilt: -0.25 }],
+      [0.15, { crouch: 0.35, lean: 0.24, bodyRoll: 0.22, frontX: 33, frontY: 13, backX: -30, backY: -29, headTilt: 0.23 }],
+      [0.28, {}],
+    ],
+  },
+  reflective_claws: {
+    startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
+    frames: [
+      [0,    { crouch: 0.10, lean: -0.12, frontX: -5, frontY: 1, backX: -2, backY: 1 }],
+      [0.09, { crouch: 0.30, lean: -0.42, bodyRoll: 0.24, frontX: -17, frontY: -27, backX: -24, backY: -24, headTilt: -0.22 }],
+      [0.15, { crouch: 0.72, lean: 0.38, bodyRoll: -0.26, frontX: 35, frontY: -13, backX: -30, backY: 20, headTilt: 0.24 }],
+      [0.28, {}],
+    ],
+  },
   purr_shield: {
     startup: 0.10, active: 0.08, recovery: 0.10, windup: 0.10,
     frames: [

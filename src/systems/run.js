@@ -1910,7 +1910,7 @@ export class Run {
         const moved = Math.hypot(e.x - prevX, e.y - prevY);
         if (e.dropCd <= 0 && moved > 0.01) {
           e.dropCd = e.def.dropCd || 2.2;
-          this.spawnHazardPatch(e.x, e.y, 26, e.dmg * 0.3, 1.2, '#7fd4d8');
+          this.spawnHazardPatch(e.x, e.y, 26, e.dmg * 0.3, 1.2, '#7fd4d8', e);
         }
       }
       e.x = clamp(e.x, PLAY.left - 40, PLAY.right + 40);
@@ -2030,7 +2030,7 @@ export class Run {
       const a = angle(enemy.x, enemy.y - 16, p.x, p.y) + (i - (count - 1) / 2) * 0.22;
       this.spawnProjectile({
         x: enemy.x, y: enemy.y - 16, angle: a, speed: def.projectileSpeed || 200,
-        damage: enemy.dmg, radius: 6, source: 'enemy', owner: 'enemy', tint: enemy.def.eye,
+        damage: enemy.dmg, radius: 6, source: 'enemy', owner: 'enemy', attacker: enemy, tint: enemy.def.eye,
         shape: 'orb', life: 3.4,
       });
     }
@@ -2038,7 +2038,7 @@ export class Run {
   }
 
   enemySlam(enemy) {
-    this.hazards.push({ kind: 'slam', x: enemy.x, y: enemy.y, radius: 74, delay: 0.42, t: 0, damage: enemy.dmg * 1.4, source: 'enemy', tint: '#9fe0c8' });
+    this.hazards.push({ kind: 'slam', x: enemy.x, y: enemy.y, radius: 74, delay: 0.42, t: 0, damage: enemy.dmg * 1.4, source: 'enemy', attacker: enemy, tint: '#9fe0c8' });
     this.emit('enemy:attack', { enemy, kind: 'slam' });
   }
 
@@ -2051,7 +2051,7 @@ export class Run {
   }
 
   enemyShockwave(enemy) {
-    this.hazards.push({ kind: 'ring', x: enemy.x, y: enemy.y, radius: enemy.def.blast || 96, delay: 0.5, t: 0, damage: enemy.dmg, source: 'enemy', tint: '#a8ffe0' });
+    this.hazards.push({ kind: 'ring', x: enemy.x, y: enemy.y, radius: enemy.def.blast || 96, delay: 0.5, t: 0, damage: enemy.dmg, source: 'enemy', attacker: enemy, tint: '#a8ffe0' });
     this.emit('enemy:attack', { enemy, kind: 'shockwave' });
   }
 
@@ -2066,7 +2066,7 @@ export class Run {
     const a = angle(enemy.x, enemy.y, this.player.x, this.player.y);
     this.hazards.push({
       kind: 'lance', x: enemy.x, y: enemy.y, angle: a, length: 170, width: 26,
-      delay: 0.5, t: 0, damage: enemy.dmg, source: 'enemy', tint: enemy.def.eye,
+      delay: 0.5, t: 0, damage: enemy.dmg, source: 'enemy', attacker: enemy, tint: enemy.def.eye,
     });
     // It flickers as it lunges: readable, and tells the player it has committed.
     this.emit('fx:blink', { x: enemy.x, y: enemy.y, x2: enemy.x + Math.cos(a) * 60, y2: enemy.y + Math.sin(a) * 60, color: enemy.def.eye });
@@ -2084,8 +2084,8 @@ export class Run {
     this.emit('enemy:tell', { enemy, kind: 'burst', radius: blast });
     this.hazards.push({
       kind: 'blast', x: enemy.x, y: enemy.y, radius: blast, delay: fuse, t: 0,
-      damage: enemy.dmg, source: 'enemy', tint: '#b6ff6a',
-      onLand: () => this.spawnHazardPatch(enemy.x, enemy.y, blast * 0.62, enemy.dmg * 0.22, 2.2, '#8ad14b'),
+      damage: enemy.dmg, source: 'enemy', attacker: enemy, tint: '#b6ff6a',
+      onLand: () => this.spawnHazardPatch(enemy.x, enemy.y, blast * 0.62, enemy.dmg * 0.22, 2.2, '#8ad14b', enemy),
     });
   }
 
@@ -2100,13 +2100,13 @@ export class Run {
     this.emit('fx:telegraph', { x: p.x, y: p.y, radius: r, delay: 0.85, kind: 'thorns' });
     this.hazards.push({
       kind: 'thorns', x: p.x, y: p.y, radius: r, delay: 0.85, t: 0,
-      damage: enemy.dmg, source: 'enemy', tint: '#9ad14b', root: 0.8,
+      damage: enemy.dmg, source: 'enemy', attacker: enemy, tint: '#9ad14b', root: 0.8,
     });
   }
 
   /** Short-lived ground patch (crystal shards, caustic slime). Purely positional. */
-  spawnHazardPatch(x, y, radius, dps, life, tint) {
-    this.zones.push({ kind: 'hazard', x, y, radius, time: life, t: 0, dps, tint, source: 'enemy' });
+  spawnHazardPatch(x, y, radius, dps, life, tint, attacker = null) {
+    this.zones.push({ kind: 'hazard', x, y, radius, time: life, t: 0, dps, tint, source: 'enemy', attacker });
     this.emit('fx:patch', { x, y, radius, tint });
   }
 
@@ -2415,12 +2415,12 @@ export class Run {
     const p = this.player;
     const dirA = angle(boss.x, boss.y - 40, p.x, p.y);
     this.emit('boss:attack', { enemy: boss, attack });
-    const pushHazard = (hz) => this.hazards.push({ t: 0, source: 'enemy', tint: '#ff8f4d', warn: hz.delay, ...hz });
+    const pushHazard = (hz) => this.hazards.push({ t: 0, source: 'enemy', attacker: boss, tint: '#ff8f4d', warn: hz.delay, ...hz });
     switch (attack) {
       case 'fanShot': {
         this.emit('enemy:tell', { enemy: boss, kind: 'fan', color: '#c9a8ff' });
         for (let i = -3; i <= 3; i++) {
-          this.spawnProjectile({ x: boss.x, y: boss.y - 40, angle: dirA + i * 0.22, speed: 175, damage: boss.dmg * 0.62, radius: 7, source: 'enemy', owner: 'enemy', tint: '#c9a8ff', shape: 'orb', life: 2.6 });
+          this.spawnProjectile({ x: boss.x, y: boss.y - 40, angle: dirA + i * 0.22, speed: 175, damage: boss.dmg * 0.62, radius: 7, source: 'enemy', attacker: boss, owner: 'enemy', tint: '#c9a8ff', shape: 'orb', life: 2.6 });
         }
         this.emit('fx:castTell', { x: boss.x, y: boss.y - 40, color: '#c9a8ff' });
         break;
@@ -2453,7 +2453,7 @@ export class Run {
         this.emit('enemy:tell', { enemy: boss, kind: 'beam', color: '#ffe8a8' });
         for (let i = 0; i < 3; i++) {
           const a = dirA + (i - 1) * 0.4;
-          this.hazards.push({ kind: 'beam', x: boss.x, y: boss.y - 40, angle: a, length: 620, width: 34, delay: 0.7 + i * 0.18, t: 0, damage: boss.dmg * 1.2, source: 'enemy', tint: '#ffe8a8' });
+          this.hazards.push({ kind: 'beam', x: boss.x, y: boss.y - 40, angle: a, length: 620, width: 34, delay: 0.7 + i * 0.18, t: 0, damage: boss.dmg * 1.2, source: 'enemy', attacker: boss, tint: '#ffe8a8' });
         }
         break;
       case 'emberRain':
@@ -2474,7 +2474,7 @@ export class Run {
         this.emit('enemy:tell', { enemy: boss, kind: 'nova', color: '#ff8f4d' });
         pushHazard({ kind: 'nova', x: boss.x, y: boss.y, radius: 260, delay: 1.1, damage: boss.dmg * 1.2, color: '#ff8f4d', warn: 1.1 });
         for (let i = 0; i < 8; i++) {
-          this.spawnProjectile({ x: boss.x, y: boss.y - 40, angle: (i / 8) * TAU, speed: 190, damage: boss.dmg * 0.6, radius: 6, source: 'enemy', owner: 'enemy', tint: '#ffc966', life: 4 });
+          this.spawnProjectile({ x: boss.x, y: boss.y - 40, angle: (i / 8) * TAU, speed: 190, damage: boss.dmg * 0.6, radius: 6, source: 'enemy', attacker: boss, owner: 'enemy', tint: '#ffc966', life: 4 });
         }
         break;
       case 'summonImps':
@@ -2515,13 +2515,13 @@ export class Run {
         break;
       case 'ringSlam':
         for (let i = 0; i < (boss.def.ringCount || 8); i++) {
-          this.spawnProjectile({ x: boss.x, y: boss.y - 20, angle: (i / (boss.def.ringCount || 8)) * TAU, speed: 170, damage: boss.dmg * 0.8, radius: 7, source: 'enemy', owner: 'enemy', tint: '#9fe0c8', life: 5 });
+          this.spawnProjectile({ x: boss.x, y: boss.y - 20, angle: (i / (boss.def.ringCount || 8)) * TAU, speed: 170, damage: boss.dmg * 0.8, radius: 7, source: 'enemy', attacker: boss, owner: 'enemy', tint: '#9fe0c8', life: 5 });
         }
         break;
       case 'screamPlus': {
         pushHazard({ kind: 'nova', x: boss.x, y: boss.y, radius: boss.def.blast || 170, delay: 0.9, damage: boss.dmg * 1.2, color: '#ff8fa8' });
         for (let i = 0; i < (boss.def.projectileCount || 8); i++) {
-          this.spawnProjectile({ x: boss.x, y: boss.y - 30, angle: (i / (boss.def.projectileCount || 8)) * TAU, speed: 160, damage: boss.dmg * 0.5, radius: 6, source: 'enemy', owner: 'enemy', tint: '#ff8fa8', life: 4 });
+          this.spawnProjectile({ x: boss.x, y: boss.y - 30, angle: (i / (boss.def.projectileCount || 8)) * TAU, speed: 160, damage: boss.dmg * 0.5, radius: 6, source: 'enemy', attacker: boss, owner: 'enemy', tint: '#ff8fa8', life: 4 });
         }
         break;
       }
@@ -2633,7 +2633,7 @@ export class Run {
         this.emit('enemy:tell', { enemy: boss, kind: 'shatter', color: '#ffffff' });
         const walls = (this.zones || []).filter((z) => z.kind === 'wall');
         for (const w of walls) {
-          this.hazards.push({ kind: 'blast', x: w.x, y: w.y, radius: 66, delay: 0.5, t: 0, damage: boss.dmg * 0.85, source: 'enemy', tint: '#e8ffff' });
+          this.hazards.push({ kind: 'blast', x: w.x, y: w.y, radius: 66, delay: 0.5, t: 0, damage: boss.dmg * 0.85, source: 'enemy', attacker: boss, tint: '#e8ffff' });
           this.emit('fx:impact', { x: w.x, y: w.y, radius: 66, color: '#e8ffff' });
         }
         this.zones = this.zones.filter((z) => z.kind !== 'wall');
@@ -2650,7 +2650,7 @@ export class Run {
           this.hazards.push({
             kind: 'beam', x: boss.x, y: boss.y - 40, angle: dirA + sweep * i * 0.16,
             length: 760, width: 30, delay: 0.7 + i * 0.16, t: 0, damage: boss.dmg * 0.7,
-            source: 'enemy', tint: '#bfefff',
+            source: 'enemy', attacker: boss, tint: '#bfefff',
           });
         }
         break;
@@ -2687,7 +2687,7 @@ export class Run {
     const p = {
       x: opt.x, y: opt.y, angle: opt.angle, speed: opt.speed || 300,
       damage: opt.damage ?? 1, radius: opt.radius || 6, life: opt.life || 2.4,
-      t: 0, owner: opt.owner || 'player', source: opt.source || 'skill',
+      t: 0, owner: opt.owner || 'player', source: opt.source || 'skill', attacker: opt.attacker || null,
       pierce: opt.pierce || 0, hits: new Set(), tint: opt.tint || '#ffffff',
       shape: opt.shape || 'orb', homing: opt.homing || 0, explode: opt.explode || 0,
       boomerang: !!opt.boomerang, travel: opt.travel || 0, phase: 0,
@@ -2821,7 +2821,7 @@ export class Run {
           hz.resolved = true;
           this.emit('fx:impact', { x: hz.x, y: hz.y, radius: hz.radius, color: hz.tint || hz.color });
           if (hz.source === 'enemy') {
-            if (dist(hz.x, hz.y, p.x, p.y) < hz.radius * 0.92) this.damagePlayer(hz.damage, null);
+            if (dist(hz.x, hz.y, p.x, p.y) < hz.radius * 0.92) this.damagePlayer(hz.damage, null, null, hz.attacker);
           } else {
             for (const e of this.enemies) if (!e.dead && dist(e.x, e.y, hz.x, hz.y) < hz.radius) this.hitEnemy(e, hz.damage, { source: 'skill' });
           }
@@ -2833,7 +2833,7 @@ export class Run {
           hz.resolved = true;
           this.emit('fx:beam', { x: hz.x, y: hz.y, angle: hz.angle, length: hz.length, width: hz.width, color: hz.tint });
           if (hz.source === 'enemy') {
-            if (this.linesHit(hz, p.x, p.y - 20, hz.width * 0.6 + p.radius)) this.damagePlayer(hz.damage, null);
+            if (this.linesHit(hz, p.x, p.y - 20, hz.width * 0.6 + p.radius)) this.damagePlayer(hz.damage, null, null, hz.attacker);
           } else {
             for (const e of this.enemies) {
               if (e.dead) continue;
@@ -2864,7 +2864,7 @@ export class Run {
             this.emit('fx:impact', { x: hz.x, y: hz.y, radius: hz.radius, color: hz.tint });
           }
           if (hit) {
-            this.damagePlayer(hz.damage, null);
+            this.damagePlayer(hz.damage, null, null, hz.attacker);
             if (hz.root) this.playerRoot = Math.max(this.playerRoot || 0, hz.root);
           }
           if (hz.onLand) hz.onLand();
@@ -2876,7 +2876,7 @@ export class Run {
           hz.resolved = true;
           this.emit('fx:lineStrike', { x: hz.x, y: hz.y, x2: hz.x2, y2: hz.y2, width: hz.width, color: hz.tint || hz.color });
           if (this.linesHit({ x: hz.x, y: hz.y, angle: angle(hz.x, hz.y, hz.x2, hz.y2), length: dist(hz.x, hz.y, hz.x2, hz.y2) }, p.x, p.y - 20, hz.width * 0.5 + p.radius)) {
-            if (hz.source === 'enemy') this.damagePlayer(hz.damage, null);
+            if (hz.source === 'enemy') this.damagePlayer(hz.damage, null, null, hz.attacker);
           }
         }
         if (age > 0.4) this.hazards.splice(i, 1);
@@ -2928,7 +2928,7 @@ export class Run {
           z.dmgTick = (z.dmgTick || 0) - dt;
           if (z.dmgTick <= 0 && z.dps) {
             z.dmgTick = 0.45;
-            this.damagePlayer(z.dps * 0.45, null);
+            this.damagePlayer(z.dps * 0.45, null, null, z.attacker);
           }
         }
       } else {
@@ -3316,7 +3316,7 @@ export class Run {
   }
 
   /* ── damage to player ──────────────────────────────────────────────────── */
-  damagePlayer(raw, source, projectile) {
+  damagePlayer(raw, source, projectile, attacker = null) {
     const p = this.player;
     if (!p.alive) return;
     if (p.invuln > 0) return;
@@ -3345,6 +3345,8 @@ export class Run {
     // them and react.
     const maxHit = this.stats.hpMax * MAX_HIT_SHARE;
     if (dmg > maxHit) dmg = maxHit;
+    // Skill reflection is based on the mitigated hit, including shield absorption.
+    const reflectedBasis = dmg;
     // Shield-break effects belong to the pool that was actually depleted.
     let brokenShield = null;
     if (p.shield > 0) {
@@ -3363,13 +3365,21 @@ export class Run {
     this.combo = 0;
     this.emit('player:hurt', { amount: dmg, x: p.x, y: p.y, source, projectile });
     this.emit('damage', { amount: dmg, x: p.x, y: p.y - 40, target: 'player' });
-    // thorns / reflect
-    const reflect = this.stats.thorns + this.buffValue('reflect');
-    if (reflect > 0 && source && !source.dead) this.hitEnemy(source, dmg * reflect, { source: 'thorns' });
-    if (dmg > 0 && this.buffValue('reflectSplash')) {
-      const splash = dmg * this.buffValue('reflect') * 0.5;
+    // Track attack ownership separately from `source`: changing `source` would
+    // make formerly undodgeable projectile/area attacks dodgeable. A projectile
+    // or telegraph may still land after its creator dies, but cannot reflect to
+    // that dead creator. Existing passive thorns retain their HP-loss semantics.
+    const reflectSource = source || projectile?.attacker || attacker;
+    const reflectBuff = this.buffValue('reflect');
+    if (reflectSource && !reflectSource.dead) {
+      const passive = source ? dmg * this.stats.thorns : 0;
+      const returned = passive + reflectedBasis * reflectBuff;
+      if (returned > 0) this.hitEnemy(reflectSource, returned, { source: 'thorns' });
+    }
+    if (reflectedBasis > 0 && this.buffValue('reflectSplash')) {
+      const splash = reflectedBasis * reflectBuff * 0.5;
       for (const enemy of this.enemies) {
-        if (enemy !== source && !enemy.dead && dist2(enemy.x, enemy.y, p.x, p.y) < (90 + enemy.radius) ** 2) {
+        if (enemy !== reflectSource && !enemy.dead && dist2(enemy.x, enemy.y, p.x, p.y) < (90 + enemy.radius) ** 2) {
           this.hitEnemy(enemy, splash, { source: 'thorns' });
         }
       }
