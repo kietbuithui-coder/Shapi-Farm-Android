@@ -32,7 +32,10 @@ and new cats/skills for the next attempt.
 Attacks are manual: use the equipped skill buttons; there is no automatic basic attack.
 
 `AUTO` in the HUD hands the run to the bot — useful to watch how a build
-plays out.
+plays out. From Home, `Thử Boss` / `Boss Practice` lets you fight any of the
+five bosses with your selected loadout and difficulty. Practice records codex
+discoveries but awards no currency, achievements, wins, or run records; the
+nine-night campaign remains unchanged.
 
 ### The loop
 

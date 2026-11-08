@@ -15,6 +15,7 @@ Mục tiêu: nâng chất lượng game hiện có mà không phá tiến trình
 ## 2 — Có thể chơi và tiến triển
 - [x] Mô phỏng có seed qua 10 mèo, 3 seed, 2 độ khó; lưu kết quả, không xem bot là người chơi. Chiến thuật do bot hiện tại quyết định; chưa bao phủ mọi build.
 - [x] Kiểm đường đi 9 đêm bằng kịch bản có hỗ trợ; có đo các run không hỗ trợ riêng. Không dùng run bất tử để kết luận cân bằng.
+- [x] Thêm trận thử riêng cho cả năm boss, không thay chiến dịch hay thưởng tiến trình; kiểm truy cập, thắng/thua và nút thử lại.
 - [x] Kiểm vòng lặp nâng cấp/lưu/mở khóa bằng test hiện có và test bundle; vẫn cần playtest để phát hiện lỗi ngoài kịch bản.
 
 ## 3 — Trải nghiệm và phát hành

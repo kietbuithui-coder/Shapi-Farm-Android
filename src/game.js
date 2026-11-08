@@ -26,6 +26,7 @@ const SCALE_SETTINGS = ['skillScaleHealth', 'skillScaleSpeed', 'skillScaleArmor'
 const SLIDER_SETTINGS = ['music', 'sfx', 'voice', 'shake', 'viewDistance', ...SCALE_SETTINGS];
 import { buildWiki } from './data/wiki.js';
 import { CATS, CAT_BY_ID } from './data/cats.js';
+import { BOSS_BY_ID } from './data/enemies.js';
 import { PALETTE, FONT } from './data/palette.js';
 import { SKILLS, SKILL_BY_ID, STARTER_SKILLS } from './data/skills.js';
 import { PERK_LINES, PERK_TIERS, PERK_COST, perkBonuses } from './data/perks.js';
@@ -340,7 +341,7 @@ export class Game {
   }
 
   /* ── run lifecycle ────────────────────────────────────────────────────── */
-  startRun({ catId, skills, difficulty, seed } = {}) {
+  startRun({ catId, skills, difficulty, seed, challengeBoss } = {}) {
     const perks = this.profile.upgrades || {};
     const rng = (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
     this.run = new Run({
@@ -348,6 +349,7 @@ export class Game {
       skills: (skills || this.selectedSkills).filter(Boolean),
       perks,
       difficulty: difficulty || this.difficulty,
+      challengeBoss,
       seed: seed ?? rng,
       profile: this.profile,
     });
@@ -382,12 +384,14 @@ export class Game {
     this.hud.lastCombo = 0;
     this.touch.layout(this.w, this.h, this.safe, this.run);
     audio.startMusic?.(this.run.act?.env || 'garden');
-    this.profile.stats.runs = (this.profile.stats.runs || 0) + 1;
-    this.store.markDirty?.();
+    if (!this.run.challengeBoss) {
+      this.profile.stats.runs = (this.profile.stats.runs || 0) + 1;
+      this.store.markDirty?.();
+    }
   }
 
   teardownRun() {
-    if (this.run) {
+    if (this.run && !this.run.challengeBoss) {
       this.profile.lastRun = {
         cat: this.run.cat.id,
         skills: (this.run.slots || []).filter(Boolean).map((s) => s.id),
@@ -410,6 +414,11 @@ export class Game {
     if (!run || this.ending) return;
     this.ending = true;
     const sum = run.summary();
+    if (run.challengeBoss) {
+      // Practice is repeatable and never grants economy, records or wins.
+      this.go('results', { ...sum, victory, challengeBoss: run.challengeBoss, depth: 0, embers: 0, gold: 0, newBest: false });
+      return;
+    }
     const depth = victory ? 45 : sum.depth;
     const before = this.profile.stats.bestDepth || 0;
     const s = this.profile.stats;
@@ -553,6 +562,7 @@ export class Game {
     switch (this.scene) {
       case 'home':
         if (id === 'play') this.go('run', { catId: this.selected, skills: this.selectedSkills, difficulty: this.difficulty });
+        else if (id === 'bossPractice') this.go('bossPractice');
         else if (id === 'cats') this.go('cats');
         else if (id === 'skills') this.go('skills');
         else if (id === 'upgrades') this.go('upgrades');
@@ -560,6 +570,14 @@ export class Game {
         else if (id === 'codex') { this.codexTab = 0; this.codexPage = 0; this.codexEntry = null; this.go('codex'); }
         else if (id === 'settings') this.go('settings');
         break;
+      case 'bossPractice': {
+        if (id === 'back') return this.go('home');
+        if (id.startsWith('practice:')) {
+          const bossId = id.slice('practice:'.length);
+          if (Object.prototype.hasOwnProperty.call(BOSS_BY_ID, bossId)) this.go('run', { catId: this.selected, skills: this.selectedSkills, difficulty: this.difficulty, challengeBoss: bossId });
+        }
+        break;
+      }
       case 'codex': {
         if (id === 'back') return this.go('home');
         if (id === 'codex-close') { this.codexEntry = null; return; }
@@ -804,7 +822,7 @@ export class Game {
         if (id.startsWith('skill')) this.castSkill(Number(id.slice(5)));
         break;
       case 'results':
-        if (id === 'again') this.go('run', { catId: this.selected, skills: this.selectedSkills, difficulty: this.difficulty });
+        if (id === 'again') this.go('run', { catId: this.selected, skills: this.selectedSkills, difficulty: this.difficulty, challengeBoss: this.summary?.challengeBoss });
         else if (id === 'home') this.go('home');
         break;
       default:
@@ -1012,6 +1030,7 @@ export class Game {
     let rects = [];
     switch (this.scene) {
       case 'home': rects = Scenes.drawHome(ctx, base); break;
+      case 'bossPractice': rects = Scenes.drawBossPractice(ctx, base); break;
       case 'cats': rects = Scenes.drawCatSelect(ctx, { ...base, selected: this.selected, selectedPrev: this.selectedPrev, fadeT: this.pickT, botMode: this.botMode }); break;
       case 'skills': rects = Scenes.drawSkillSelect(ctx, { ...base, selectedSkills: this.selectedSkills, botMode: this.botMode, page: this.skillPage }); break;
       case 'upgrades': rects = Scenes.drawUpgrades(ctx, base); break;

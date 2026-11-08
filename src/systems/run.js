@@ -49,9 +49,10 @@ export class Run {
   /**
    * @param {object} opts { catId, skills:[4], perks, seed, difficulty, statsRecorder }
    */
-  constructor({ catId, skills = [], perks = {}, seed = 1, difficulty = 'normal', profile = null }) {
+  constructor({ catId, skills = [], perks = {}, seed = 1, difficulty = 'normal', profile = null, challengeBoss = null }) {
     this.cat = CAT_BY_ID[catId] || CAT_BY_ID.tabby;
     this.difficulty = difficulty;
+    this.challengeBoss = Object.prototype.hasOwnProperty.call(BOSS_BY_ID, challengeBoss) ? challengeBoss : null;
     this.seed = seed >>> 0;
     this.rng = new Rng(seed);
     this.shuffleRng = new Rng(seed ^ 0x9e3779b9);
@@ -157,7 +158,7 @@ export class Run {
     // than no manual.
     this.discover('world:night');
     this.discover('world:terrace');
-    this.beginWave(1);
+    this.beginWave(this.challengeBoss ? 5 : 1);
     this.setState(RUN_STATE.INTRO);
   }
 
@@ -222,7 +223,7 @@ export class Run {
     if (this.boss) { this.boss.dead = true; this.boss = null; }
     if (this.miniBoss) { this.miniBoss.dead = true; this.miniBoss = null; }
     // The data defines a rotation beyond night 9 for a future mode; the current
-    // campaign ends after night 9, so this uses the authored act boss.
+    // campaign ends after night 9, so regular runs use the authored act boss.
     this.actBoss = bossForNight(this.night, plan.act);
     this.waveBudget = plan.budget;
     this.waveEnemiesLeft = 0;
@@ -232,7 +233,7 @@ export class Run {
     this.emit('wave:begin', { night: this.night, wave, plan });
 
     if (plan.isBoss) {
-      this.spawnBoss(this.actBoss || this.act.boss);
+      this.spawnBoss(this.challengeBoss || this.actBoss || this.act.boss);
       return;
     }
     if (plan.isMini) {
@@ -461,6 +462,14 @@ export class Run {
       if (this.comboTimer <= 0) { this.combo = 0; this.emit('combo:end', {}); }
     }
     if (this.hp <= 0) this.playerDeath();
+    // Resolve practice at the end of the simulation step: XP/loot in the same
+    // frame cannot overwrite victory with a level-up. A simultaneous death is
+    // still a defeat rather than a victory with a dead player.
+    if (this.challengeBoss && this.practiceWon && this.state !== RUN_STATE.DEAD) {
+      this.setState(RUN_STATE.VICTORY);
+      this.emit('run:victory', { night: this.night, kills: this.kills, level: this.level, time: this.time, gold: this.gold });
+      return;
+    }
 
     // wave completion
     const stragglers = this.enemies.some((e) => !e.dead);
@@ -1769,6 +1778,7 @@ export class Run {
     this.waveEnemiesLeft = 0;
     this.pendingSpawns.length = 0;
     this.emit('boss:defeated', { night: this.night });
+    if (this.challengeBoss) this.practiceWon = true;
   }
 
   /* ── enemy AI ──────────────────────────────────────────────────────────── */

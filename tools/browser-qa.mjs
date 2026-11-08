@@ -65,7 +65,20 @@ try {
     assert.equal(local,true,'Chromium permitted localStorage during this test');
     await page.reload();await page.waitForFunction(()=>__catLegends?.scene==='home');
     assert.equal(await page.evaluate(()=>__catLegends.profile.embers),123);
-    console.log(`PASS file:// offline ${width}x${height}@2: menu, four skill buttons, multitouch movement/dodge, pause, level-up, reload/save`);
+    await page.waitForFunction(()=>__catLegends._cachedRects.some(r=>r.id==='bossPractice'));
+    const practice=await page.evaluate(()=>__catLegends._cachedRects.find(r=>r.id==='bossPractice'));
+    await page.touchscreen.tap(practice.x+practice.w/2,practice.y+practice.h/2);
+    await page.waitForFunction(()=>__catLegends.scene==='bossPractice' && __catLegends._cachedRects.filter(r=>r.id.startsWith('practice:')).length===5);
+    const queen=await page.evaluate(()=>__catLegends._cachedRects.find(r=>r.id==='practice:crystal_queen'));
+    await page.touchscreen.tap(queen.x+queen.w/2,queen.y+queen.h/2);
+    await page.waitForFunction(()=>__catLegends.scene==='run' && __catLegends.run?.state==='fight');
+    assert.equal(await page.evaluate(()=>__catLegends.run.boss?.def.id),'crystal_queen');
+    const before=await page.evaluate(()=>({stats:JSON.stringify(__catLegends.profile.stats),embers:__catLegends.profile.embers}));
+    await page.evaluate(()=>__catLegends.run.killEnemy(__catLegends.run.boss));
+    await page.waitForFunction(()=>__catLegends.scene==='results');
+    const after=await page.evaluate(()=>({stats:JSON.stringify(__catLegends.profile.stats),embers:__catLegends.profile.embers,summary:__catLegends.summary}));
+    assert.equal(after.embers,before.embers);assert.equal(after.stats,before.stats);assert.equal(after.summary.embers,0);assert.equal(after.summary.challengeBoss,'crystal_queen');
+    console.log(`PASS file:// offline ${width}x${height}@2: menu, four skill buttons, multitouch movement/dodge, pause, level-up, reload/save, boss practice`);
     await context.close();
   }
   const context=await browser.newContext({viewport:{width:1280,height:720}}),page=await context.newPage();

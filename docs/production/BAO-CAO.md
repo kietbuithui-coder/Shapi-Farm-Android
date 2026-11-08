@@ -13,7 +13,8 @@
 - **Nâng cấp trong trận:** Lưỡi Sắc và Nanh Thủy Tinh nay tăng chỉ số sát thương thực; Nhịp Rỉ Máu hoạt động trên mỗi 4 đòn kỹ năng trực tiếp và tăng sức mạnh thay vì tăng sai khoảng cách; Lớp Da Thứ Hai giữ chu kỳ 20 giây qua nhiều lần chọn; Bật Nảy và Đâm Sau Lưng có tác dụng trên đòn trực tiếp, không nảy vô hạn. Sửa mô tả để nêu đúng phạm vi áp dụng. Đây là quyết định cơ chế mới, **chưa được xác nhận cân bằng**.
 - **Thẻ nâng cấp:** thay phép chọn làm độ hiếm bị đảo bằng chọn có trọng số không trùng: common 100, rare 46, epic 17, mythic 5; cùng thẻ hợp build ×1,25. Test thống kê và seed/cap. **Thay đổi này ảnh hưởng đáng kể độ sâu bot; cần cân bằng/playtest trước phát hành rộng** (xem bảng).
 - **Điều khiển:** Esc/P và nút Start/Select gamepad có thể vừa tạm dừng vừa tiếp tục, không nhận đòn khi đang pause; không chặn màn thưởng. Bot dùng năng lượng thật và lệnh né bình thường thay vì kiểm nhầm năng lượng trên player; sửa nhánh tìm máu, xử lý loadout rỗng.
-- Sửa README mô tả đòn đánh thủ công, 54 kỹ năng và vị trí AUTO. Tài liệu audit cũ được đánh dấu ở phần đã sửa.
+- **Thử Boss:** từ màn hình chính chọn nút `Thử Boss`, chọn một trong năm boss, gồm Void Predator và Crystal Queen. Đây là trận riêng với mèo, bốn kỹ năng, nâng cấp cố định và độ khó đang chọn; giết boss kết thúc trận. Thắng, thua hoặc thoát đều không thêm tro, xu, kỷ lục, số trận hay thành tựu; gặp boss có thể mở mục tương ứng trong Sổ Tay. Nút thử lại giữ boss và độ khó. Chiến dịch vẫn kết thúc sau chín đêm.
+- Sửa màn kết quả từng cộng lại thưởng depth/kill khi hiển thị, khiến số tro hiện ra cao hơn thực nhận. Sửa README mô tả đòn đánh thủ công, 54 kỹ năng và vị trí AUTO. Tài liệu audit cũ được đánh dấu ở phần đã sửa.
 
 ## Dữ liệu đo có thể lặp
 
@@ -34,9 +35,9 @@ Dữ liệu từng run: `bot-truoc.json`, `bot-sau.json`, `bot-doi-chieu-tile-cu
 
 ## Kiểm thử bản giao
 
-- `npm test`: **518/518** đạt, bao gồm source, 54 skill smoke, input, save, mobile, chọn thẻ, các sửa cơ chế mới, bundle HTML và đường đi 9 đêm có hỗ trợ.
-- `npm run build:web`, `npm run verify`, `node tools/verify-fonts.mjs`, `git diff --check`: đạt. Bundle test so JavaScript nhúng với source. `index.html` 639 KB, self-contained; SHA-256: `f251cffa27b8cd7977b5139ed79e7089809ba9a63752655678a096de3f27df69`.
-- Chromium headless thật, truy cập `file://` và bật offline, không nhận request HTTP(S): mô phỏng 840×380 và 390×844, DPR 2; vào game bằng chạm, 4 nút skill, đa chạm di chuyển + skill + né, pause/resume, chọn level-up, lưu và reload trong cùng context. Chromium desktop: Esc pause/resume. Không có exception trang được ghi nhận. Môi trường browser giả lập **không phải điện thoại thật**, không chứng minh lưu qua lần mở sau trên mọi trình duyệt file://.
+- `npm test`: **524/524** đạt, bao gồm source, 54 skill smoke, input, save, mobile, chọn thẻ, các sửa cơ chế mới, bundle HTML và đường đi 9 đêm có hỗ trợ.
+- `npm run build:web`, `npm run verify`, `node tools/verify-fonts.mjs`, `git diff --check`: đạt. Bundle test so JavaScript nhúng với source. `index.html` 641 KB, self-contained; SHA-256: `d7c9e62447e04dc2685b0618a30ffd8f71c3b03f8992e9a8bba9cf56e331851f`.
+- Chromium headless thật, truy cập `file://` và bật offline, không nhận request HTTP(S): mô phỏng 840×380 và 390×844, DPR 2; vào game bằng chạm, 4 nút skill, đa chạm di chuyển + skill + né, pause/resume, chọn level-up, lưu và reload trong cùng context; vào Thử Boss, chọn Crystal Queen và kiểm tra kết quả không nhận thưởng bằng cách kết liễu boss nhân tạo. Chromium desktop: Esc pause/resume. Không có exception trang được ghi nhận. Môi trường browser giả lập **không phải điện thoại thật**, không chứng minh lưu qua lần mở sau trên mọi trình duyệt file://.
 
 ### Công cụ Chromium tùy chọn (Linux)
 
@@ -59,4 +60,4 @@ Công cụ không tắt bảo vệ same-origin. `npm ci` khôi phục chính xá
 2. Đo FPS, nhiệt độ, pin, âm thanh, đa chạm, fullscreen, safe area, lưu và khôi phục file trên thiết bị Android/iOS thật và các trình duyệt mục tiêu.
 3. Audit mô tả và hiệu ứng của toàn bộ nâng cấp/skill rank 2–5, tương tác chéo, khả năng đọc giao tranh và khả năng tiếp cận; `piercing_mind` chẳng hạn chưa được chứng minh tác động lên mọi loại đạn kỹ năng. Kiểm chất lượng art/animation bằng người, không chỉ test silhouette.
 4. Đánh giá tích lũy phần thưởng, hệ kinh tế, nhịp 9 đêm, và khả năng hoàn thành không dùng trợ giúp trên nhiều seed/build; cải tiến bot chỉ để hỗ trợ đo, không dùng bot làm thước đo duy nhất.
-5. **Nội dung boss chưa đến được:** chiến dịch luôn kết thúc sau đêm 9; Void Predator và Crystal Queen chỉ nằm trong bảng xoay từ đêm 13–14 nên không thể gặp qua luồng chơi hiện tại. Hai boss có test AI riêng nhưng chưa có chế độ chơi tiếp/đấu thử; cần quyết định thiết kế và giao diện trước khi công bố là đã hoàn tất nội dung.
+5. **Nội dung boss:** Void Predator và Crystal Queen hiện chơi được ở Thử Boss nhưng **không xuất hiện trong chiến dịch chín đêm**. Chế độ mới và hai boss vẫn cần được chơi thử thực tế, cân bằng, kiểm các phase và đánh giá liệu có cần nội dung chiến dịch riêng hay không.

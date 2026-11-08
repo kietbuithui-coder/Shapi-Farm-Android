@@ -9,6 +9,7 @@ import { drawIcon } from '../art/icons.js';
 import { drawCat, drawCatFace } from '../art/catart.js';
 import { drawCreature } from '../art/creatureart.js';
 import { CATS, CAT_BY_ID } from '../data/cats.js';
+import { BOSSES } from '../data/enemies.js';
 import { SKILLS, SKILL_BY_ID, SKILL_CATEGORIES, skillScaling } from '../data/skills.js';
 import { PERK_LINES, PERK_COST, PERK_TIERS } from '../data/perks.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -258,12 +259,39 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   ctx.stroke();
   drawIcon(ctx, 'ember', purseX + 22, purseY + 19, 17, '#ffb066', { glow: 'rgba(255,150,80,0.5)' });
   text(ctx, String(profile.embers), purseX + 38, purseY + 24, { size: 15, weight: 700, color: '#ffe8c8' });
+  const practice = button(ctx, { x: purseX, y: purseY + 48, w: purseW, h: 36,
+    label: t2(lang, 'Thử Boss', 'Boss Practice'), hover: hover === 'bossPractice', font: '10.5px' });
+  rects.push({ id: 'bossPractice', ...practice });
 
   // best depth, bottom-left
   const best = profile.stats.bestDepth || 0;
   if (best > 0) {
     text(ctx, `${tr(lang, 'best')} · ${best}`, left, h - safe.bottom - 22, { size: 11, weight: 700, color: 'rgba(255,201,102,0.5)' });
   }
+  return rects;
+}
+
+/* Standalone boss practice: no campaign rewards, records or wins. */
+export function drawBossPractice(ctx, { w, h, safe, t, lang, hover }) {
+  drawBackdrop(ctx, w, h, t, PALETTE.vermilion, 0.85);
+  const rects = [];
+  sceneTitle(ctx, t2(lang, 'Thử Boss', 'Boss Practice'), t2(lang, 'ĐẤU TẬP · KHÔNG CÓ THƯỞNG', 'PRACTICE · NO REWARDS'), safe.left + 24, safe.top + 88, { size: 32, track: 0.8 });
+  const portrait = h > w, cols = portrait ? 2 : 5, rows = Math.ceil(BOSSES.length / cols), gap = 10;
+  const left = safe.left + 20, top = safe.top + 126, availableW = w - safe.left - safe.right - 40;
+  const cardW = (availableW - gap * (cols - 1)) / cols;
+  const cardH = Math.min(180, (h - safe.bottom - 20 - top - gap * (rows - 1)) / rows);
+  BOSSES.forEach((boss,i) => {
+    const x = left + (i % cols) * (cardW + gap), y = top + Math.floor(i / cols) * (cardH + gap), active = hover === 'practice:' + boss.id;
+    panel(ctx, x, y, cardW, cardH, { radius: 14 });
+    ctx.save(); ctx.beginPath(); ctx.arc(x + cardW/2, y + cardH * 0.38, Math.min(32, cardH * 0.21), 0, TAU);
+    ctx.fillStyle = hexA(boss.color, 0.4); ctx.fill(); ctx.strokeStyle = hexA(boss.glow || boss.color, 0.75); ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+    drawIcon(ctx, 'skull', x + cardW / 2, y + cardH * 0.38, Math.min(30, cardH * 0.25), boss.glow || '#ffe8a8');
+    const size = cardW < 100 ? 9.5 : 12;
+    text(ctx, trimTo(ctx, localize(boss.name, lang), cardW - 12, size, 700), x + cardW / 2, y + cardH * 0.74, { size, weight: 700, align: 'center', color: active ? '#ffe8a8' : '#f4ecd8' });
+    rects.push({ id: 'practice:' + boss.id, x, y, w: cardW, h: cardH });
+  });
+  iconButton(ctx, { x: safe.left + 26, y: safe.top + 26, r: 19, icon: 'back', hover: hover === 'back' });
+  rects.push({ id: 'back', x: safe.left + 7, y: safe.top + 7, w: 38, h: 38 });
   return rects;
 }
 
@@ -1401,7 +1429,9 @@ export function drawResults(ctx, { w, h, safe, t, lang, summary, hover, victory 
   g.addColorStop(0.5, victory ? '#d8fff0' : '#ffd7dc');
   g.addColorStop(1, hexA(victory ? PALETTE.jade : PALETTE.vermilion, 0.3));
   ctx.fillStyle = g;
-  ctx.fillText(victory ? t2(lang, 'BÌNH MINH', 'DAYBREAK') : t2(lang, 'ĐÊM KÉO DÀI', 'THE NIGHT GROWS LONG'), w / 2, h * 0.22);
+  const resultTitle = summary.challengeBoss ? (victory ? t2(lang, 'THỬ THÁCH THÀNH CÔNG', 'PRACTICE COMPLETE') : t2(lang, 'THỬ LẠI', 'TRY AGAIN'))
+    : victory ? t2(lang, 'BÌNH MINH', 'DAYBREAK') : t2(lang, 'ĐÊM KÉO DÀI', 'THE NIGHT GROWS LONG');
+  ctx.fillText(resultTitle, w / 2, h * 0.22, w - safe.left - safe.right - 20);
   ctx.restore();
 
   const panelW = Math.min(560, w * 0.6);
@@ -1423,8 +1453,8 @@ export function drawResults(ctx, { w, h, safe, t, lang, summary, hover, victory 
   });
   divider(ctx, panelX + 24, panelY + 108, panelW - 48);
   // rewards
-  text(ctx, tr(lang, 'rewards'), panelX + 26, panelY + 138, { size: 11, weight: 700, color: 'rgba(255,201,102,0.7)' });
-  const embers = summary.embers + Math.floor(summary.depth * 2 + summary.kills * 0.12);
+  text(ctx, summary.challengeBoss ? t2(lang, 'Đấu tập · Không có thưởng', 'Practice · No rewards') : tr(lang, 'rewards'), panelX + 26, panelY + 138, { size: 11, weight: 700, color: 'rgba(255,201,102,0.7)' });
+  const embers = summary.embers || 0;
   drawIcon(ctx, 'ember', panelX + 42, panelY + 168, 18, '#ffb066');
   text(ctx, `+${embers}`, panelX + 58, panelY + 174, { size: 17, weight: 700, color: '#ffe8c8' });
   drawIcon(ctx, 'coin', panelX + 150, panelY + 168, 18, '#ffc966');
