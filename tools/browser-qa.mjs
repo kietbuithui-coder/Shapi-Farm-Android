@@ -23,8 +23,12 @@ try {
     await page.waitForFunction(() => window.__catLegends && !document.querySelector('#boot:not(.gone)'));
     let state = await page.evaluate(() => ({ scene: __catLegends.scene, mobile: __catLegends.mobile, play: __catLegends._cachedRects.find(r => r.id === 'play') }));
     assert.equal(state.scene, 'home'); assert.equal(state.mobile, true); assert.ok(state.play);
+    const difficulty=await page.evaluate(()=>__catLegends._cachedRects.find(r=>r.id==='toggleDifficulty'));
+    await page.touchscreen.tap(difficulty.x+difficulty.w/2,difficulty.y+difficulty.h/2);
+    assert.equal(await page.evaluate(()=>__catLegends.difficulty),'hard');
     await page.touchscreen.tap(state.play.x + state.play.w / 2, state.play.y + state.play.h / 2);
     await page.waitForFunction(() => __catLegends.scene === 'run' && __catLegends.run?.state === 'fight', null, { timeout: 30000 }).catch(async error => { console.error('boot state', await page.evaluate(() => ({scene:__catLegends.scene, state:__catLegends.run?.state, paused:__catLegends.paused, overlay:__catLegends.overlay, fade:__catLegends.fade, pending:__catLegends.pending}))); throw error; });
+    assert.equal(await page.evaluate(()=>__catLegends.run.difficulty),'hard');
     await page.evaluate(() => {
       const g=__catLegends;g.run.player.invuln=999;g.run.waveEnemiesLeft=999;window.qaCasts=[];window.qaDashes=0;window.qaEvents=[];for(const type of ['pointerdown','pointerup','pointermove','pointercancel','lostpointercapture']) g.canvas.addEventListener(type,e=>window.qaEvents.push([type,e.pointerId,Math.round(e.clientX),Math.round(e.clientY)]));
       const old=g.castSkill.bind(g);g.castSkill=i=>{window.qaCasts.push(i);return old(i);};
@@ -78,7 +82,7 @@ try {
     await page.waitForFunction(()=>__catLegends.scene==='results');
     const after=await page.evaluate(()=>({stats:JSON.stringify(__catLegends.profile.stats),embers:__catLegends.profile.embers,summary:__catLegends.summary}));
     assert.equal(after.embers,before.embers);assert.equal(after.stats,before.stats);assert.equal(after.summary.embers,0);assert.equal(after.summary.challengeBoss,'crystal_queen');
-    console.log(`PASS file:// offline ${width}x${height}@2: menu, four skill buttons, multitouch movement/dodge, pause, level-up, reload/save, boss practice`);
+    console.log(`PASS file:// offline ${width}x${height}@2: menu/difficulty, four skill buttons, multitouch movement/dodge, pause, level-up, reload/save, boss practice`);
     await context.close();
   }
   const context=await browser.newContext({viewport:{width:1280,height:720}}),page=await context.newPage();

@@ -34,8 +34,8 @@ export const CATS = [
     attack: 'slash',
     look: { body: 0.92, head: 0.95, fur: 'short', stripes: 0, tail: 'whip', tailLen: 1.25, ear: 'point', cheek: 0, fluff: 0.1, earTuft: 0 },
     base: { hp: 92, atk: 1.16, def: 0.02, crit: 0.16, critDmg: 1.75, atkSpeed: 1.1, move: 1.12, cdr: 0.02, dodge: 0.1, energy: 90, energyRegen: 11 },
-    passive: { id: 'first_blood', name: { vi: 'Đòn Đầu', en: 'First Blood' }, desc: { vi: 'Đòn đánh vào kẻ địch còn đầy máu luôn chí mạng.', en: 'Hits on full-health enemies always crit.' } },
-    skills: ['shadow_strike', 'shadow_dash', 'blood_fang'],
+    passive: { id: 'first_blood', name: { vi: 'Đòn Đầu', en: 'First Blood' }, desc: { vi: 'Đòn kỹ năng trực tiếp lên địch đầy máu luôn chí mạng.', en: 'Direct skill hits against full-health enemies always crit.' } },
+    skills: ['shadow_strike', 'phantom_step', 'blood_fang'],
   },
   {
     id: 'persian',
@@ -68,7 +68,7 @@ export const CATS = [
     attack: 'slash',
     look: { body: 0.9, head: 0.94, fur: 'short', stripes: 0, mask: true, tail: 'whip', tailLen: 1.35, ear: 'tall', cheek: 0, fluff: 0.1, earTuft: 0 },
     base: { hp: 88, atk: 1.04, def: 0.03, crit: 0.1, critDmg: 1.6, atkSpeed: 1.22, move: 1.18, cdr: 0.05, dodge: 0.12, energy: 95, energyRegen: 10 },
-    passive: { id: 'combo_flow', name: { vi: 'Liên Hoàn', en: 'Combo Flow' }, desc: { vi: 'Đánh liên tiếp tăng dần tốc đánh.', en: 'Consecutive hits ramp up attack speed.' } },
+    passive: { id: 'combo_flow', name: { vi: 'Liên Hoàn', en: 'Combo Flow' }, desc: { vi: 'Đòn kỹ năng trực tiếp tăng 4% tốc đánh, tối đa 40%; hết sau 3 giây.', en: 'Direct skill hits grant 4% attack speed, up to 40%; expires after 3s.' } },
     skills: ['triple_scratch', 'blink_paw', 'wind_sprint'],
   },
   {
@@ -85,7 +85,7 @@ export const CATS = [
     attack: 'slash',
     look: { body: 1.18, head: 1.12, fur: 'semi', stripes: 2, tail: 'plume', tailLen: 0.85, ear: 'tuft', cheek: 0.9, fluff: 0.6, earTuft: 1 },
     base: { hp: 145, atk: 1.12, def: 0.12, crit: 0.05, critDmg: 1.5, atkSpeed: 0.92, move: 0.92, cdr: 0, dodge: 0.02, energy: 105, energyRegen: 8 },
-    passive: { id: 'lion_heart', name: { vi: 'Tim Sư Tử', en: 'Lion Heart' }, desc: { vi: 'Giảm sát thương nhận vào khi đứng yên giao chiến.', en: 'Takes less damage while anchored in combat.' } },
+    passive: { id: 'lion_heart', name: { vi: 'Tim Sư Tử', en: 'Lion Heart' }, desc: { vi: '+12% giảm sát thương khi đứng yên gần địch (220).', en: '+12% damage reduction while stationary near enemies (220).' } },
     skills: ['brutal_bite', 'iron_fur', 'guardian_lion'],
   },
   {
@@ -102,7 +102,7 @@ export const CATS = [
     attack: 'slash',
     look: { body: 1.22, head: 1.18, fur: 'plush', stripes: 0, tail: 'stub', tailLen: 0.55, ear: 'small', cheek: 1.1, fluff: 0.7, earTuft: 0 },
     base: { hp: 165, atk: 0.98, def: 0.18, crit: 0.03, critDmg: 1.45, atkSpeed: 0.86, move: 0.86, cdr: 0.02, dodge: 0.01, energy: 100, energyRegen: 8 },
-    passive: { id: 'iron_hide', name: { vi: 'Da Sắt', en: 'Iron Hide' }, desc: { vi: 'Mỗi đòn trúng địch cộng dồn giáp tạm thời.', en: 'Landing hits builds temporary armor.' } },
+    passive: { id: 'iron_hide', name: { vi: 'Da Sắt', en: 'Iron Hide' }, desc: { vi: 'Đòn kỹ năng trực tiếp cộng 2% giảm sát thương, tối đa 20% trong 4 giây.', en: 'Direct skill hits grant 2% damage reduction, up to 20% for 4s.' } },
     skills: ['reflective_claws', 'stone_stance', 'purr_shield'],
   },
   {
@@ -119,7 +119,7 @@ export const CATS = [
     attack: 'slash',
     look: { body: 1.0, head: 0.98, fur: 'short', stripes: 5, spots: true, tail: 'ring', tailLen: 1.05, ear: 'point', cheek: 0.2, fluff: 0.2, earTuft: 0 },
     base: { hp: 104, atk: 1.14, def: 0.05, crit: 0.14, critDmg: 1.85, atkSpeed: 1.05, move: 1.06, cdr: 0.02, dodge: 0.07, energy: 100, energyRegen: 9 },
-    passive: { id: 'marked_prey', name: { vi: 'Con Mồi Được Đánh Dấu', en: 'Marked Prey' }, desc: { vi: 'Đánh cùng một mục tiêu liên tục tăng sát thương.', en: 'Repeated hits on one target ramp damage.' } },
+    passive: { id: 'marked_prey', name: { vi: 'Con Mồi Được Đánh Dấu', en: 'Marked Prey' }, desc: { vi: 'Đòn kỹ năng trực tiếp liên tiếp lên cùng mục tiêu +8% sát thương, tối đa +48%; hết sau 3 giây.', en: 'Consecutive direct skill hits on one target gain 8% damage, up to 48%; expires after 3s.' } },
     skills: ['rending_wave', 'executioner', 'hex_brand'],
   },
   {
@@ -136,7 +136,7 @@ export const CATS = [
     attack: 'orb',
     look: { body: 1.08, head: 1.04, fur: 'long', stripes: 0, mask: true, tail: 'plume', tailLen: 0.95, ear: 'small', cheek: 0.8, fluff: 0.8, earTuft: 0 },
     base: { hp: 112, atk: 0.94, def: 0.09, crit: 0.04, critDmg: 1.4, atkSpeed: 0.95, move: 0.97, cdr: 0.1, dodge: 0.03, energy: 130, energyRegen: 13 },
-    passive: { id: 'gentle_warmth', name: { vi: 'Hơi Ấm Dịu Dàng', en: 'Gentle Warmth' }, desc: { vi: 'Kỹ năng hỗ trợ hồi máu cho cả bạn đồng hành.', en: 'Support skills also patch up companions.' } },
+    passive: { id: 'gentle_warmth', name: { vi: 'Hơi Ấm Dịu Dàng', en: 'Gentle Warmth' }, desc: { vi: 'Kỹ năng hỗ trợ hồi 8% máu tối đa cho bạn đồng hành sống trong phạm vi 180.', en: 'Support skills heal living companions within 180 for 8% of their max health.' } },
     skills: ['healing_purr', 'guardian_aura', 'spirit_cat'],
   },
   {

@@ -124,7 +124,7 @@ export function paintNav(ctx, rects, activeId, hover, lang, items) {
 }
 
 /* ───────────────────────────── menu (home) ───────────────────────────── */
-export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
+export function drawHome(ctx, { w, h, safe, t, lang, profile, hover, difficulty = 'normal' }) {
   drawBackdrop(ctx, w, h, t, PALETTE.lilac, 1);
   const rects = [];
 
@@ -133,10 +133,15 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   const heroX = w * 0.73;
   const heroY = h * 0.88;
   const heroScale = Math.min(w, h) / 250;
-  ctx.save();
-  ctx.globalAlpha = 0.92;
-  drawCat(ctx, heroCat, { t, gait: 0, lean: 0, tail: t * 0.2, blink: 0, ears: Math.sin(t * 0.8) * 0.12, mouth: 0 }, { x: heroX, y: heroY, scale: heroScale, facing: -1 });
-  ctx.restore();
+  // A short portrait screen uses this space for its menu grid; the decorative
+  // cat used to show through the translucent buttons and obscure their labels.
+  const showHero = !(h > w && h < 700);
+  if (showHero) {
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    drawCat(ctx, heroCat, { t, gait: 0, lean: 0, tail: t * 0.2, blink: 0, ears: Math.sin(t * 0.8) * 0.12, mouth: 0 }, { x: heroX, y: heroY, scale: heroScale, facing: -1 });
+    ctx.restore();
+  }
   // moon halo behind the hero
   const halo = ctx.createRadialGradient(heroX, heroY - 190, 10, heroX, heroY - 190, 300);
   halo.addColorStop(0, 'rgba(255,232,168,0.14)');
@@ -148,10 +153,12 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   const pool = ctx.createLinearGradient(0, heroY - 8, 0, heroY + 26);
   pool.addColorStop(0, 'rgba(255,232,168,0.10)');
   pool.addColorStop(1, 'rgba(255,232,168,0)');
-  ctx.fillStyle = pool;
-  ctx.beginPath();
-  ctx.ellipse(heroX, heroY + 2, 120, 20, 0, 0, TAU);
-  ctx.fill();
+  if (showHero) {
+    ctx.fillStyle = pool;
+    ctx.beginPath();
+    ctx.ellipse(heroX, heroY + 2, 120, 20, 0, 0, TAU);
+    ctx.fill();
+  }
 
   // title block
   const portrait = h > w;
@@ -262,6 +269,13 @@ export function drawHome(ctx, { w, h, safe, t, lang, profile, hover }) {
   const practice = button(ctx, { x: purseX, y: purseY + 48, w: purseW, h: 36,
     label: t2(lang, 'Thử Boss', 'Boss Practice'), hover: hover === 'bossPractice', font: '10.5px' });
   rects.push({ id: 'bossPractice', ...practice });
+  // Difficulty currently changes bosses/minibosses only, not ordinary waves.
+  // Say so on the control instead of implying that every enemy is harder.
+  const difficultyLabel = difficulty === 'hard' ? t2(lang, 'Boss: Khó', 'Boss: Hard') : t2(lang, 'Boss: Thường', 'Boss: Normal');
+  const diffAtTop = portrait && h - safe.bottom - 50 < by + 4;
+  const diff = button(ctx, { x: diffAtTop ? left : w - safe.right - 142, y: diffAtTop ? safe.top + 20 : h - safe.bottom - 50, w: 116, h: 36,
+    label: difficultyLabel, hover: hover === 'toggleDifficulty', font: '11px' });
+  rects.push({ id: 'toggleDifficulty', ...diff });
 
   // best depth, bottom-left
   const best = profile.stats.bestDepth || 0;

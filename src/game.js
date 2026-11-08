@@ -563,6 +563,7 @@ export class Game {
       case 'home':
         if (id === 'play') this.go('run', { catId: this.selected, skills: this.selectedSkills, difficulty: this.difficulty });
         else if (id === 'bossPractice') this.go('bossPractice');
+        else if (id === 'toggleDifficulty') this.difficulty = this.difficulty === 'hard' ? 'normal' : 'hard';
         else if (id === 'cats') this.go('cats');
         else if (id === 'skills') this.go('skills');
         else if (id === 'upgrades') this.go('upgrades');
@@ -599,7 +600,12 @@ export class Game {
         break;
       }
       case 'cats': {
-        if (id === 'back') return this.go('home');
+        if (id === 'back') {
+          // Browsing a locked or merely previewed cat must not silently equip it.
+          this.selected = this.profile.loadout.cat || 'tabby';
+          this.selectedPrev = null;
+          return this.go('home');
+        }
         if (id.startsWith('cat:')) {
           const next = id.slice(4);
           if (next !== this.selected) {
@@ -614,7 +620,7 @@ export class Game {
           // the cat's own kit becomes the default loadout, slots untouched
           const cat = CAT_BY_ID[this.selected];
           const kept = this.selectedSkills.filter((s) => s);
-          const merged = [...new Set([...(cat.skills || []), ...kept])].slice(0, 4);
+          const merged = [...new Set([...(cat.skills || []), ...kept, ...STARTER_SKILLS])].filter(id => SKILL_BY_ID[id]).slice(0, 4);
           this.selectedSkills = merged;
           this.persistLoadout();
           audio.meow?.(this.selected);
@@ -1029,7 +1035,7 @@ export class Game {
     const base = { w, h, safe: this.safe, t: this.sceneT, lang, profile: this.profile, hover: this.hover };
     let rects = [];
     switch (this.scene) {
-      case 'home': rects = Scenes.drawHome(ctx, base); break;
+      case 'home': rects = Scenes.drawHome(ctx, { ...base, difficulty: this.difficulty }); break;
       case 'bossPractice': rects = Scenes.drawBossPractice(ctx, base); break;
       case 'cats': rects = Scenes.drawCatSelect(ctx, { ...base, selected: this.selected, selectedPrev: this.selectedPrev, fadeT: this.pickT, botMode: this.botMode }); break;
       case 'skills': rects = Scenes.drawSkillSelect(ctx, { ...base, selectedSkills: this.selectedSkills, botMode: this.botMode, page: this.skillPage }); break;
@@ -1052,7 +1058,10 @@ export class Game {
       ctx.fillStyle = '#ffbc87';
       ctx.font = `700 10px ${FONT.ui}`;
       ctx.textAlign = 'left';
-      const x = this.safe.left + 12, y = this.safe.top + 18;
+      const diff = rects.find(r => r.id === 'toggleDifficulty');
+      const play = rects.find(r => r.id === 'play');
+      const compact = diff && diff.y <= this.safe.top + 20 && play;
+      const x = this.safe.left + 12, y = compact ? play.y + play.h + 11 : this.safe.top + 18;
       ctx.fillText(lang === 'en' ? 'Save unavailable' : 'Không lưu được', x, y);
       ctx.font = `600 9px ${FONT.ui}`;
       ctx.fillText(lang === 'en' ? 'Progress lasts only this session' : 'Tiến trình chỉ còn trong phiên này', x, y + 14);

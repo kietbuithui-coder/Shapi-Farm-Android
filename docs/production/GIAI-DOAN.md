@@ -11,17 +11,20 @@ Mục tiêu: nâng chất lượng game hiện có mà không phá tiến trình
 - [x] Sửa và kiểm thử các tồn đọng đã phát hiện: Phép Gai, tính phạm vi hình cung, hút máu và thời gian DoT.
 - [x] Kiểm thử tương tác dấu ấn, tiêu diệt, nguồn sát thương và độ dài bước mô phỏng; các bài boss thuộc bộ hồi quy hiện có.
 - [x] Giữ FIFO kỹ năng, chuyển động và tiến trình cũ; kiểm bundle giao người chơi.
+- [x] Xử lý lịch đòn qua chuyển trạng thái, bổ sung xuyên đạn và kiểm đội hình Bẫy Trăng ở mép sân.
+- [ ] Rà nốt Toan Tính với đòn có độ trễ, Vuốt Gương rank 4 và tính hữu ích miễn đẩy của Thế Đá/Chạy Gió trong AI boss thực tế.
 
 ## 2 — Có thể chơi và tiến triển
 - [x] Mô phỏng có seed qua 10 mèo, 3 seed, 2 độ khó; lưu kết quả, không xem bot là người chơi. Chiến thuật do bot hiện tại quyết định; chưa bao phủ mọi build.
 - [x] Kiểm đường đi 9 đêm bằng kịch bản có hỗ trợ; có đo các run không hỗ trợ riêng. Không dùng run bất tử để kết luận cân bằng.
 - [x] Thêm trận thử riêng cho cả năm boss, không thay chiến dịch hay thưởng tiến trình; kiểm truy cập, thắng/thua và nút thử lại.
 - [x] Kiểm vòng lặp nâng cấp/lưu/mở khóa bằng test hiện có và test bundle; vẫn cần playtest để phát hiện lỗi ngoài kịch bản.
+- [x] Sửa kit Mèo Mun, tái nối sáu nội tại, mở nút chọn độ khó boss và đo lại bot; các con số vẫn cần cân bằng thực tế.
 
 ## 3 — Trải nghiệm và phát hành
 - [x] Kiểm UI dọc/ngang, pause, level-up, thưởng, nút, file offline và lưu qua test tự động; Chromium thật chỉ kiểm một tập con như báo cáo.
 - [x] Build HTML tự chứa, so bundle với source, kiểm phông, chạy toàn bộ test và ghi hash.
-- [ ] Chơi thử và đo FPS, nhiệt độ, pin, âm thanh, lưu file trên máy thật; kiểm độ dễ hiểu và cân bằng với nhiều người chơi (cần thiết bị/người chơi).
+- [ ] Chơi thử và đo FPS, nhiệt độ, pin, âm thanh, lưu file trên máy thật; kiểm độ dễ hiểu và cân bằng với nhiều người chơi (cần thiết bị/người chơi). Phiếu: `PHIEU-CHOI-THU.md`.
 
 ## Hoàn thành thực tế
 

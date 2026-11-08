@@ -167,6 +167,8 @@ export class Run {
     if ([RUN_STATE.INTRO, RUN_STATE.REWARD, RUN_STATE.DEAD, RUN_STATE.VICTORY].includes(next)) {
       this.cancelSkillQueue();
       if (this.dashQueue) this.dashQueue.length = 0;
+      if (this.slotsTimeouts) this.slotsTimeouts.length = 0;
+      this.phantomStep = null;
       this.player.dashTime = 0;
     }
     this.state = next;
@@ -434,6 +436,9 @@ export class Run {
       return;
     }
     if (this.state === RUN_STATE.LEVELUP || this.state === RUN_STATE.REWARD) {
+      // The run clock advances for UI, but unfinished casts must retain their
+      // remaining delay while the player chooses a card.
+      if (this.state === RUN_STATE.LEVELUP) for (const job of this.slotsTimeouts || []) job.at += dt;
       this.updateEffects(dt, false);
       return;
     }
@@ -529,6 +534,9 @@ export class Run {
     const p = this.player;
     p.dashTime = Math.max(0, (p.dashTime || 0) - dt);
     if (!p.alive) return;
+    if (p.comboFlowTime > 0 && (p.comboFlowTime = Math.max(0, p.comboFlowTime - dt)) === 0) p.comboFlow = 0;
+    if (p.ironHideTime > 0 && (p.ironHideTime = Math.max(0, p.ironHideTime - dt)) === 0) p.ironHideStacks = 0;
+    if (p.preyTime > 0 && (p.preyTime = Math.max(0, p.preyTime - dt)) === 0) { p.preyStacks = 0; p.lastTarget = null; }
     const moving = !!(input && (input.moveX || input.moveY));
     const mvx = input?.moveX || 0;
     const mvy = input?.moveY || 0;
@@ -847,7 +855,7 @@ export class Run {
         (this.slotsTimeouts ||= []).push({ at: this.time + windup, fn: () => this.executeSkill(slot, values, i) });
       } else this.executeSkill(slot, values, i);
     }
-    const cooldown = Math.max(0.1, values.cd * (1 - clamp(this.stats.cdr + this.buffValue('cdr'), 0, 0.6)) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed'))));
+    const cooldown = Math.max(0.1, values.cd * (1 - clamp(this.stats.cdr + this.buffValue('cdr'), 0, 0.6)) / Math.sqrt(this.stats.atkSpeed * (1 + this.buffValue('atkSpeed') + (this.player.comboFlow || 0))));
     if (!options.reserved) slot.charges = Math.max(0, slot.charges - 1);
     if (slot.recharge <= 0) { slot.recharge = cooldown; slot.rechargeDuration = cooldown; }
     slot.cd = slot.charges > 0 ? 0 : slot.recharge;
@@ -875,6 +883,14 @@ export class Run {
       x: p.x, y: p.y - 22, target, values, castIndex, ...extra,
     });
     const rv = values.rankValues || {};
+    if (this.cat.passive.id === 'gentle_warmth' && ['heal', 'defense', 'utility'].includes(def.category)) {
+      // A support cast also mends nearby living companions; orbs are not pets.
+      for (const ally of this.minions) {
+        if (ally.kind === 'orb' || !(ally.life > 0) || !(ally.hp > 0) || !(ally.maxHp > 0) ||
+            dist2(ally.x, ally.y, p.x, p.y) > 180 * 180) continue;
+        ally.hp = Math.min(ally.maxHp, ally.hp + ally.maxHp * 0.08);
+      }
+    }
     const baseDamage = typeof rv.damage === 'number' ? rv.damage : (def.params.damage ?? def.params.dmg ?? 1);
     const power = values.dmg * baseDamage;
     const potency = this.skillPotency(def);
@@ -970,7 +986,7 @@ export class Run {
             x: p.x, y: p.y - 22, angle: base + spread,
             speed: def.params.speed, damage: this.skillDamage(def, power),
             radius: def.params.explode ? 9 : 6,
-            pierce: Math.max(rv.pierce || def.params.pierce || 0, values.mods.pierce || 0) + this.mods.skillPierce,
+            pierce: Math.max(rv.pierce || def.params.pierce || 0, values.mods.pierce || 0),
             homing: def.params.homing || 0,
             explode: def.params.explode ? (def.params.blast || def.params.explode) * (rv.blast || 1) * (values.mods.blast || 1) * area : 0,
             burnDps: def.id === 'fireball' ? this.skillDamage(def, power) * 0.12 : 0,
@@ -1169,10 +1185,24 @@ export class Run {
         const count = rv.count || 1;
         const radius = def.params.radius * area * (rv.radius || 1);
         const aim = p.moving ? p.aim : target ? angle(p.x, p.y, target.x, target.y) : p.aim;
+        // Translate the whole formation inside the arena rather than clamp
+        // each trap independently onto the same point at corners.
+        let tangentX = -Math.sin(aim), tangentY = Math.cos(aim);
+        const halfSpan = (count - 1) * (radius * 2 + 16) / 2;
+        if (Math.abs(tangentX) * halfSpan > (PLAY.right - PLAY.left) / 2 ||
+            Math.abs(tangentY) * halfSpan > (PLAY.bottom - PLAY.top) / 2) {
+          tangentX = 1; tangentY = 0; // use the longer axis for large formations
+        }
+        const halfX = Math.min(Math.abs(tangentX) * halfSpan, (PLAY.right - PLAY.left) / 2);
+        const halfY = Math.min(Math.abs(tangentY) * halfSpan, (PLAY.bottom - PLAY.top) / 2);
+        const spacingScale = halfSpan ? Math.min(1,
+          Math.abs(tangentX) > 1e-9 ? (PLAY.right - PLAY.left) / (2 * Math.abs(tangentX) * halfSpan) : 1,
+          Math.abs(tangentY) > 1e-9 ? (PLAY.bottom - PLAY.top) / (2 * Math.abs(tangentY) * halfSpan) : 1) : 1;
+        const centerX = clamp(p.x + Math.cos(aim) * 110 * area, PLAY.left + halfX, PLAY.right - halfX);
+        const centerY = clamp(p.y + Math.sin(aim) * 110 * area, PLAY.top + halfY, PLAY.bottom - halfY);
         for (let i = 0; i < count; i++) {
-          const side = (i - (count - 1) / 2) * (radius * 2 + 16);
-          const tx = clamp(p.x + Math.cos(aim) * 110 * area - Math.sin(aim) * side, PLAY.left, PLAY.right);
-          const ty = clamp(p.y + Math.sin(aim) * 110 * area + Math.cos(aim) * side, PLAY.top, PLAY.bottom);
+          const side = (i - (count - 1) / 2) * (radius * 2 + 16) * spacingScale;
+          const tx = centerX + tangentX * side, ty = centerY + tangentY * side;
           this.traps.push({ x: tx, y: ty, radius, root: (rv.root || def.params.root) * potency,
             time: def.params.time, t: 0, damage: rv.damage ? this.skillDamage(def, values.dmg) : 0,
             tint: def.icon.tint, revealTime: 3 });
@@ -1652,6 +1682,23 @@ export class Run {
     // On-hit upgrades used to trigger only from the removed auto attack.
     // Keep them useful on deliberate skill hits instead.
     if (opts.source === 'skill' && !opts.tick) {
+      // The old cat passives only ran on basicAttack, which has no player input.
+      // A direct skill hit counts; DoTs, summons and secondary blasts do not.
+      const p = this.player;
+      if (this.cat.passive.id === 'first_blood' && enemy.hp >= enemy.hpMax && !opts.crit) {
+        dmg *= this.stats.critDmg; opts = { ...opts, crit: true };
+      }
+      if (this.cat.passive.id === 'combo_flow') {
+        p.comboFlow = Math.min(0.4, (p.comboFlow || 0) + 0.04); p.comboFlowTime = 3;
+      }
+      if (this.cat.passive.id === 'iron_hide') {
+        p.ironHideStacks = Math.min(10, (p.ironHideStacks || 0) + 1); p.ironHideTime = 4;
+      }
+      if (this.cat.passive.id === 'marked_prey') {
+        const stacks = p.lastTarget === enemy.uid && p.preyTime > 0 ? (p.preyStacks || 0) : 0;
+        dmg *= 1 + Math.min(0.48, stacks * 0.08);
+        p.preyStacks = Math.min(6, stacks + 1); p.lastTarget = enemy.uid; p.preyTime = 3;
+      }
       this.attackCounter++;
       if (this.mods.everyThird > 0 && this.attackCounter % 3 === 0) dmg *= 1 + this.mods.everyThird;
       if (this.mods.slowOnHit > 0) this.applyStatus(enemy, 'slow', this.mods.slowOnHit, 1.5);
@@ -2786,7 +2833,10 @@ export class Run {
       x: opt.x, y: opt.y, angle: opt.angle, speed: opt.speed || 300,
       damage: opt.damage ?? 1, radius: opt.radius || 6, life: opt.life || 2.4,
       t: 0, owner: opt.owner || 'player', source: opt.source || 'skill', attacker: opt.attacker || null,
-      pierce: opt.pierce || 0, hits: new Set(), tint: opt.tint || '#ffffff',
+      // The upgrade applies only to projectiles made by player skills, not
+      // enemy fire, summons or reflected shots. Boomerangs use this per leg.
+      pierce: (opt.pierce || 0) + ((opt.owner || 'player') === 'player' && (opt.source || 'skill') === 'skill' ? this.mods.skillPierce : 0),
+      hits: new Set(), tint: opt.tint || '#ffffff',
       shape: opt.shape || 'orb', homing: opt.homing || 0, explode: opt.explode || 0,
       boomerang: !!opt.boomerang, travel: opt.travel || 0, phase: 0,
       root: opt.root || 0, lifesteal: opt.lifesteal || 0, wide: !!opt.wide,
@@ -3412,13 +3462,19 @@ export class Run {
       if (this.moonPactTimer <= 0) { this.moonPactReady = true; this.emit('moonpact:ready', {}); }
     }
     // scheduled skill callbacks
-    if (this.slotsTimeouts && this.slotsTimeouts.length) {
-      for (let i = this.slotsTimeouts.length - 1; i >= 0; i--) {
-        if (this.time >= this.slotsTimeouts[i].at) {
-          const job = this.slotsTimeouts[i];
-          this.slotsTimeouts.splice(i, 1);
-          job.fn();
+    if (this.state === RUN_STATE.FIGHT && this.slotsTimeouts?.length) {
+      // Detach due jobs before executing: a callback can end the wave and clear
+      // the live queue, or add more jobs. Never index into a mutated array.
+      const due = [], later = [];
+      for (const job of this.slotsTimeouts) (this.time >= job.at ? due : later).push(job);
+      this.slotsTimeouts = later;
+      due.sort((a, b) => a.at - b.at);
+      for (let i = 0; i < due.length; i++) {
+        if (this.state !== RUN_STATE.FIGHT) {
+          if (this.state === RUN_STATE.LEVELUP) this.slotsTimeouts.unshift(...due.slice(i));
+          break;
         }
+        due[i].fn();
       }
     }
     // revive ward timing
@@ -3434,7 +3490,10 @@ export class Run {
     if (!p.alive) return;
     if (p.invuln > 0) return;
     const res = computeIncoming({
-      raw, def: this.stats.def, armor: this.buffValue('armor'), movingArmor: this.mods.movingArmor,
+      raw, def: this.stats.def,
+      armor: this.buffValue('armor') + (p.ironHideStacks || 0) * 0.02 +
+        (this.cat.passive.id === 'lion_heart' && !p.moving && this.enemies.some(e => !e.dead && dist2(e.x, e.y, p.x, p.y) <= 220 * 220) ? 0.12 : 0),
+      movingArmor: this.mods.movingArmor,
       moving: p.moving, lastStand: this.mods.lastStand, hpFrac: this.hp / this.stats.hpMax,
       roll: this.rng.float(), dodge: this.stats.dodge,
       dodgeable: !!source && !source.boss && !source.mini,

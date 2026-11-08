@@ -16,6 +16,15 @@
 - **Thử Boss:** từ màn hình chính chọn nút `Thử Boss`, chọn một trong năm boss, gồm Void Predator và Crystal Queen. Đây là trận riêng với mèo, bốn kỹ năng, nâng cấp cố định và độ khó đang chọn; giết boss kết thúc trận. Thắng, thua hoặc thoát đều không thêm tro, xu, kỷ lục, số trận hay thành tựu; gặp boss có thể mở mục tương ứng trong Sổ Tay. Nút thử lại giữ boss và độ khó. Chiến dịch vẫn kết thúc sau chín đêm.
 - Sửa màn kết quả từng cộng lại thưởng depth/kill khi hiển thị, khiến số tro hiện ra cao hơn thực nhận. Sửa README mô tả đòn đánh thủ công, 54 kỹ năng và vị trí AUTO. Tài liệu audit cũ được đánh dấu ở phần đã sửa.
 
+## Đợt tiếp tục
+
+- Sửa bộ Mèo Mun chứa `shadow_dash` không tồn tại: thay bằng Bước Ma (`phantom_step`); trang bị mèo lọc mã sai và bổ sung skill hợp lệ. Quay về từ màn xem mèo không âm thầm chọn mèo chưa mở khóa.
+- **Nội tại:** chuyển các hiệu ứng từng mắc ở đòn đánh tự động đã bỏ sang đòn kỹ năng trực tiếp. Mèo Mun chí mạng một lần trên địch đầy máu; Xiêm cộng 4% tốc đánh mỗi hit (tối đa 40%, hết sau 3 giây); Mập Xám cộng 2% giảm sát thương mỗi hit (tối đa 20%, hết sau 4 giây); Báo Đốm được +8% mỗi hit liên tiếp cùng mục tiêu (tối đa +48%, hết sau 3 giây). Sư Tử Rừng được +12% giảm sát thương khi đứng yên gần địch trong 220; Ragdoll hồi cho đồng minh sống trong 180 thêm 8% máu tối đa khi skill hồi máu/phòng thủ/tiện ích thực thi, kể cả mỗi lần echo. Đòn phụ, DoT, triệu hồi không tự cộng stack. Đây là quy tắc/mức mới, **chưa được cân bằng qua người chơi**.
+- **Ý Chí Xuyên Thấu** áp dụng cho các đạn kỹ năng của người chơi, gồm kim, sóng, đạn hồi và mảnh băng; đạn hồi được thêm mục tiêu ở mỗi lượt đi/về. Không áp dụng cho đạn địch, summon hoặc phản đòn; sửa mô tả để không hứa hiệu ứng cho đòn không có đạn.
+- Đóng băng thời gian còn lại của đòn đang chuẩn bị khi chọn thẻ; hủy callback và Bước Ma khi sang intro/thưởng hoặc kết thúc trận. Lệnh đã thi triển không được hoàn phí, còn lệnh trong hàng đợi vẫn hoàn như trước. Scheduler xử lý theo thời gian và không truy cập mảng đã bị callback thay đổi.
+- Bẫy Trăng đôi giữ đội hình khi sát mép/góc thay vì bị clamp chồng nhau với phạm vi thường. Echo của hai lần thi triển vẫn có thể đặt trùng; phạm vi cực lớn có thể không đủ chỗ để tách hoàn toàn.
+- Ở màn dọc thấp, ẩn mèo trang trí để không chồng lên ô menu; kiểm ảnh Chromium 320×568. Nút `Boss: Thường/Khó` trên màn hình chính nay chọn được độ khó (áp dụng cả chiến dịch và Thử Boss). Lựa chọn chỉ có hiệu lực trong phiên và **hiện chỉ thay chỉ số boss/miniboss**, không thay quái thường; không tuyên bố là hai độ khó hoàn chỉnh.
+
 ## Dữ liệu đo có thể lặp
 
 Công cụ `node tools/production-sweep.mjs --output ketqua.json`: 10 mèo × seed 3, 11, 29 × 2 độ khó, bot dùng bộ khởi đầu, không perk, bước 1/60 giây, giới hạn 1.200 giây mô phỏng/run; tự chọn thẻ và thưởng. Depth = `(đêm − 1) × 5 + wave`. Một run còn `fight` ở giới hạn là **bị cắt thời gian**, không phải thắng hay thua; trung bình depth vì thế không phản ánh tỷ lệ thắng thật. Không dùng số này thay cho người chơi.
@@ -24,20 +33,22 @@ Công cụ `node tools/production-sweep.mjs --output ketqua.json`: 10 mèo × se
 |---|---|---:|---:|---:|---:|
 | Trước, commit `57a6293` | Thường | 10,80 | 4 | 25 / 5 / 0 | 7 |
 | Trước, commit `57a6293` | Khó | 9,27 | 4 | 25 / 5 / 0 | 7 |
-| Sau, mã đợt này | Thường | 5,30 | 4 | 29 / 1 / 0 | 7 |
-| Sau, mã đợt này | Khó | 4,73 | 4 | 30 / 0 / 0 | 7 |
+| Sau, đợt trước | Thường | 5,30 | 4 | 29 / 1 / 0 | 7 |
+| Sau, đợt trước | Khó | 4,73 | 4 | 30 / 0 / 0 | 7 |
+| Sau, đợt tiếp tục | Thường | 5,83 | 4 | 29 / 1 / 0 | 7 |
+| Sau, đợt tiếp tục | Khó | 5,80 | 4 | 29 / 1 / 0 | 7 |
 
-Không có lỗi invariant được công cụ ghi nhận trong 120 run này. Kết quả sau **xấu hơn đáng kể ở trung bình depth**, không thể kết luận game dễ hay khó đối với người thật vì cả AI, nâng cấp và phân phối thẻ đều đổi, mẫu nhỏ và bị cắt thời gian. Thử nghiệm tách biến: giữ mã sau nhưng khôi phục cách chọn thẻ cũ cho depth trung bình 8,57/8,20; thử trọng số 100/80/45/20 cho 5,97/5,17 (thường/khó). Đây là dữ liệu quan sát, không chứng minh nguyên nhân duy nhất. Bản hiện tại giữ trọng số 100/46/17/5 để độ hiếm không bị đảo; **đây là rủi ro cân bằng cần đánh giá trước phát hành rộng**, không coi là tối ưu.
+Không có lỗi invariant được công cụ ghi nhận trong 180 run này. Bộ sau đợt tiếp tục khác bộ trước ở kit Mèo Mun, nội tại và các sửa cơ chế nên không thể quy thay đổi cho một nguyên nhân. Kết quả sau **xấu hơn đáng kể ở trung bình depth**, không thể kết luận game dễ hay khó đối với người thật vì cả AI, nâng cấp và phân phối thẻ đều đổi, mẫu nhỏ và bị cắt thời gian. Thử nghiệm tách biến: giữ mã sau nhưng khôi phục cách chọn thẻ cũ cho depth trung bình 8,57/8,20; thử trọng số 100/80/45/20 cho 5,97/5,17 (thường/khó). Đây là dữ liệu quan sát, không chứng minh nguyên nhân duy nhất. Bản hiện tại giữ trọng số 100/46/17/5 để độ hiếm không bị đảo; **đây là rủi ro cân bằng cần đánh giá trước phát hành rộng**, không coi là tối ưu.
 
-Dữ liệu từng run: `bot-truoc.json`, `bot-sau.json`, `bot-doi-chieu-tile-cu.json`, `bot-thu-tile-moi.json`. Hai tệp đối chiếu được chạy trên bản sao tạm, chỉ thay thuật toán/chỉ số chọn thẻ; không có trong game phát hành. Bot có thể yếu hoặc bỏ sót chiến thuật, đặc biệt ở wave miniboss.
+Dữ liệu từng run: `bot-truoc.json`, `bot-sau.json`, `bot-tiep-tuc.json`, `bot-doi-chieu-tile-cu.json`, `bot-thu-tile-moi.json`. Hai tệp đối chiếu được chạy trên bản sao tạm, chỉ thay thuật toán/chỉ số chọn thẻ; không có trong game phát hành. Bot có thể yếu hoặc bỏ sót chiến thuật, đặc biệt ở wave miniboss.
 
 `node tools/production-sweep.mjs --assisted`: Tabby seed 3 đạt victory đêm 9 wave 5, hạ 9 boss, 704 kills sau 570,2 giây mô phỏng (`chin-dem-ho-tro.json`). Kịch bản **tự đặt bất tử, hồi tài nguyên và tăng tấn công lên ít nhất 4.000 mỗi bước** để kiểm luồng wave/boss/thưởng tới kết thúc. Không có run bot thường nào ở trên thắng; kết quả hỗ trợ không chứng minh có thể thắng với nhân vật bình thường hay cân bằng.
 
 ## Kiểm thử bản giao
 
-- `npm test`: **524/524** đạt, bao gồm source, 54 skill smoke, input, save, mobile, chọn thẻ, các sửa cơ chế mới, bundle HTML và đường đi 9 đêm có hỗ trợ.
-- `npm run build:web`, `npm run verify`, `node tools/verify-fonts.mjs`, `git diff --check`: đạt. Bundle test so JavaScript nhúng với source. `index.html` 641 KB, self-contained; SHA-256: `d7c9e62447e04dc2685b0618a30ffd8f71c3b03f8992e9a8bba9cf56e331851f`.
-- Chromium headless thật, truy cập `file://` và bật offline, không nhận request HTTP(S): mô phỏng 840×380 và 390×844, DPR 2; vào game bằng chạm, 4 nút skill, đa chạm di chuyển + skill + né, pause/resume, chọn level-up, lưu và reload trong cùng context; vào Thử Boss, chọn Crystal Queen và kiểm tra kết quả không nhận thưởng bằng cách kết liễu boss nhân tạo. Chromium desktop: Esc pause/resume. Không có exception trang được ghi nhận. Môi trường browser giả lập **không phải điện thoại thật**, không chứng minh lưu qua lần mở sau trên mọi trình duyệt file://.
+- `npm test`: **546/546** đạt, bao gồm source, 54 skill smoke, input, save, mobile, chọn thẻ, các sửa cơ chế mới, bundle HTML và đường đi 9 đêm có hỗ trợ.
+- `npm run build:web`, `npm run verify`, `node tools/verify-fonts.mjs`, `git diff --check`: đạt. Bundle test so JavaScript nhúng với source. `index.html` 644 KB, self-contained; SHA-256: `d1a3318da3b40c071dd622121ce4b6c30cae85590810104a252ec0ee39e71de8`.
+- Chromium headless thật, truy cập `file://` và bật offline, không nhận request HTTP(S): mô phỏng 840×380 và 390×844, DPR 2; chọn độ khó từ menu và vào game bằng chạm, 4 nút skill, đa chạm di chuyển + skill + né, pause/resume, chọn level-up, lưu và reload trong cùng context; vào Thử Boss, chọn Crystal Queen và kiểm tra kết quả không nhận thưởng bằng cách kết liễu boss nhân tạo. Chromium desktop: Esc pause/resume. Không có exception trang được ghi nhận. Môi trường browser giả lập **không phải điện thoại thật**, không chứng minh lưu qua lần mở sau trên mọi trình duyệt file://.
 
 ### Công cụ Chromium tùy chọn (Linux)
 
@@ -58,6 +69,8 @@ Công cụ không tắt bảo vệ same-origin. `npm ci` khôi phục chính xá
 
 1. Kiểm thử có người chơi, nhiều cấp kỹ năng/cat/build, các boss, độ khó và nhánh nâng cấp; đặc biệt kiểm chứng tụt depth sau sửa tỉ lệ thẻ, chỉnh cân bằng dựa trên trải nghiệm và kết quả đủ mẫu.
 2. Đo FPS, nhiệt độ, pin, âm thanh, đa chạm, fullscreen, safe area, lưu và khôi phục file trên thiết bị Android/iOS thật và các trình duyệt mục tiêu.
-3. Audit mô tả và hiệu ứng của toàn bộ nâng cấp/skill rank 2–5, tương tác chéo, khả năng đọc giao tranh và khả năng tiếp cận; `piercing_mind` chẳng hạn chưa được chứng minh tác động lên mọi loại đạn kỹ năng. Kiểm chất lượng art/animation bằng người, không chỉ test silhouette.
+3. Audit mô tả và hiệu ứng của toàn bộ nâng cấp/skill rank 2–5, tương tác chéo, khả năng đọc giao tranh và khả năng tiếp cận; ví dụ còn cần kiểm lại nội tại Toan Tính với skill có độ trễ và cách phân biệt đạn phép ở Vuốt Gương rank 4. Miễn đẩy lùi của Thế Đá/Chạy Gió hiện chưa được chứng minh hữu ích qua nhánh AI boss thực tế. Kiểm chất lượng art/animation bằng người, không chỉ test silhouette.
 4. Đánh giá tích lũy phần thưởng, hệ kinh tế, nhịp 9 đêm, và khả năng hoàn thành không dùng trợ giúp trên nhiều seed/build; cải tiến bot chỉ để hỗ trợ đo, không dùng bot làm thước đo duy nhất.
 5. **Nội dung boss:** Void Predator và Crystal Queen hiện chơi được ở Thử Boss nhưng **không xuất hiện trong chiến dịch chín đêm**. Chế độ mới và hai boss vẫn cần được chơi thử thực tế, cân bằng, kiểm các phase và đánh giá liệu có cần nội dung chiến dịch riêng hay không.
+
+Phiếu thử có người và thiết bị thật: `PHIEU-CHOI-THU.md`. Đợt này chưa có người chơi thử hay số liệu thiết bị thật.
