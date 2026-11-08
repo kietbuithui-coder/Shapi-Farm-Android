@@ -221,8 +221,8 @@ export class Run {
     // are tracked by different fields, so neither cleared the other.
     if (this.boss) { this.boss.dead = true; this.boss = null; }
     if (this.miniBoss) { this.miniBoss.dead = true; this.miniBoss = null; }
-    // From night 10 the campaign keeps going and the boss roster rotates; below
-    // that this is exactly the authored act boss.
+    // The data defines a rotation beyond night 9 for a future mode; the current
+    // campaign ends after night 9, so this uses the authored act boss.
     this.actBoss = bossForNight(this.night, plan.act);
     this.waveBudget = plan.budget;
     this.waveEnemiesLeft = 0;
@@ -676,9 +676,9 @@ export class Run {
     this.phantomStep = null;
     this.emit('fx:blink', { x: p.x, y: p.y, x2: ghost.x, y2: ghost.y, color: ghost.def.icon.tint });
     if (ghost.rv.decoy || ghost.rv.decoyBoom) {
-      this.arcDamage(ghost.originX, ghost.originY, 74, 74, p.facing, TAU, ghost.def,
+      this.arcDamage(ghost.originX, ghost.originY, ghost.radius, ghost.radius, p.facing, TAU, ghost.def,
         ghost.power * (ghost.rv.decoyBoom ? 1 : ghost.rv.decoy), {}, true);
-      this.emit('fx:nova', { x: ghost.originX, y: ghost.originY, radius: 74, color: ghost.def.icon.tint });
+      this.emit('fx:nova', { x: ghost.originX, y: ghost.originY, radius: ghost.radius, color: ghost.def.icon.tint });
     }
     p.x = ghost.x; p.y = ghost.y;
     p.invuln = Math.max(p.invuln, ghost.rv.invuln || ghost.def.params.invuln || 0.2);
@@ -715,7 +715,7 @@ export class Run {
     let dmg = res.damage;
     if (this.attackCounter % 3 === 0 && this.mods.everyThird > 0) dmg *= 1 + this.mods.everyThird;
     if (this.mods.bleedEvery > 0 && this.attackCounter % this.mods.bleedEvery === 0) {
-      this.applyStatus(target, 'bleed', 6, 3);
+      this.applyStatus(target, 'bleed', 6 * (this.mods.bleedStacks || 1), 3);
     }
     if (this.mods.slowOnHit > 0) this.applyStatus(target, 'slow', this.mods.slowOnHit, 1.5);
     if (this.mods.stunChance > 0 && this.rng.chance(this.mods.stunChance)) this.applyStatus(target, 'stun', 0.5);
@@ -889,7 +889,7 @@ export class Run {
         for (let h = 0; h < hits; h++) {
           const swingDir = facing > 0 ? 0 : Math.PI;
           this.emit('fx:slash', { x: p.x, y: p.y - 24, facing, crit: false, skill: true, angle: swingDir, radius: arcR, strokes: def.id === 'claw_slash' ? 1 : 3 });
-          this.arcDamage(p.x, p.y, arcR, arcR, facing, def.params.arc || 1.2, def, power, rv, false, 'skill', def.id === 'claw_slash');
+          this.arcDamage(p.x, p.y, arcR, arcR, facing, def.params.arc || 1.2, def, power, rv, false);
         }
         break;
       }
@@ -930,7 +930,7 @@ export class Run {
         const nx = clamp(p.x + (dx / len) * values.range * area * potency, PLAY.left, PLAY.right);
         const ny = clamp(p.y + (dy / len) * values.range * area * potency * 0.6, PLAY.top, PLAY.bottom);
         if (def.id === 'phantom_step') {
-          this.phantomStep = { x: nx, y: ny, originX: p.x, originY: p.y, t: 0, delay: 1, def, power, rv };
+          this.phantomStep = { x: nx, y: ny, originX: p.x, originY: p.y, t: 0, delay: 1, radius: 74 * area, def, power, rv };
           this.emit('fx:phantom', { x: nx, y: ny, color: def.icon.tint });
           break;
         }
@@ -1397,7 +1397,7 @@ export class Run {
       }
       default:
         emitCast();
-        this.arcDamage(p.x, p.y, 90, 90, p.facing, TAU, def, power, rv, true);
+        this.arcDamage(p.x, p.y, 90 * area, 90 * area, p.facing, TAU, def, power, rv, true);
     }
   }
 
@@ -1550,22 +1550,22 @@ export class Run {
   }
 
   /* ── attacks ───────────────────────────────────────────────────────────── */
-  arcDamage(x, y, rx, ry, facing, arc, def, power, rv = {}, radial = false, source = 'skill', areaScaled = false) {
-    // Some callers have already applied the skill-area upgrade to rx.
-    const reach = areaScaled ? 1 : 1 + this.mods.skillArea;
+  arcDamage(x, y, rx, ry, facing, arc, def, power, rv = {}, radial = false, source = 'skill') {
+    // Callers pass the final radius, also used by the visual. Scaling it again
+    // here made several skills hit far outside their effect when upgraded.
     const list = this.enemies.filter((e) => !e.dead);
     let hitAny = false;
     for (const e of list) {
       const dx = e.x - x;
       const dy = e.y - y;
       const distE = Math.hypot(dx * 0.9, dy);
-      if (distE > rx * reach + e.radius) continue;
+      if (distE > rx + e.radius) continue;
       if (!radial) {
         const a = Math.atan2(dy, dx * facing);
         if (Math.abs(a) > arc / 2) continue;
       }
       hitAny = true;
-      if (source === 'minion') this.hitEnemy(e, power, { source: 'minion' });
+      if (source !== 'skill') this.hitEnemy(e, power, { source });
       else this.skillHit(e, def, power, rv);
     }
     if (!hitAny) this.emit('fx:whiff', { x, y });
@@ -1630,7 +1630,9 @@ export class Run {
   /** Single damage funnel. Returns the damage actually dealt. */
   hitEnemy(enemy, amount, opts = {}) {
     if (!enemy || enemy.dead || !(amount > 0)) return 0;
-    let dmg = amount * (1 + this.soulDamageBonus);
+    // Thorn damage was snapshotted after amplification on application; do not
+    // reapply marks/soul bonuses on each tick.
+    let dmg = opts.fixed || opts.skipSoul ? amount : amount * (1 + this.soulDamageBonus);
     // Lucky Paw rank five shares only its own bonus with living summons.
     // Orbiting objects, DoTs, blasts and reflected shots do not roll summon crits.
     const teamCrit = this.buffValue('teamCrit');
@@ -1646,16 +1648,35 @@ export class Run {
       if (this.mods.slowOnHit > 0) this.applyStatus(enemy, 'slow', this.mods.slowOnHit, 1.5);
       if (this.mods.stunChance > 0 && this.rng.chance(this.mods.stunChance)) this.applyStatus(enemy, 'stun', 0.5);
       if (this.mods.moonPact > 0 && this.moonPactReady) { dmg *= 3; this.moonPactReady = false; this.moonPactTimer = this.mods.moonPact; }
-      if (this.stats.lifesteal > 0) this.heal(dmg * this.stats.lifesteal, { silent: true });
+      // An enemy faces left or right; attacking from the other side counts as
+      // behind. The cat's position is the origin for direct skills.
+      if (this.mods.backstab > 0 && Math.abs(enemy.facing) === 1 &&
+          (this.player.x - enemy.x) * enemy.facing < 0) dmg *= 1 + this.mods.backstab;
     }
-    if (enemy.mark || enemy.timeAmp) dmg *= 1 + (enemy.mark || 0) + (enemy.timeAmp || 0);
+    const ricochetBase = dmg;
+    if (!opts.fixed && (enemy.mark || enemy.timeAmp)) dmg *= 1 + (enemy.mark || 0) + (enemy.timeAmp || 0);
     if (opts.execute) dmg = enemy.hp;
     if (enemy.mini || enemy.boss) dmg *= 1;
     // Bosses and wardens take reduced damage from summons so a passive build
     // cannot out-tick the encounter's scripted pressure.
     if ((enemy.boss || enemy.mini) && opts.source === 'minion') dmg *= 0.55;
     if ((enemy.boss || enemy.mini) && opts.source === 'orbit') dmg *= 0.7;
+    const actualDamage = Math.min(Math.max(0, enemy.hp), dmg);
+    if (opts.source === 'skill' && !opts.tick && this.stats.lifesteal > 0) {
+      this.heal(actualDamage * this.stats.lifesteal, { silent: true });
+    }
     enemy.hp -= dmg;
+    // 20% per rank over two seconds, one strongest refreshed instance. Only
+    // direct skill hits apply it; ticks, minions and secondary blasts cannot
+    // recursively generate further DoTs or on-hit effects.
+    if (enemy.hp > 0 && opts.source === 'skill' && !opts.tick && this.mods.bleedEvery > 0 && this.attackCounter % this.mods.bleedEvery === 0) {
+      this.applyStatus(enemy, 'bleed', 6 * (this.mods.bleedStacks || 1), 3);
+    }
+    if (enemy.hp > 0 && opts.source === 'skill' && !opts.tick && this.mods.skillDot > 0) {
+      const dps = actualDamage * this.mods.skillDot / 2;
+      enemy.thornDps = enemy.thornTime > 0 ? Math.max(enemy.thornDps || 0, dps) : dps;
+      enemy.thornTime = 2;
+    }
     enemy.hurt = 1;
     this.statsTotals.damage += dmg;
     if (!opts.tick) {
@@ -1664,6 +1685,15 @@ export class Run {
     }
     if (opts.crit && opts.source !== 'minion') this.player.attackAnim = 1;
     if (enemy.hp <= 0) this.killEnemy(enemy, opts);
+    if (opts.source === 'skill' && !opts.tick && this.mods.ricochet > 0) {
+      const next = this.nearestEnemy(enemy.x, enemy.y, 200, e => e !== enemy);
+      if (next) {
+        // Apply the second target's own mark, but not the already snapshotted
+        // soul multiplier twice; this source never triggers another bounce.
+        this.hitEnemy(next, ricochetBase * this.mods.ricochet, { source: 'ricochet', skipSoul: true });
+        this.emit('fx:chain', { points: [{ x: enemy.x, y: enemy.y - 18 }, { x: next.x, y: next.y - 18 }], color: '#ffe8a8' });
+      }
+    }
     if (opts.source === 'skill' && !opts.tick && this.isVeiled()) this.endNightVeil();
     return dmg;
   }
@@ -1714,12 +1744,13 @@ export class Run {
       this.embersFound = (this.embersFound || 0) + (enemy.boss ? 20 : 10);
       this.emit('pickup', { kind: 'ember', x: enemy.x, y: enemy.y, auto: true });
     } else if (this.rng.chance(dropChance(0.18))) this.spawnPickup(enemy.x + 10, enemy.y, 'ember', 2);
-    if (this.mods.killHeal) this.heal(this.stats.hpMax * this.mods.killHeal, { silent: true });
+    if (this.mods.killHeal && dist2(enemy.x, enemy.y, this.player.x, this.player.y) <= 180 ** 2) {
+      this.heal(this.stats.hpMax * this.mods.killHeal, { silent: true });
+    }
     if (this.mods.killBoom) {
-      this.arcDamage(enemy.x, enemy.y, 70, 70, 1, TAU, null, this.mods.killBoom, {}, true);
+      this.arcDamage(enemy.x, enemy.y, 70, 70, 1, TAU, null, this.mods.killBoom, {}, true, 'killBoom');
       this.emit('fx:burst', { x: enemy.x, y: enemy.y - 14, color: '#ff5f6d', radius: 70 });
     }
-    if (opts.source === 'skill' && this.mods.skillDot > 0) void 0;
     // wave bookkeeping
     if (!enemy.boss && !enemy.mini) this.waveEnemiesLeft = Math.max(0, this.waveEnemiesLeft - 1);
     if (enemy === this.boss) {
@@ -1761,7 +1792,19 @@ export class Run {
       }
       if (e.slowTime > 0) { e.slowTime -= dt; if (e.slowTime <= 0) e.slow = 0; }
       if (e.revealTime > 0) e.revealTime = Math.max(0, e.revealTime - dt);
-      if (e.poisonTime > 0) { e.poisonTime -= dt; this.hitEnemy(e, e.poison * dt, { tick: true, silent: true }); if (e.dead) continue; }
+      if (e.poisonTime > 0) {
+        const step = Math.min(dt, e.poisonTime);
+        e.poisonTime = Math.max(0, e.poisonTime - dt);
+        this.hitEnemy(e, e.poison * step, { source: 'poison', tick: true, silent: true });
+        if (e.dead) continue;
+      }
+      if (e.thornTime > 0) {
+        const step = Math.min(dt, e.thornTime);
+        e.thornTime = Math.max(0, e.thornTime - dt);
+        this.hitEnemy(e, e.thornDps * step, { source: 'thorn', fixed: true, tick: true, silent: true });
+        if (e.thornTime === 0) e.thornDps = 0;
+        if (e.dead) continue;
+      }
       if (e.bleedTime > 0) {
         const elapsed = Math.min(dt, e.bleedTime);
         e.bleedTime = Math.max(0, e.bleedTime - dt);
@@ -3210,23 +3253,17 @@ export class Run {
         picks.push({ type: 'skillup', skillId: slot.id, slot: slot.index, rank: nextRank, id: 'skillup:' + slot.id });
       }
     }
-    const shuffled = rand.shuffle(pool);
-    const used = new Set(picks.map((p) => p.id));
+    // Weighted sampling without replacement: the old rejection test inverted
+    // rarity (larger common weights were rejected more often than mythics).
     const rarityWeight = { common: 100, rare: 46, epic: 17, mythic: 5 };
-    for (const up of shuffled) {
-      if (picks.length >= 3) break;
-      if (used.has(up.id)) continue;
-      const w = rarityWeight[up.rarity] || 40;
-      const bonus = up.tags?.some((tg) => this.buildTagMatch(tg)) ? 1.25 : 1;
-      if (rand.float() * w * bonus > 22) continue;
-      picks.push(up);
-      used.add(up.id);
-    }
-    while (picks.length < 3) {
-      const fallback = shuffled.find((u) => !used.has(u.id));
-      if (!fallback) break;
-      picks.push(fallback);
-      used.add(fallback.id);
+    const candidates = pool.map(up => ({
+      up,
+      weight: (rarityWeight[up.rarity] || 40) * (up.tags?.some(tg => this.buildTagMatch(tg)) ? 1.25 : 1),
+    }));
+    while (picks.length < 3 && candidates.length) {
+      const index = weightedIndex(candidates, () => rand.float());
+      if (index < 0) break;
+      picks.push(candidates.splice(index, 1)[0].up);
     }
     return picks.slice(0, 3);
   }
@@ -3287,7 +3324,17 @@ export class Run {
   applyUpgrade(up) {
     const m = this.mods;
     const a = up.apply || {};
-    if (a.atk) m.atk += a.atk;
+    if (a.atk) {
+      // The stored modifier alone is not read by skillPotency: update the live
+      // stat too, preserving additive stacking across repeated picks.
+      const before = 1 + m.atk;
+      m.atk += a.atk;
+      this.stats.atk *= (1 + m.atk) / before;
+    }
+    if (a.bleedEvery) {
+      m.bleedEvery = a.bleedEvery;
+      m.bleedStacks = (m.bleedStacks || 0) + 1;
+    }
     if (a.hpMult) {
       const before = this.stats.hpMax;
       m.hpMult += a.hpMult;
@@ -3306,7 +3353,7 @@ export class Run {
     if (a.lifesteal) this.stats.lifesteal += a.lifesteal;
     if (a.thorns) this.stats.thorns += a.thorns;
     if (a.cdr) this.stats.cdr = clamp(this.stats.cdr + a.cdr, 0, 0.6);
-    for (const key of ['execute', 'ricochet', 'backstab', 'skillDot', 'skillArea', 'skillPierce', 'echo', 'movingArmor', 'lastStand', 'killHeal', 'killBoom', 'goldGain', 'xpGain', 'pickup', 'burnAura', 'slowOnHit', 'stunChance', 'knock', 'summonPower', 'summonExtra', 'autoShield', 'autoShieldCd', 'bleedEvery', 'everyThird', 'fortune', 'dodgeEnergy', 'moonPact', 'stormCall', 'goldenFur', 'revive']) {
+    for (const key of ['execute', 'ricochet', 'backstab', 'skillDot', 'skillArea', 'skillPierce', 'echo', 'movingArmor', 'lastStand', 'killHeal', 'killBoom', 'goldGain', 'xpGain', 'pickup', 'burnAura', 'slowOnHit', 'stunChance', 'knock', 'summonPower', 'summonExtra', 'autoShield', 'everyThird', 'fortune', 'dodgeEnergy', 'moonPact', 'stormCall', 'goldenFur', 'revive']) {
       if (a[key] != null) {
         if (key === 'moonPact' || key === 'stormCall') m[key] = a[key];
         else m[key] = (m[key] || 0) + a[key];
@@ -3318,6 +3365,7 @@ export class Run {
         this.statsTotals.minions++;
       }
     }
+    if (a.autoShieldCd != null) m.autoShieldCd = a.autoShieldCd;
     if (a.revive) { this.reviveUsed = false; m.revive = a.revive; }
     if (a.moonPact) this.moonPactReady = true;
     this.mods = m;
@@ -3511,7 +3559,7 @@ export class Run {
     const rng = this.shuffleRng;
     const pool = [
       { id: 'heal', label: { vi: 'Hồi 40% máu', en: 'Heal 40%' }, icon: 'heart', apply: () => this.heal(this.stats.hpMax * 0.4) },
-      { id: 'maxhp', label: { vi: '+12% máu tối đa', en: '+12% max health' }, icon: 'shield', apply: () => { this.mods.hpMult += 0.12; this.stats.hpMax *= 1.12; this.hp += this.stats.hpMax * 0.12; } },
+      { id: 'maxhp', label: { vi: '+12% máu tối đa', en: '+12% max health' }, icon: 'shield', apply: () => { const before = this.stats.hpMax; this.mods.hpMult += 0.12; this.stats.hpMax *= 1.12; this.hp = Math.min(this.stats.hpMax, this.hp + this.stats.hpMax - before); } },
       { id: 'energy', label: { vi: '+20 năng lượng', en: '+20 energy' }, icon: 'orb', apply: () => { this.stats.energyMax += 20; this.energy += 20; } },
       { id: 'gold', label: { vi: '+40 xu', en: '+40 coins' }, icon: 'coin', apply: () => { this.gold += 40; } },
       { id: 'ember', label: { vi: '+8 tro than', en: '+8 embers' }, icon: 'ember', apply: () => { this.embersFound = (this.embersFound || 0) + 8; } },

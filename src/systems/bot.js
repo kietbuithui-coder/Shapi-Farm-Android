@@ -9,7 +9,7 @@
 //   4. collect  — drift toward xp / health / gold when safe
 
 import { angle, clamp, dist, dist2, TAU } from '../core/math.js';
-import { PLAY } from './run.js';
+import { PLAY, DASH_COST } from './run.js';
 
 const WANTS = {
   physical: { near: 54, far: 120 },
@@ -56,7 +56,7 @@ export class BotBrain {
   preferredRange() {
     const run = this.run;
     const cats = run.slots.filter((s) => s);
-    if (!cats.length) return 80;
+    if (!cats.length) return { near: 80, far: 160 };
     let near = 0;
     let far = 0;
     for (const s of cats) {
@@ -116,20 +116,18 @@ export class BotBrain {
     if (danger) {
       ax = ax * (danger.urgent ? 0.15 : 0.55) + danger.x * (danger.urgent ? 2.6 : 1.2);
       ay = ay * (danger.urgent ? 0.15 : 0.55) + danger.y * (danger.urgent ? 2.6 : 1.2);
-      if (danger.urgent && this.dodgeCd <= 0 && p.energy > 22) {
+      // Use the same paid, cooldown-gated dodge input as a human. Energy is
+      // owned by Run, not player; reading p.energy silently disabled dodging.
+      if (danger.urgent && this.dodgeCd <= 0 && (p.dashCd || 0) <= 0 && run.energy >= DASH_COST) {
         input.dodge = true;
         this.dodgeCd = 0.75;
-      }
-      // a real player rolls out of a red circle, not just walks
-      if (danger.urgent && (p.dashCd || 0) <= 0 && p.energy > 24) {
-        run.dashTo(p, 0, 0, p.x + danger.x * 130, p.y + danger.y * 90);
       }
     }
 
     // low health: break off and hunt a health pickup
     const hpFrac = run.hp / run.stats.hpMax;
     const bossFight = !!(run.boss && !run.boss.dead);
-    if (hpFrac < 0.35 && !bossFight && !target) {
+    if (hpFrac < 0.35 && !bossFight) {
       const heal = run.pickups.find((k) => k.kind === 'hp');
       if (heal) {
         const a = angle(p.x, p.y, heal.x, heal.y);

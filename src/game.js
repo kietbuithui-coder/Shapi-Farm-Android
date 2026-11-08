@@ -529,7 +529,7 @@ export class Game {
   togglePause(force) {
     if (this.scene !== 'run' || !this.run) return;
     if (['dead', 'victory'].includes(this.run.state)) return;
-    if (this.run.state === RUN_STATE.LEVELUP) return;
+    if (this.run.state === RUN_STATE.LEVELUP || this.run.state === RUN_STATE.REWARD || (this.overlay && !this.paused)) return;
     const next = typeof force === 'boolean' ? force : !this.paused;
     if (next === this.paused) return;
     this.paused = next;

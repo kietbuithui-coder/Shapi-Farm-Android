@@ -38,7 +38,15 @@ export class Input {
   _bind() {
     const isTyping = (el) => el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
     addEventListener('keydown', (e) => {
-      if (!this.enabled || isTyping(e.target)) return;
+      if (isTyping(e.target)) return;
+      // Pause must remain reachable while gameplay input is disabled, or Esc/P
+      // can pause but never resume.
+      if (e.code === 'Escape' || e.code === 'KeyP') {
+        e.preventDefault();
+        if (!e.repeat && this.onPause) this.onPause();
+        return;
+      }
+      if (!this.enabled) return;
       const action = KEYMAP[e.code];
       if (action) {
         e.preventDefault();
@@ -50,10 +58,6 @@ export class Input {
         this.keys.add(action);
         this.lastDevice = 'keyboard';
         this.usingPad = false;
-      }
-      if (e.code === 'Escape' || e.code === 'KeyP') {
-        e.preventDefault();
-        if (!e.repeat && this.onPause) this.onPause();
       }
     });
     addEventListener('keyup', (e) => {
@@ -201,6 +205,10 @@ export class Input {
   poll(dt, { width, height } = {}) {
     this.w = width || this.canvas.clientWidth || 960;
     this.h = height || this.canvas.clientHeight || 540;
+    const pad = this._pollPad();
+    const padPause = !!pad?.pause;
+    if (padPause && !this._padPauseHeld && this.onPause) this.onPause();
+    this._padPauseHeld = padPause;
     if (!this.enabled) return { moveX: 0, moveY: 0, dodge: false, cast: [false, false, false, false] };
 
     let moveX = 0;
@@ -218,7 +226,6 @@ export class Input {
       touchSteer = true;
     }
 
-    const pad = this._pollPad();
     if (pad && Math.hypot(pad.moveX, pad.moveY) > 0.05) {
       moveX = pad.moveX;
       moveY = pad.moveY;

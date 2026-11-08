@@ -264,6 +264,7 @@ function drawStatusPips(ctx, e, t) {
   if (e.bleedTime > 0) pips.push('#b3202f');
   if (e.burnTime > 0) pips.push('#ff8f4d');
   if (e.poisonTime > 0) pips.push('#9ad14b');
+  if (e.thornTime > 0) pips.push('#ff9cde');
   if (e.slowTime > 0) pips.push('#7fb6ff');
   if (e.markTime > 0) pips.push('#b48bff');
   if (e.stun > 0) pips.push('#ffe066');

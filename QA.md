@@ -1,5 +1,7 @@
 # QA checklists
 
+> Báo cáo kiểm thử mới nhất, kết quả bot trước/sau và giới hạn thực tế: [`docs/production/BAO-CAO.md`](docs/production/BAO-CAO.md). Các số đếm và kết luận đo trong danh sách dưới đây là lịch sử, không phải bảo đảm cho bản hiện tại.
+
 What was actually run, and what could not be run here. Kept honest on purpose:
 anything marked **not verified** has never been exercised on real hardware, and
 says so rather than being quietly assumed.

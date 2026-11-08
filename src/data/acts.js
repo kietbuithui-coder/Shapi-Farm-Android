@@ -94,9 +94,9 @@ export function actForNight(night) {
  * Boss for a given night.
  *
  * Nights 1-9 keep their authored bosses (nothing about the existing progression
- * changed). From night 10 the game continues and the five bosses rotate — that
- * is where the Void Predator and the Crystal Queen enter the campaign, so they
- * are reachable content rather than data nobody meets.
+ * changed). The table also defines a rotation from night 10 for future modes,
+ * but the current campaign ends after night 9. Void Predator and Crystal Queen
+ * therefore cannot be encountered through normal campaign progression yet.
  */
 const ROTATION = ['moon_devourer', 'lantern_king', 'hollow_ninth', 'void_predator', 'crystal_queen'];
 

@@ -1,0 +1,50 @@
+{
+  "note": "Artificial invulnerability and high attack; progression plumbing only.",
+  "dt": 0.016666666666666666,
+  "results": [
+    {
+      "cat": "tabby",
+      "skills": [
+        "claw_slash",
+        "pounce",
+        "nine_lives",
+        "triple_scratch"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": true,
+      "state": "victory",
+      "night": 9,
+      "wave": 5,
+      "seconds": 570.2,
+      "level": 41,
+      "kills": 704,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "maxEnemies": 28,
+      "maxProjectiles": 11,
+      "maxHazards": 7,
+      "errors": []
+    }
+  ]
+}

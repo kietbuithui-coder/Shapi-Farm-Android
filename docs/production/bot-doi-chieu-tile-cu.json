@@ -1,0 +1,1700 @@
+{
+  "note": "Automated bot; not a human playtest or proof of balance.",
+  "dt": 0.016666666666666666,
+  "results": [
+    {
+      "cat": "tabby",
+      "skills": [
+        "claw_slash",
+        "pounce",
+        "nine_lives",
+        "triple_scratch"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 2,
+      "wave": 5,
+      "seconds": 248.8,
+      "level": 12,
+      "kills": 118,
+      "nights": [
+        1,
+        2
+      ],
+      "bosses": [
+        1
+      ],
+      "maxEnemies": 16,
+      "maxProjectiles": 11,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "tabby",
+      "skills": [
+        "claw_slash",
+        "pounce",
+        "nine_lives",
+        "triple_scratch"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 5,
+      "wave": 3,
+      "seconds": 659.1,
+      "level": 23,
+      "kills": 340,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "maxEnemies": 31,
+      "maxProjectiles": 25,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "tabby",
+      "skills": [
+        "claw_slash",
+        "pounce",
+        "nine_lives",
+        "triple_scratch"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 116.7,
+      "level": 8,
+      "kills": 75,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 7,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "black",
+      "skills": [
+        "shadow_strike",
+        "shadow_dash",
+        "blood_fang",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 96.3,
+      "level": 7,
+      "kills": 47,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 9,
+      "maxProjectiles": 10,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "black",
+      "skills": [
+        "shadow_strike",
+        "shadow_dash",
+        "blood_fang",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 101,
+      "level": 3,
+      "kills": 22,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 1,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "black",
+      "skills": [
+        "shadow_strike",
+        "shadow_dash",
+        "blood_fang",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 75.8,
+      "level": 4,
+      "kills": 25,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 1,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "persian",
+      "skills": [
+        "arcane_paw",
+        "lunar_beam",
+        "frost_nova",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 2,
+      "wave": 4,
+      "seconds": 133.6,
+      "level": 10,
+      "kills": 80,
+      "nights": [
+        1,
+        2
+      ],
+      "bosses": [
+        1
+      ],
+      "maxEnemies": 15,
+      "maxProjectiles": 7,
+      "maxHazards": 2,
+      "errors": []
+    },
+    {
+      "cat": "persian",
+      "skills": [
+        "arcane_paw",
+        "lunar_beam",
+        "frost_nova",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 63.5,
+      "level": 4,
+      "kills": 29,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 12,
+      "maxProjectiles": 3,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "persian",
+      "skills": [
+        "arcane_paw",
+        "lunar_beam",
+        "frost_nova",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 62.7,
+      "level": 5,
+      "kills": 44,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 12,
+      "maxProjectiles": 2,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "siamese",
+      "skills": [
+        "triple_scratch",
+        "blink_paw",
+        "wind_sprint",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 58.7,
+      "level": 4,
+      "kills": 29,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 2,
+      "errors": []
+    },
+    {
+      "cat": "siamese",
+      "skills": [
+        "triple_scratch",
+        "blink_paw",
+        "wind_sprint",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 114.4,
+      "level": 7,
+      "kills": 67,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 8,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "siamese",
+      "skills": [
+        "triple_scratch",
+        "blink_paw",
+        "wind_sprint",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 3,
+      "seconds": 53.2,
+      "level": 3,
+      "kills": 19,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 9,
+      "maxProjectiles": 4,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "mainecoon",
+      "skills": [
+        "brutal_bite",
+        "iron_fur",
+        "guardian_lion",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 104.6,
+      "level": 6,
+      "kills": 43,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 9,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "mainecoon",
+      "skills": [
+        "brutal_bite",
+        "iron_fur",
+        "guardian_lion",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 1,
+      "seconds": 41.3,
+      "level": 1,
+      "kills": 3,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 5,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "mainecoon",
+      "skills": [
+        "brutal_bite",
+        "iron_fur",
+        "guardian_lion",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 122.4,
+      "level": 3,
+      "kills": 22,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 4,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "british",
+      "skills": [
+        "reflective_claws",
+        "stone_stance",
+        "purr_shield",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 107.9,
+      "level": 2,
+      "kills": 9,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 6,
+      "maxProjectiles": 3,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "british",
+      "skills": [
+        "reflective_claws",
+        "stone_stance",
+        "purr_shield",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "fight",
+      "night": 5,
+      "wave": 4,
+      "seconds": 1200,
+      "level": 23,
+      "kills": 414,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "maxEnemies": 32,
+      "maxProjectiles": 22,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "british",
+      "skills": [
+        "reflective_claws",
+        "stone_stance",
+        "purr_shield",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "fight",
+      "night": 5,
+      "wave": 5,
+      "seconds": 1200,
+      "level": 25,
+      "kills": 669,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "maxEnemies": 33,
+      "maxProjectiles": 19,
+      "maxHazards": 8,
+      "errors": []
+    },
+    {
+      "cat": "bengal",
+      "skills": [
+        "rending_wave",
+        "executioner",
+        "hex_brand",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 72.4,
+      "level": 4,
+      "kills": 37,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 2,
+      "errors": []
+    },
+    {
+      "cat": "bengal",
+      "skills": [
+        "rending_wave",
+        "executioner",
+        "hex_brand",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 25,
+      "level": 1,
+      "kills": 5,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 5,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "bengal",
+      "skills": [
+        "rending_wave",
+        "executioner",
+        "hex_brand",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 41.6,
+      "level": 2,
+      "kills": 10,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 6,
+      "maxProjectiles": 3,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "ragdoll",
+      "skills": [
+        "healing_purr",
+        "guardian_aura",
+        "spirit_cat",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 7,
+      "wave": 1,
+      "seconds": 1170.4,
+      "level": 29,
+      "kills": 492,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "maxEnemies": 39,
+      "maxProjectiles": 19,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "ragdoll",
+      "skills": [
+        "healing_purr",
+        "guardian_aura",
+        "spirit_cat",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "fight",
+      "night": 6,
+      "wave": 3,
+      "seconds": 1200,
+      "level": 27,
+      "kills": 482,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "maxEnemies": 37,
+      "maxProjectiles": 16,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "ragdoll",
+      "skills": [
+        "healing_purr",
+        "guardian_aura",
+        "spirit_cat",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "fight",
+      "night": 6,
+      "wave": 1,
+      "seconds": 1200,
+      "level": 26,
+      "kills": 656,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "maxEnemies": 32,
+      "maxProjectiles": 14,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "sphynx",
+      "skills": [
+        "fireball",
+        "thunder_purr",
+        "void_maw",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 89.3,
+      "level": 7,
+      "kills": 47,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 8,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "sphynx",
+      "skills": [
+        "fireball",
+        "thunder_purr",
+        "void_maw",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 78.2,
+      "level": 4,
+      "kills": 44,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "sphynx",
+      "skills": [
+        "fireball",
+        "thunder_purr",
+        "void_maw",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 69.4,
+      "level": 4,
+      "kills": 26,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "scottish",
+      "skills": [
+        "thunder_purr",
+        "gravity_well",
+        "phantom_step",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 117.6,
+      "level": 4,
+      "kills": 21,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "scottish",
+      "skills": [
+        "thunder_purr",
+        "gravity_well",
+        "phantom_step",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 61.6,
+      "level": 2,
+      "kills": 6,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 6,
+      "maxProjectiles": 3,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "scottish",
+      "skills": [
+        "thunder_purr",
+        "gravity_well",
+        "phantom_step",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "normal",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 94.2,
+      "level": 4,
+      "kills": 40,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 11,
+      "maxProjectiles": 0,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "tabby",
+      "skills": [
+        "claw_slash",
+        "pounce",
+        "nine_lives",
+        "triple_scratch"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 7,
+      "wave": 1,
+      "seconds": 1001.8,
+      "level": 29,
+      "kills": 476,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "maxEnemies": 38,
+      "maxProjectiles": 22,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "tabby",
+      "skills": [
+        "claw_slash",
+        "pounce",
+        "nine_lives",
+        "triple_scratch"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 112.7,
+      "level": 7,
+      "kills": 67,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 11,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "tabby",
+      "skills": [
+        "claw_slash",
+        "pounce",
+        "nine_lives",
+        "triple_scratch"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 121.3,
+      "level": 8,
+      "kills": 87,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 10,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "black",
+      "skills": [
+        "shadow_strike",
+        "shadow_dash",
+        "blood_fang",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 99.2,
+      "level": 7,
+      "kills": 51,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 9,
+      "maxProjectiles": 7,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "black",
+      "skills": [
+        "shadow_strike",
+        "shadow_dash",
+        "blood_fang",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 101,
+      "level": 3,
+      "kills": 22,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 1,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "black",
+      "skills": [
+        "shadow_strike",
+        "shadow_dash",
+        "blood_fang",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 75.8,
+      "level": 4,
+      "kills": 25,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 1,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "persian",
+      "skills": [
+        "arcane_paw",
+        "lunar_beam",
+        "frost_nova",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 2,
+      "wave": 4,
+      "seconds": 141.8,
+      "level": 10,
+      "kills": 80,
+      "nights": [
+        1,
+        2
+      ],
+      "bosses": [
+        1
+      ],
+      "maxEnemies": 16,
+      "maxProjectiles": 8,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "persian",
+      "skills": [
+        "arcane_paw",
+        "lunar_beam",
+        "frost_nova",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 63.5,
+      "level": 4,
+      "kills": 29,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 12,
+      "maxProjectiles": 3,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "persian",
+      "skills": [
+        "arcane_paw",
+        "lunar_beam",
+        "frost_nova",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 62.7,
+      "level": 5,
+      "kills": 44,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 12,
+      "maxProjectiles": 2,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "siamese",
+      "skills": [
+        "triple_scratch",
+        "blink_paw",
+        "wind_sprint",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 58.7,
+      "level": 4,
+      "kills": 29,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 2,
+      "errors": []
+    },
+    {
+      "cat": "siamese",
+      "skills": [
+        "triple_scratch",
+        "blink_paw",
+        "wind_sprint",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 3,
+      "wave": 1,
+      "seconds": 308.2,
+      "level": 14,
+      "kills": 147,
+      "nights": [
+        1,
+        2,
+        3
+      ],
+      "bosses": [
+        1,
+        2
+      ],
+      "maxEnemies": 15,
+      "maxProjectiles": 20,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "siamese",
+      "skills": [
+        "triple_scratch",
+        "blink_paw",
+        "wind_sprint",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 3,
+      "seconds": 53.2,
+      "level": 3,
+      "kills": 19,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 9,
+      "maxProjectiles": 4,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "mainecoon",
+      "skills": [
+        "brutal_bite",
+        "iron_fur",
+        "guardian_lion",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 102.5,
+      "level": 6,
+      "kills": 42,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 18,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "mainecoon",
+      "skills": [
+        "brutal_bite",
+        "iron_fur",
+        "guardian_lion",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 1,
+      "seconds": 41.3,
+      "level": 1,
+      "kills": 3,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 5,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "mainecoon",
+      "skills": [
+        "brutal_bite",
+        "iron_fur",
+        "guardian_lion",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 122.4,
+      "level": 3,
+      "kills": 22,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 4,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "british",
+      "skills": [
+        "reflective_claws",
+        "stone_stance",
+        "purr_shield",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 107.9,
+      "level": 2,
+      "kills": 9,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 6,
+      "maxProjectiles": 3,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "british",
+      "skills": [
+        "reflective_claws",
+        "stone_stance",
+        "purr_shield",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 2,
+      "wave": 1,
+      "seconds": 351.8,
+      "level": 10,
+      "kills": 103,
+      "nights": [
+        1,
+        2
+      ],
+      "bosses": [
+        1
+      ],
+      "maxEnemies": 18,
+      "maxProjectiles": 10,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "british",
+      "skills": [
+        "reflective_claws",
+        "stone_stance",
+        "purr_shield",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "fight",
+      "night": 5,
+      "wave": 5,
+      "seconds": 1200,
+      "level": 24,
+      "kills": 490,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "maxEnemies": 29,
+      "maxProjectiles": 19,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "bengal",
+      "skills": [
+        "rending_wave",
+        "executioner",
+        "hex_brand",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 72.4,
+      "level": 4,
+      "kills": 37,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 2,
+      "errors": []
+    },
+    {
+      "cat": "bengal",
+      "skills": [
+        "rending_wave",
+        "executioner",
+        "hex_brand",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 25,
+      "level": 1,
+      "kills": 5,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 5,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "bengal",
+      "skills": [
+        "rending_wave",
+        "executioner",
+        "hex_brand",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 41.6,
+      "level": 2,
+      "kills": 10,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 6,
+      "maxProjectiles": 3,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "ragdoll",
+      "skills": [
+        "healing_purr",
+        "guardian_aura",
+        "spirit_cat",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "fight",
+      "night": 6,
+      "wave": 3,
+      "seconds": 1200,
+      "level": 26,
+      "kills": 478,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "maxEnemies": 35,
+      "maxProjectiles": 17,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "ragdoll",
+      "skills": [
+        "healing_purr",
+        "guardian_aura",
+        "spirit_cat",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "fight",
+      "night": 6,
+      "wave": 1,
+      "seconds": 1200,
+      "level": 24,
+      "kills": 415,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "maxEnemies": 26,
+      "maxProjectiles": 13,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "ragdoll",
+      "skills": [
+        "healing_purr",
+        "guardian_aura",
+        "spirit_cat",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "fight",
+      "night": 6,
+      "wave": 4,
+      "seconds": 1200,
+      "level": 27,
+      "kills": 567,
+      "nights": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "bosses": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "maxEnemies": 30,
+      "maxProjectiles": 24,
+      "maxHazards": 7,
+      "errors": []
+    },
+    {
+      "cat": "sphynx",
+      "skills": [
+        "fireball",
+        "thunder_purr",
+        "void_maw",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 5,
+      "seconds": 98.5,
+      "level": 7,
+      "kills": 48,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 7,
+      "maxHazards": 3,
+      "errors": []
+    },
+    {
+      "cat": "sphynx",
+      "skills": [
+        "fireball",
+        "thunder_purr",
+        "void_maw",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 78.2,
+      "level": 4,
+      "kills": 44,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "sphynx",
+      "skills": [
+        "fireball",
+        "thunder_purr",
+        "void_maw",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 69.4,
+      "level": 4,
+      "kills": 26,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "scottish",
+      "skills": [
+        "thunder_purr",
+        "gravity_well",
+        "phantom_step",
+        "claw_slash"
+      ],
+      "seed": 3,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 117.6,
+      "level": 4,
+      "kills": 21,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 10,
+      "maxProjectiles": 2,
+      "maxHazards": 1,
+      "errors": []
+    },
+    {
+      "cat": "scottish",
+      "skills": [
+        "thunder_purr",
+        "gravity_well",
+        "phantom_step",
+        "claw_slash"
+      ],
+      "seed": 11,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 2,
+      "seconds": 61.6,
+      "level": 2,
+      "kills": 6,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 6,
+      "maxProjectiles": 3,
+      "maxHazards": 0,
+      "errors": []
+    },
+    {
+      "cat": "scottish",
+      "skills": [
+        "thunder_purr",
+        "gravity_well",
+        "phantom_step",
+        "claw_slash"
+      ],
+      "seed": 29,
+      "difficulty": "hard",
+      "assisted": false,
+      "state": "dead",
+      "night": 1,
+      "wave": 4,
+      "seconds": 94.2,
+      "level": 4,
+      "kills": 40,
+      "nights": [
+        1
+      ],
+      "bosses": [],
+      "maxEnemies": 11,
+      "maxProjectiles": 0,
+      "maxHazards": 1,
+      "errors": []
+    }
+  ]
+}

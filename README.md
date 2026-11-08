@@ -28,9 +28,10 @@ and new cats/skills for the next attempt.
 | Dash (i-frames) | `Space` / `Shift` | dash button, `A` (`LB`/`RT` also work) |
 | Cast slot 1–4 | `1` `2` `3` `4` | four skill buttons, `X` `B` `Y` `RB` |
 | Pause | `Esc` / `P` | pause button in the HUD, `Start`/`Select` |
-| Basic attack | automatic | automatic |
 
-`AUTO` in the bottom-left hands the run to the bot — useful to watch how a build
+Attacks are manual: use the equipped skill buttons; there is no automatic basic attack.
+
+`AUTO` in the HUD hands the run to the bot — useful to watch how a build
 plays out.
 
 ### The loop
@@ -42,7 +43,7 @@ plays out.
 4. Death or victory → **results** with embers. Spend them in `Cường Hóa` and on
    locked cats/skills.
 
-The skill screen pages when the pool does not fit (`Trang 1/3`), so all 52
+The skill screen pages when the pool does not fit (`Trang 1/3`), so all 54
 skills are reachable at any window size.
 
 ### Language
@@ -67,7 +68,7 @@ Then open <http://localhost:8080/>. The server serves the built `index.html`;
 | Command | What it does |
 | --- | --- |
 | `npm start` | Serve the repo on port 8080 (`node scripts/serve.mjs [port]`) |
-| `npm test` | Full suite (142 tests) — engine, progression, audio, input, bosses, codex, deploy, bundle |
+| `npm test` | Full suite — engine, progression, audio, input, bosses, codex, deploy, bundle |
 | `npm run build:web` | Bundle `src/` + inline fonts → `index.html` |
 | `npm run verify` | Self-containment + placeholder check on `index.html` |
 | `npm run art` | Re-render the art sheets into `public/art-check/` |
@@ -294,3 +295,7 @@ Font License, subsetted and inlined at build time.
 Tải `index.html` về máy rồi mở bằng trình duyệt hỗ trợ JavaScript và Canvas. Game có thể chạy không cần mạng sau khi tải; không cần tải thêm tài nguyên. Trong trận có **bốn nút kỹ năng** và một nút **NÉ** riêng; kéo cần ảo để di chuyển, có thể vừa di chuyển vừa bấm kỹ năng hoặc né. Cài đặt cho phép đổi tay và cỡ nút. Xoay màn hình sẽ đặt lại cần ảo, nên nhấc tay rồi kéo lại sau khi xoay.
 
 Tiến trình dùng bộ nhớ của trình duyệt. Với file tải về (`file://`), việc lưu lâu dài phụ thuộc trình duyệt và quyền lưu trữ; nếu game báo không lưu được, dữ liệu chỉ tồn tại trong phiên hiện tại. Không xóa dữ liệu trình duyệt nếu muốn giữ tiến trình. Các kiểm thử tự động mô phỏng màn hình và cảm ứng, không thay thế việc chơi thử trên máy thật.
+
+### Kế hoạch và kiểm thử chất lượng
+
+Xem [`docs/production/NGUYEN-TAC.md`](docs/production/NGUYEN-TAC.md), [`GIAI-DOAN.md`](docs/production/GIAI-DOAN.md) và [`BAO-CAO.md`](docs/production/BAO-CAO.md). `node tools/production-sweep.mjs` chạy phép đo bot có seed; `--assisted` chỉ kiểm đường đi chín đêm với hỗ trợ nhân tạo, không đo cân bằng. Kiểm thử Chromium tùy chọn và yêu cầu cài công cụ được hướng dẫn trong báo cáo.
